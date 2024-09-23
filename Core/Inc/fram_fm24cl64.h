@@ -31,6 +31,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
+HAL_StatusTypeDef FRAM_Init(I2C_HandleTypeDef *p_handle);
 
 #ifdef __cplusplus
 }

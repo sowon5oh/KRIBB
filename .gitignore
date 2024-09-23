@@ -1,0 +1,45 @@
+# STM32CubeIDE 관련 설정 파일
+.vscode/
+.project
+.cproject
+.settings/
+*.launch
+
+# STM32CubeIDE 빌드 파일 및 바이너리 파일
+/Debug/
+/Release/
+/build/
+
+# CubeMX 자동 생성 파일 및 설정
+*.ioc
+*.bak
+*.log
+*.rpt
+*.mdk
+/Inc/
+/Src/
+/MXProject.mxproject
+*.AC6
+
+# 자동 생성된 바이너리 파일 및 빌드 관련 파일
+*.bin
+*.hex
+*.elf
+*.map
+*.srec
+*.lst
+*.crf
+*.o
+*.d
+*.a
+
+# 기타 임시 파일 및 시스템 파일
+*.log
+*.tmp
+*.bak
+*.swp
+*.dmp
+.DS_Store
+*.gch
+*.pyc
+__pycache__/

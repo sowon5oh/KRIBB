@@ -25,6 +25,87 @@
 /* Exported constants --------------------------------------------------------*/
 
 /* Exported macro ------------------------------------------------------------*/
+#define SYS_VERIFY_PARAM_NOT_NULL( param ) \
+    do \
+    { \
+        if( ( param ) == NULL ) \
+        { \
+            LogError( "[Failed] Null Parameter" ); \
+            return HAL_ERROR; \
+        } \
+    } while( 0 );
+
+#define SYS_VERIFY_PARAM_NOT_NULL_VOID( param ) \
+    do \
+    { \
+        if( ( param ) == NULL ) \
+        { \
+            LogError( "[Failed] Null Parameter" ); \
+            return; \
+        } \
+    } while( 0 );
+
+#define SYS_VERIFY_SUCCESS( statement ) \
+    do \
+    { \
+        uint32_t _err_code = ( uint32_t ) ( statement ); \
+        if( _err_code != HAL_OK ) \
+        { \
+            LogError( "[Failed] Error code: %d", _err_code ); \
+            return _err_code; \
+        } \
+    } while( 0 );
+
+#define SYS_VERIFY_SUCCESS_VOID( statement ) \
+    do \
+    { \
+        uint32_t _err_code = ( uint32_t ) ( statement ); \
+        if( _err_code != HAL_OK ) \
+        { \
+            LogError( "[Failed] Error code: %d", _err_code ); \
+            return; \
+        } \
+    } while( 0 );
+
+#define SYS_VERIFY_VALID_STATE( state ) \
+    do \
+    { \
+        if( !( state ) ) \
+        { \
+            LogError( "[Failed] Invalid State" ); \
+            return HAL_ERROR; \
+        } \
+    } while( 0 );
+
+#define SYS_VERIFY_VALID_STATE_VOID( state ) \
+    do \
+    { \
+        if( !( state ) ) \
+        { \
+            LogError( "[Failed] Invalid State" ); \
+            return; \
+        } \
+    } while( 0 );
+
+#define SYS_VERIFY_TRUE( state, err_code ) \
+    do \
+    { \
+        if( !( state ) ) \
+        { \
+            LogError( "[Failed] Invalid" ); \
+            return err_code; \
+        } \
+    } while( 0 );
+
+#define SYS_VERIFY_TRUE_VOID( state ) \
+    do \
+    { \
+        if( !( state ) ) \
+        { \
+            LogError( "[Failed] Invalid" ); \
+            return; \
+        } \
+    } while( 0 );
 
 /**
  * @brief Define Bit-field mask

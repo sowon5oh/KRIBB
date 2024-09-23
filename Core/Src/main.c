@@ -2,11 +2,12 @@
 /**
  ******************************************************************************
  * @file           : main.c
- * @brief          : Main program body
+ * @brief          : main program body
+ * @date           : 2024.09.
  ******************************************************************************
  * @attention
  *
- * Copyright (c) 2023 STMicroelectronics.
+ * Copyright (c) 2024 UNIOTECH.
  * All rights reserved.
  *
  * This software is licensed under terms that can be found in the LICENSE file
@@ -32,8 +33,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define UOT_FW_VER		"2.0"  //PJT
-#define UOT_HW_VER		"2.0"
+#define SYS_FW_VER		"1.0"
+#define SYS_HW_VER		"2.0"
+#define VENDOR_NAME		"UNIOTECH"
+#define MODEL_NAME		"KRIBB_FLURESCENCE_ANALYZER"
+#define FIRMWARE_DATE	"2024-09-10"
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,33 +61,9 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 volatile uint16_t time_1ms_cnt = 0;
 volatile uint16_t time_0_1ms_cnt = 0;
-HAL_StatusTypeDef res;
-
-//uint8_t sendMode = SEND_MODE_NORMAL;
-uint8_t gpioIntReady = 0;
-
-MeasAvrReq_t meas_cfg;
-
-GPIO_PinState currentPinState[1];
-GPIO_PinState pastPinState[1];
-
-uint32_t adc_value = 0;
-float temperature = 0.0f;
-
-char Tx_str_data[] = "UNIOTECH CORP.\r\n";
-
-//============================================================================
-//	Define - ID
-//============================================================================
-// "*IDN?"?��?�� ?��?��?��?�� 보드 ?��보에 ???�� 문자?��.
-#define VENDOR_NAME				"UNIOTECH"
-#define MODEL_NAME				"HGUARD_3CH_FA"
-#define HARDWARE_VER			"HW2.0"
-#define FIRMWARE_VER			"FW2.0"
-#define FIRMWARE_DATE			"2024-09-10"
-//============================================================================
 
 #define	UART_DEBUG_MSG 	1
+char Tx_str_data[] = "UNIOTECH CORP.\r\n";
 
 /* USER CODE END PV */
 
@@ -172,8 +152,8 @@ int main(void) {
 	LogInfo("--------------------------------------------");
 	LogInfo("[       UNIOTECH - 3CH FL ANALYZER UOT       ]");
 	LogInfo("  * Build Time: %s %s", __DATE__, __TIME__);
-	LogInfo("  * FW Ver    : Ver. %s", UOT_FW_VER);
-	LogInfo("  * HW Ver    : Ver. %s", UOT_HW_VER);
+	LogInfo("  * FW Ver    : Ver. %s", SYS_FW_VER);
+	LogInfo("  * HW Ver    : Ver. %s", SYS_HW_VER);
 	LogInfo("--------------------------------------------");
 
 	LogInfo("DAC Init");
@@ -190,8 +170,6 @@ int main(void) {
 	LED_TASK_Start();
 
 	HAL_Delay(100);
-
-	meas_cfg.measFlag = false;
 
 	/* TEST */
 	//uint8_t test_cmd[100] = {0xC0, 0x01, 0x00, 0xC2};

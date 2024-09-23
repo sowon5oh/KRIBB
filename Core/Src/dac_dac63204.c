@@ -22,7 +22,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct {
-	I2C_HandleTypeDef *i2c_handle;
+    I2C_HandleTypeDef *i2c_handle;
 
 } dacContext_t;
 
@@ -67,201 +67,180 @@ dacContext_t dac_context;
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef DAC_Init(I2C_HandleTypeDef *p_handle) {
-	HAL_StatusTypeDef ret = HAL_OK;
+    SYS_VERIFY_PARAM_NOT_NULL(p_handle);
 
-	if (p_handle != NULL) {
-		/* Regist handle */
-		dac_context.i2c_handle = (I2C_HandleTypeDef*) p_handle;
+    /* attach i2c handle */
+    dac_context.i2c_handle = (I2C_HandleTypeDef*) p_handle;
 
-		ret = HAL_I2C_IsDeviceReady(dac_context.i2c_handle, DAC63204_ADDRESS,
-				64, HAL_MAX_DELAY);
-	} else {
-		ret = HAL_ERROR;
-	}
+    /* check i2c communication status */
+    SYS_VERIFY_SUCCESS(HAL_I2C_IsDeviceReady(dac_context.i2c_handle, DAC63204_ADDRESS, 64, HAL_MAX_DELAY));
 
-	if (ret != HAL_ERROR) {
-		ret = _dacReset();
+    /* reset */
+    SYS_VERIFY_SUCCESS(_dacReset());
 
-		/* Chip Setting */
-		/* Power-up
-		 * voltage output on all channels
-		 * enables internal reference */
-		ret = _dacWrite(DAC_REG_ADDR_COMMON_CFG, 0x1249);
+    /* Power-up
+     * voltage output on all channels
+     * enables internal reference */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_COMMON_CFG, 0x1249));
 
-		/* Set channel 0-3 gain setting
-		 * 1.5x internal reference (1.8 V) */
-		ret = _dacWrite(DAC_REG_ADDR_DAC_0_VOUT_CMP_CFG, 0x0800); //0x0800 = 2048
-		ret = _dacWrite(DAC_REG_ADDR_DAC_1_VOUT_CMP_CFG, 0x0800);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_2_VOUT_CMP_CFG, 0x0800);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_3_VOUT_CMP_CFG, 0x0800);
+    /* Set channel 0-3 gain setting
+     * 1.5x internal reference (1.8 V) */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_0_VOUT_CMP_CFG, 0x0800)); /* 0x0800 = 2048 */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_1_VOUT_CMP_CFG, 0x0800));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_2_VOUT_CMP_CFG, 0x0800));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_3_VOUT_CMP_CFG, 0x0800));
 
-		/* Configure GPI
-		 * for Margin-High
-		 * Low trigger for all channels */
-		ret = _dacWrite(DAC_REG_ADDR_GPIO_CFG, 0x01F5);
+    /* Configure GPI
+     * for Margin-High
+     * Low trigger for all channels */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_GPIO_CFG, 0x01F5));
 
-		/* Set Channel 0 */
-		/* Slew rate and Code step
-		 * CODE_STEP: 2 LSB
-		 * SLEW_RATE: 60.72 µs/step */
-		ret = _dacWrite(DAC_REG_ADDR_DAC_0_FUNC_CFG, 0x0017);
-		/* DAC margin high code
-		 * OUTPUT RANGE: 1.8 V
-		 * MIRGIN_HIGE: 1.164 V
-		 * the 10-bit hex code for 1.164 V is 0x296 With 16-bit left alignment this becomes 0xA540 */
-		ret = _dacWrite(DAC_REG_ADDR_DAC_0_MARGIN_HIGH, 0xA540);
-		/* DAC margin low code
-		 * OUTPUT RANGE: 1.8 V
-		 * MIRGIN_LOW: 36 mV
-		 * the 10-bit hex code for 36 mV is 0x14. With 16-bit left alignment, this becomes 0x0500 */
-		ret = _dacWrite(DAC_REG_ADDR_DAC_0_MARGIN_LOW, 0x0500);
+    /* Set Channel 0 */
+    /* Slew rate and Code step
+     * CODE_STEP: 2 LSB
+     * SLEW_RATE: 60.72 µs/step */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_0_FUNC_CFG, 0x0017));
+    /* DAC margin high code
+     * OUTPUT RANGE: 1.8 V
+     * MIRGIN_HIGE: 1.164 V
+     * the 10-bit hex code for 1.164 V is 0x296 With 16-bit left alignment this becomes 0xA540 */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_0_MARGIN_HIGH, 0xA540));
+    /* DAC margin low code
+     * OUTPUT RANGE: 1.8 V
+     * MIRGIN_LOW: 36 mV
+     * the 10-bit hex code for 36 mV is 0x14. With 16-bit left alignment, this becomes 0x0500 */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_0_MARGIN_LOW, 0x0500));
 
-		/* Set Channel 1 */
-		ret = _dacWrite(DAC_REG_ADDR_DAC_1_FUNC_CFG, 0x0017);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_1_MARGIN_HIGH, 0xA540);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_1_MARGIN_LOW, 0x0500);
+    /* Set Channel 1 */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_1_FUNC_CFG, 0x0017));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_1_MARGIN_HIGH, 0xA540));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_1_MARGIN_LOW, 0x0500));
 
-		/* Set Channel 2 */
-		ret = _dacWrite(DAC_REG_ADDR_DAC_2_FUNC_CFG, 0x0017);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_2_MARGIN_HIGH, 0xA540);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_2_MARGIN_LOW, 0x0500);
+    /* Set Channel 2 */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_2_FUNC_CFG, 0x0017));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_2_MARGIN_HIGH, 0xA540));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_2_MARGIN_LOW, 0x0500));
 
-		/* Set Channel 3 */
-		ret = _dacWrite(DAC_REG_ADDR_DAC_3_FUNC_CFG, 0x0017);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_3_MARGIN_HIGH, 0xA540);
-		ret = _dacWrite(DAC_REG_ADDR_DAC_3_MARGIN_LOW, 0x0500);
+    /* Set Channel 3 */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_3_FUNC_CFG, 0x0017));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_3_MARGIN_HIGH, 0xA540));
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_DAC_3_MARGIN_LOW, 0x0500));
 
-		/* Init Interface */
-		ret = _dacWrite(DAC_REG_ADDR_INTERFACE_CFG, 0x0000);
+    /* Init Interface */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_INTERFACE_CFG, 0x0000));
 
-		/* Save to NVM */
-		ret = _dacWrite(DAC_REG_ADDR_COMMON_TRIGGER, 0x0002);
-	}
+    /* Save to NVM */
+    SYS_VERIFY_SUCCESS(_dacWrite(DAC_REG_ADDR_COMMON_TRIGGER, 0x0002));
 
-	return ret;
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef DAC_SetData(DAC_chSel_t channel, uint16_t data) {
-	HAL_StatusTypeDef ret = HAL_OK;
-	uint16_t write_data = 0;
+    HAL_StatusTypeDef ret = HAL_OK;
+    uint16_t write_data = 0;
 
-	if (data > 0xFF0) //FF0 = 4080
-			{
-		write_data = 0xFF0;
-		LogWarn("Invalid DAC Set value, Value changed. %04X ==> %04X", data,
-				write_data);
-	} else {
-		write_data = (data << 4) & 0xFFF0; //FFF0 = 65520
-	}
+    if (data > 0xFF0) //FF0 = 4080
+            {
+        write_data = 0xFF0;
+        LogWarn("Invalid DAC Set value, Value changed. %04X ==> %04X", data, write_data);
+    }
+    else {
+        write_data = (data << 4) & 0xFFF0; //FFF0 = 65520
+    }
 
-	if (dac_context.i2c_handle != NULL) {
-		switch (channel) {
-		case DAC_CH_0:
-			ret = _dacWrite(DAC_REG_ADDR_DAC_0_DATA, write_data);
-			break;
+    switch (channel) {
+        case DAC_CH_0:
+            ret = _dacWrite(DAC_REG_ADDR_DAC_0_DATA, write_data);
+            break;
 
-		case DAC_CH_1:
-			ret = _dacWrite(DAC_REG_ADDR_DAC_1_DATA, write_data);
-			break;
+        case DAC_CH_1:
+            ret = _dacWrite(DAC_REG_ADDR_DAC_1_DATA, write_data);
+            break;
 
-		case DAC_CH_2:
-			ret = _dacWrite(DAC_REG_ADDR_DAC_2_DATA, write_data);
-			break;
+        case DAC_CH_2:
+            ret = _dacWrite(DAC_REG_ADDR_DAC_2_DATA, write_data);
+            break;
 
-		case DAC_CH_3:
-			ret = _dacWrite(DAC_REG_ADDR_DAC_3_DATA, write_data);
-			break;
+        case DAC_CH_3:
+            ret = _dacWrite(DAC_REG_ADDR_DAC_3_DATA, write_data);
+            break;
 
-		case DAC_CH_ALL:
-			ret = _dacWrite(DAC_REG_ADDR_DAC_0_DATA, write_data);
-			ret = _dacWrite(DAC_REG_ADDR_DAC_1_DATA, write_data);
-			ret = _dacWrite(DAC_REG_ADDR_DAC_2_DATA, write_data);
-			ret = _dacWrite(DAC_REG_ADDR_DAC_3_DATA, write_data);
-			break;
+        case DAC_CH_ALL:
+            ret = _dacWrite(DAC_REG_ADDR_DAC_0_DATA, write_data);
+            ret = _dacWrite(DAC_REG_ADDR_DAC_1_DATA, write_data);
+            ret = _dacWrite(DAC_REG_ADDR_DAC_2_DATA, write_data);
+            ret = _dacWrite(DAC_REG_ADDR_DAC_3_DATA, write_data);
+            break;
 
-		default:
-			ret = HAL_ERROR;
-			break;
-		}
+        default:
+            return HAL_ERROR;
+            break;
+    }
 
-		if (ret == HAL_OK) {
-			LogDebug("DAC Set ch: %d, data: %04X\r\n", channel, data);
-		} else {
-			LogError("DAC Set failed\r\n");
-		}
-	} else {
-		ret = HAL_ERROR;
-	}
+    if (HAL_OK == ret) {
+        LogDebug("DAC Set ch: %d, data: %04X\r\n", channel, data);
+    }
+    else {
+        LogError("DAC Set failed\r\n");
+    }
 
-	return ret;
+    return ret;
 }
 
 HAL_StatusTypeDef DAC_CheckStatus(uint8_t *p_read_data) {
-	HAL_StatusTypeDef ret = HAL_OK;
-	uint8_t read_buff[2] = { 0, };
+    uint8_t read_buff[2] = { 0, };
 
-	if ((dac_context.i2c_handle != NULL) && (p_read_data != NULL)) {
-		ret = _dacRead(DAC_REG_ADDR_GENERAL_STATUS, &read_buff[0]);
-	} else {
-		ret = HAL_ERROR;
-	}
+    SYS_VERIFY_PARAM_NOT_NULL(p_read_data);
+    SYS_VERIFY_PARAM_NOT_NULL(dac_context.i2c_handle);
+    SYS_VERIFY_SUCCESS(_dacRead(DAC_REG_ADDR_GENERAL_STATUS, &read_buff[0]));
 
-	if (ret == HAL_OK) {
-		;
-	}
-
-	return ret;
+    return HAL_OK;
 }
 
 /* Private user code ---------------------------------------------------------*/
 HAL_StatusTypeDef _dacReset(void) {
-	HAL_StatusTypeDef ret = HAL_OK;
-	uint8_t tx_data[2] = { 0, };
+    uint8_t tx_data[2] = { 0, };
 
-	/* Make packet */
-	tx_data[0] = 0x00;
-	tx_data[1] = 0x06;
+    SYS_VERIFY_PARAM_NOT_NULL(dac_context.i2c_handle);
 
-	ret = HAL_I2C_Master_Transmit(dac_context.i2c_handle, DAC63204_ADDRESS,
-			&tx_data[0], 2, 50);
+    /* Make packet */
+    tx_data[0] = 0x00;
+    tx_data[1] = 0x06;
 
-	return ret;
+    SYS_VERIFY_SUCCESS(HAL_I2C_Master_Transmit(dac_context.i2c_handle, DAC63204_ADDRESS, &tx_data[0], 2, 50));
+
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef _dacWrite(uint8_t reg, uint16_t data) {
-	HAL_StatusTypeDef ret = HAL_OK;
-	uint8_t tx_data[3] = { 0, };
+    uint8_t tx_data[3] = { 0, };
 
-	/* Make packet */
-	tx_data[0] = reg;
-	tx_data[1] = (data >> 8) & 0xFF;
-	tx_data[2] = data & 0xFF;
+    SYS_VERIFY_PARAM_NOT_NULL(dac_context.i2c_handle);
 
-	ret = HAL_I2C_Master_Transmit(dac_context.i2c_handle, DAC63204_ADDRESS,
-			&tx_data[0], 3, 50);
+    /* Make packet */
+    tx_data[0] = reg;
+    tx_data[1] = (data >> 8) & 0xFF;
+    tx_data[2] = data & 0xFF;
 
-	return ret;
+    SYS_VERIFY_SUCCESS(HAL_I2C_Master_Transmit(dac_context.i2c_handle, DAC63204_ADDRESS, &tx_data[0], 3, 50));
+
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef _dacRead(uint8_t reg, uint8_t *p_data) {
-	HAL_StatusTypeDef ret = HAL_OK;
-	uint8_t tx_data = 0x00;
-	uint8_t rx_data[2] = { 0, };
+    uint8_t tx_data = 0x00;
+    uint8_t rx_data[2] = { 0, };
 
-	/* Make packet */
-	tx_data = reg;
+    SYS_VERIFY_PARAM_NOT_NULL(dac_context.i2c_handle);
+    SYS_VERIFY_PARAM_NOT_NULL(p_data);
 
-	ret = HAL_I2C_Master_Transmit(dac_context.i2c_handle, DAC63204_ADDRESS,
-			&tx_data, 1, 50);
+    /* Make packet */
+    tx_data = reg;
 
-	if (ret == HAL_OK) {
-		ret = HAL_I2C_Master_Receive(dac_context.i2c_handle, DAC63204_ADDRESS,
-				&rx_data[0], 2, 50);
-	}
+    SYS_VERIFY_SUCCESS(HAL_I2C_Master_Transmit(dac_context.i2c_handle, DAC63204_ADDRESS, &tx_data, 1, 50));
+    SYS_VERIFY_SUCCESS(HAL_I2C_Master_Receive(dac_context.i2c_handle, DAC63204_ADDRESS, &rx_data[0], 2, 50));
 
-	if (ret == HAL_OK) {
-		memcpy(p_data, &rx_data[0], 2);
-	}
+    memcpy(p_data, &rx_data[0], 2);
 
-	return ret;
+    return HAL_OK;
 }

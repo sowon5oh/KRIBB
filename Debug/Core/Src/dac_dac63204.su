@@ -1,6 +1,6 @@
-../Core/Src/dac_dac63204.c:71:19:DAC_Init	24	static
-../Core/Src/dac_dac63204.c:150:19:DAC_SetData	32	static
-../Core/Src/dac_dac63204.c:214:19:DAC_CheckStatus	24	static
-../Core/Src/dac_dac63204.c:237:19:_dacReset	24	static
-../Core/Src/dac_dac63204.c:252:19:_dacWrite	32	static
-../Core/Src/dac_dac63204.c:267:19:_dacRead	32	static
+../Core/Src/dac_dac63204.c:69:19:DAC_Init	24	static
+../Core/Src/dac_dac63204.c:144:19:DAC_SetData	32	static
+../Core/Src/dac_dac63204.c:199:19:DAC_CheckStatus	24	static
+../Core/Src/dac_dac63204.c:217:19:_dacReset	24	static
+../Core/Src/dac_dac63204.c:231:19:_dacWrite	32	static
+../Core/Src/dac_dac63204.c:246:19:_dacRead	32	static

@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * @file           : led_task.h
- * @brief          : Header file for led_task.c.
+ * @file           : task_fsm.h
+ * @brief          : Header file for Task_Fsm.c.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _LED_TASK_H
-#define _LED_TASK_H
+#ifndef _TASK_FSM_H_
+#define _TASK_FSM_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,22 +31,13 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-void LED_TASK_Init(void);
-void LED_TASK_Start(void);
-void LED_TASK_Stop(void);
-void LED_TASK_MEAS_M1_Start(void);
-void LED_TASK_MEAS_M3_Start(void);
-void LED_TASK(void);
-
-HAL_StatusTypeDef LED_TASK_SetSchedule(MeasSchedule_t *p_schdeule,
-		uint8_t schedule_len);
-HAL_StatusTypeDef LED_TASK_SetAdc(MeasAvrReq_t *p_req_info);
-HAL_StatusTypeDef LED_TASK_CFG_Change(MeasAvrReq_t *p_req_info);
-
-void LED_TASK_AdcCollectDone(void);
+void Task_Fsm_Init(void);
+void Task_Fsm_Start(void);
+void Task_Fsm_Stop(void);
+void Task_Fsm_Process(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _LED_TASK_H */
+#endif /* _TASK_FSM_H_ */

@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * @file           : adc_ads130b04.c
- * @brief          : Header file for adc_ads130b04.c.
+ * @file           : drv_dac_dac63204.h
+ * @brief          : Header file for dac_dac63204.c.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _ADC_ADS130B04_H
-#define _ADC_ADS130B04_H
+#ifndef _DRV_DAC_DAC63204_H
+#define _DRV_DAC_DAC63204_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,23 +27,25 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported constants --------------------------------------------------------*/
-#define ADC_AVR_BUFF_MAX_NUM	500
+typedef enum {
+    DAC_CH_0 = 0,
+    DAC_CH_1,
+    DAC_CH_2,
+    DAC_CH_3,
+    DAC_CH_NUM,
+    DAC_CH_ALL,
+} DAC_chSel_t;
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-typedef void (*MeasAvrResultCb_t)(float result);
-HAL_StatusTypeDef ADC_Init(SPI_HandleTypeDef *p_handle);
-HAL_StatusTypeDef ADC_ReqAvr(MeasAvrReq_t *p_req_info, MeasAvrResultCb_t cb_fn);
-HAL_StatusTypeDef ADC_Start(void);
-HAL_StatusTypeDef ADC_Stop(void);
-void ADC_CFG_Change(MeasAvrReq_t *p_req_info);
-void ADC_MeasStop(void);
-void ADC_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples,
-		uint16_t *wait_time);
+
+HAL_StatusTypeDef DAC_Init(I2C_HandleTypeDef *p_handle);
+HAL_StatusTypeDef DAC_SetData(DAC_chSel_t channel, uint16_t data);
+HAL_StatusTypeDef DAC_CheckStatus(uint8_t *p_read_data);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _ADC_ADS130B04_H */
+#endif /* _DRV_DAC_DAC63204_H */

@@ -41,9 +41,9 @@ extern "C" {
 #include "app_util.h"
 #include "user_uart.h"
 #include "user_mmi.h"
-#include "adc_ads130b04.h"
-#include "dac_dac63204.h"
-#include "led_task.h"
+#include "drv_adc_ads130b04.h"
+#include "drv_dac_dac63204.h"
+#include "task_fsm.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

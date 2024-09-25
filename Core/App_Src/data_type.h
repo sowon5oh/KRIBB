@@ -35,47 +35,50 @@ extern "C" {
 #define LED_MEAS_M3_RESULT_DATA_SIZE   	4	/* adc average: 4byte */
 
 typedef struct {
-	uint8_t led_ch;
-	float avr_adc;
+    uint8_t led_ch;
+    float avr_adc;
 } MeasM1Result_t;
 
 typedef struct {
-	float avr_adc;
+    float avr_adc;
 } MeasM3Result_t;
 
 typedef union {
-	uint8_t bVal[4];
-	float fVal;
+    uint8_t bVal[4];
+    float fVal;
 } FtoB;
 
 typedef struct {
-	uint8_t led_ch;
-	uint16_t led_data;
+    uint8_t led_ch;
+    uint16_t led_data;
 } MeasSchedule_t;
 
 typedef enum {
-	ADC_CH_0 = 0, ADC_CH_1, ADC_CH_2, ADC_CH_3, //MUX
-	ADC_CH_NUM,
+    ADC_CH_0 = 0,
+    ADC_CH_1,
+    ADC_CH_2,
+    ADC_CH_3, //MUX
+    ADC_CH_NUM,
 } MeasChSel_t;
 
 typedef enum {
-	ADC_SPS_32K = 0,
-	ADC_SPS_16K,
-	ADC_SPS_8K,
-	ADC_SPS_4K,
-	ADC_SPS_2K,
-	ADC_SPS_1K, /* Default */
-	ADC_SPS_0_5K,
-	ADC_SPS_0_25K,
+    ADC_SPS_32K = 0,
+    ADC_SPS_16K,
+    ADC_SPS_8K,
+    ADC_SPS_4K,
+    ADC_SPS_2K,
+    ADC_SPS_1K, /* Default */
+    ADC_SPS_0_5K,
+    ADC_SPS_0_25K,
 } MeasSpsSel_t;
 
 typedef struct {
-	MeasChSel_t ch;
-	uint16_t Mux_ch;
-	MeasSpsSel_t sps;
-	uint16_t adc_num;
-	uint16_t wait_time;
-	bool measFlag;
+    MeasChSel_t ch;
+    uint16_t Mux_ch;
+    MeasSpsSel_t sps;
+    uint16_t adc_num;
+    uint16_t wait_time;
+    bool measFlag;
 } MeasAvrReq_t;
 
 /* Exported macro ------------------------------------------------------------*/

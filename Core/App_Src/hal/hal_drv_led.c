@@ -18,6 +18,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "hal_drv_led.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -30,6 +31,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* Public user code ----------------------------------------------------------*/
+HAL_StatusTypeDef Hal_Led_Init(void) {
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef Hal_Led_Ctrl(HalLedChNUm_t ch_num) {
+    return HAL_OK;
+}
 
 /* Private user code ---------------------------------------------------------*/
 

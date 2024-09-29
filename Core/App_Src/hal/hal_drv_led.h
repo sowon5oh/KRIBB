@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * @file           : xx.h
- * @brief          : Header file for xx.c.
+ * @file           : hal_drv_led_driver.h
+ * @brief          : Header file for hal_drv_led_driver.c.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _HEADER_NAME_H
-#define _HEADER_NAME_H
+#ifndef _HAL_DRV_LED_DRIVER_H
+#define _HAL_DRV_LED_DRIVER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,13 +27,22 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported constants --------------------------------------------------------*/
+typedef enum {
+    HAL_LED_CH_NUM_1 = 0,
+    HAL_LED_CH_NUM_2,
+    HAL_LED_CH_NUM_3,
+    HAL_LED_CH_NUM_ALL,
+    HAL_LED_CH_NUM_MAX
+} HalLedChNUm_t;
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
+HAL_StatusTypeDef Hal_Led_Init(void);
+HAL_StatusTypeDef Hal_Led_Ctrl(HalLedChNUm_t ch_num);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _HEADER_NAME_H */
+#endif /* _HAL_DRV_LED_DRIVER_H */

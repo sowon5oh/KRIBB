@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * @file           : xx.h
- * @brief          : Header file for xx.c.
+ * @file           : drv_tempsensor_lmt86lp.h
+ * @brief          : Header file for drv_tempsensor_lmt86lp.c.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _HEADER_NAME_H
-#define _HEADER_NAME_H
+#ifndef _DRV_TEMPSENSOR_LMT86LP_H
+#define _DRV_TEMPSENSOR_LMT86LP_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,4 +36,4 @@ extern "C" {
 }
 #endif
 
-#endif /* _HEADER_NAME_H */
+#endif /* _DRV_TEMPSENSOR_LMT86LP_H */

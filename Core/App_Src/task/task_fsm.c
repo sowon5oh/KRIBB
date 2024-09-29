@@ -19,6 +19,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "task_fsm.h"
+#include "hal_drv_heater.h"
+#include "hal_drv_led.h"
+#include "hal_drv_recv_pd.h"
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct {
@@ -27,6 +30,7 @@ typedef struct {
 } FsmStateName_t;
 
 typedef HAL_StatusTypeDef (*fsmActionFunc_t)(void);
+
 typedef struct {
     FsmEvent_t event;
     FsmState_t cur_state;
@@ -39,8 +43,9 @@ typedef struct {
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-void _fsm_hdl(FsmEvent_t event);
 void _fsm_task_init(void);
+void _fsm_send_event(FsmEvent_t event);
+void _fsm_hdl(FsmEvent_t event);
 HAL_StatusTypeDef _fsm_proc_meas_start(void);
 HAL_StatusTypeDef _fsm_proc_meas_pause(void);
 HAL_StatusTypeDef _fsm_proc_meas_done(void);
@@ -62,7 +67,7 @@ static FsmStateName_t fsm_state_info[TASK_FSM_STATE_MAX] = {
 static uint8_t fsm_evt_num_max;
 static fsmTable_t fsm_table[] = {
     {
-        TASK_FSM_EVENT_MEAS_REQ,
+        TASK_FSM_EVENT_INIT_DONE,
         TASK_FSM_STATE_IDLE,
         _fsm_proc_meas_start,
         TASK_FSM_STATE_MEAS },
@@ -85,15 +90,30 @@ static fsmTable_t fsm_table[] = {
 /* Public user code ----------------------------------------------------------*/
 void Task_Fsm_Init(void) {
     _fsm_task_init();
-}
 
-void Task_Fsm_Start(void) {
-    _fsm_hdl(TASK_FSM_STATE_READY);
-}
+    /* Sensor Init */
+    Hal_Heater_Init();
+    Hal_Led_Init();
 
-void Task_Fsm_Stop(void) {
-    _fsm_hdl(TASK_FSM_STATE_IDLE);
-    _fsm_task_init();
+    //TODO
+    //Sensor Init
+//    LogInfo("DAC Init");
+//    (void) DAC_Init(&hi2c2);
+//
+//    LogInfo("ADC Init");
+//    (void) ADC_Init(&hspi1);
+
+    /* TEST */
+    //uint8_t test_cmd[100] = {0xC0, 0x01, 0x00, 0xC2};
+    //MMI_Decoder(&test_cmd[0], 4);
+    /* MUX Init - Monitor CH4 ON */
+//    HAL_GPIO_WritePin(M_SEL_EN_GPIO_Port, M_SEL_EN_Pin, GPIO_PIN_SET);
+//    HAL_GPIO_WritePin(M_SEL_A0_GPIO_Port, M_SEL_A0_Pin, GPIO_PIN_RESET);
+//    HAL_GPIO_WritePin(M_SEL_A1_GPIO_Port, M_SEL_A1_Pin, GPIO_PIN_RESET);
+    /* HEAT CON Init */
+
+    HAL_Delay(100);
+    _fsm_send_event(TASK_FSM_EVENT_INIT_DONE);
 }
 
 void Task_Fsm_Process(void) {
@@ -103,9 +123,14 @@ void Task_Fsm_Process(void) {
 }
 
 void Task_Fsm_SendEvent(FsmEvent_t event) {
+    _fsm_send_event(event);
+}
+
+/* Private user code ---------------------------------------------------------*/
+void _fsm_send_event(FsmEvent_t event) {
     _fsm_hdl(event);
 }
-/* Private user code ---------------------------------------------------------*/
+
 /**
  * @brief FSM handler function
  *
@@ -119,10 +144,10 @@ void _fsm_hdl(FsmEvent_t event) {
     FsmState_t fsm_next_state = fsm_cur_state; /**< The next state to transition to if the event matches. */
     fsmActionFunc_t action_func = NULL; /**< The action function to be executed for the transition. */
     bool flag = false; /**< Flag to indicate if a matching state transition was found. */
-
+    
     // Check if the event is within the valid range of FSM events.
     SYS_VERIFY_TRUE_VOID(event < TASK_FSM_EVENT_MAX);
-
+    
     // Iterate through the FSM table to find a matching event and current state.
     for (uint8_t index = 0; index < fsm_evt_num_max; index++) {
         if ((event == fsm_table[index].event) && (fsm_cur_state == fsm_table[index].cur_state)) {
@@ -134,8 +159,8 @@ void _fsm_hdl(FsmEvent_t event) {
             break;
         }
     }
-
-    // If a matching transition is found, proceed to state transition.
+    
+    /* If a matching transition is found, proceed to state transition. */
     if (flag == true) {
         if (action_func == NULL) {
             LogInfo("[FSM] %s ===[ No Action ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
@@ -157,7 +182,7 @@ void _fsm_task_init(void) {
     /* init state machine */
     fsm_cur_state = TASK_FSM_STATE_IDLE;
     fsm_evt_num_max = sizeof(fsm_table) / sizeof(fsmTable_t);
-
+    
     /* init polling timer */
     fsm_polling_sec = 0;
 }

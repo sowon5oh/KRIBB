@@ -10,17 +10,6 @@
 /Release/
 /build/
 
-# CubeMX 자동 생성 파일 및 설정
-*.ioc
-*.bak
-*.log
-*.rpt
-*.mdk
-/Inc/
-/Src/
-/MXProject.mxproject
-*.AC6
-
 # 자동 생성된 바이너리 파일 및 빌드 관련 파일
 *.bin
 *.hex

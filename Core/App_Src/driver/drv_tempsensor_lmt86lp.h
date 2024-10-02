@@ -31,6 +31,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
+HAL_StatusTypeDef TEMPSENSOR_Init(ADC_HandleTypeDef *p_handle);
 
 #ifdef __cplusplus
 }

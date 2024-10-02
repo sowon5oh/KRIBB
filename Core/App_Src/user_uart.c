@@ -63,7 +63,7 @@ HAL_StatusTypeDef UART_SendMMI(uint8_t *p_data, uint16_t len) {
 
 	if (p_data == NULL) {
 		ret = HAL_ERROR;
-		LogError("Invalid parameter");
+        SYS_LOG_ERR("Invalid parameter");
 	} else {
 		ret = _uartSendData(p_data, len);
 	}
@@ -90,15 +90,15 @@ HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len) {
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == uart_context.uart_handle->Instance) {
-		LogInfo("Send Done");
+        SYS_LOG_INFO("Send Done");
 	}
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	uint8_t ch;
+//    uint8_t ch;
 	if (huart->Instance == uart_context.uart_handle->Instance) {
-		ch = rx_buffer[0];
-		MMI_Decoder(&ch, 1);
+//		ch = rx_buffer[0];
+//		MMI_Decoder(&ch, 1); //TODO
 
 		HAL_UART_Receive_IT(uart_context.uart_handle, rx_buffer, 1);
 	}

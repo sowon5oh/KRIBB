@@ -33,11 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define SYS_FW_VER		"1.0.0"
-#define SYS_HW_VER		"2.0"
-#define VENDOR_NAME		"UNIOTECH"
-#define MODEL_NAME		"KRIBB_FLURESCENCE_ANALYZER"
-#define FIRMWARE_DATE	"2024-09-10"
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -99,6 +95,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
 }
 
+
 /* USER CODE END 0 */
 
 /**
@@ -106,7 +103,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
  * @retval int
  */
 int main(void) {
-
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -148,62 +144,34 @@ int main(void) {
     /* User Module Initialize */
     (void) UART_Init(&huart1);
     HAL_UART_Transmit(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1, 1000);
-    LogInfo("--------------------------------------------");
-    LogInfo("[      UNIOTECH - 3CH FL ANALYZER UOT      ]");
-    LogInfo("  * Build Time: %s %s", __DATE__, __TIME__);
-    LogInfo("  * FW Ver    : Ver. %s", SYS_FW_VER);
-    LogInfo("  * HW Ver    : Ver. %s", SYS_HW_VER);
-    LogInfo("--------------------------------------------");
+    SYS_LOG_INFO("--------------------------------------------");
+    SYS_LOG_INFO("[      UNIOTECH - 3CH FL ANALYZER UOT      ]");
+    SYS_LOG_INFO("  * Build Time: %s %s", __DATE__, __TIME__);
+    SYS_LOG_INFO("  * FW Ver    : Ver. %d.%d.%2d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
+    SYS_LOG_INFO("  * HW Ver    : Ver. %d.%d", SYS_HW_MAJOR_VER, SYS_HW_MINOR_VER);
+    SYS_LOG_INFO("--------------------------------------------");
 
-    LogInfo("DAC Init");
-    (void) DAC_Init(&hi2c2);
-
-    LogInfo("ADC Init");
-    (void) ADC_Init(&hspi1);
-
-    LogInfo("LED TASK Init");
+    SYS_LOG_INFO("Finite State Machine Start");
     Task_Fsm_Init();
     HAL_Delay(100);
-
-    LogInfo("LED TASK Start");
-    Task_Fsm_Start();
-
-    HAL_Delay(100);
-
-    /* TEST */
-    //uint8_t test_cmd[100] = {0xC0, 0x01, 0x00, 0xC2};
-    //MMI_Decoder(&test_cmd[0], 4);
-    /* MUX Init - Monitor CH4 ON */
-    HAL_GPIO_WritePin(M_SEL_EN_GPIO_Port, M_SEL_EN_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(M_SEL_A0_GPIO_Port, M_SEL_A0_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(M_SEL_A1_GPIO_Port, M_SEL_A1_Pin, GPIO_PIN_RESET);
-
-    /* HEAT CON Init */
-    HAL_GPIO_WritePin(HEAT_CON1_GPIO_Port, HEAT_CON1_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(HEAT_CON2_GPIO_Port, HEAT_CON2_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(HEAT_CON3_GPIO_Port, HEAT_CON3_Pin, GPIO_PIN_RESET);
-
-    HAL_Delay(100);
-
-    //HAL_GPIO_WritePin(M_SEL_EN_GPIO_Port, M_SEL_EN_Pin, GPIO_PIN_RESET);
-
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
-        /* USER CODE END WHILE */
-
-        /* USER CODE BEGIN 3 */
+        /* 1 sec timer */
         if (time_1ms_cnt >= 1000) {
             HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
             time_1ms_cnt = 0;
         }
 
+        /* 1 msec timer */
         if (time_0_1ms_cnt >= 10) {
-            Task_Fsm_Process();
             time_0_1ms_cnt = 0;
         }
+        /* USER CODE END WHILE */
+
+        /* USER CODE BEGIN 3 */
 
     }
     /* USER CODE END 3 */
@@ -214,8 +182,10 @@ int main(void) {
  * @retval None
  */
 void SystemClock_Config(void) {
-    RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        0 };
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {
+        0 };
 
     /** Configure the main internal regulator output voltage
      */
@@ -268,7 +238,8 @@ static void MX_ADC1_Init(void) {
 
     /* USER CODE END ADC1_Init 0 */
 
-    ADC_ChannelConfTypeDef sConfig = { 0 };
+    ADC_ChannelConfTypeDef sConfig = {
+        0 };
 
     /* USER CODE BEGIN ADC1_Init 1 */
 
@@ -417,7 +388,8 @@ static void MX_TIM7_Init(void) {
 
     /* USER CODE END TIM7_Init 0 */
 
-    TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+    TIM_MasterConfigTypeDef sMasterConfig = {
+        0 };
 
     /* USER CODE BEGIN TIM7_Init 1 */
 
@@ -507,7 +479,8 @@ static void MX_USART1_UART_Init(void) {
  * @retval None
  */
 static void MX_GPIO_Init(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+    GPIO_InitTypeDef GPIO_InitStruct = {
+        0 };
     /* USER CODE BEGIN MX_GPIO_Init_1 */
     /* USER CODE END MX_GPIO_Init_1 */
 

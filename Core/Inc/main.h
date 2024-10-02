@@ -36,14 +36,15 @@ extern "C" {
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+#include "system_config.h"
 #include "data_type.h"
 #include "util_debug.h"
 #include "app_util.h"
 #include "user_uart.h"
-#include "user_mmi.h"
-#include "drv_adc_ads130b04.h"
-#include "drv_dac_dac63204.h"
+#include "task_mmi.h"
 #include "task_fsm.h"
+//#include "drv_adc_ads130b04.h"
+//#include "drv_dac_dac63204.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

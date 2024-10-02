@@ -43,13 +43,13 @@ typedef struct {
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-void _fsm_task_init(void);
-void _fsm_send_event(FsmEvent_t event);
-void _fsm_hdl(FsmEvent_t event);
-HAL_StatusTypeDef _fsm_proc_meas_start(void);
-HAL_StatusTypeDef _fsm_proc_meas_pause(void);
-HAL_StatusTypeDef _fsm_proc_meas_done(void);
-HAL_StatusTypeDef _fsm_proc_sleep(void);
+static void _fsm_task_init(void);
+static void _fsm_send_event(FsmEvent_t event);
+static void _fsm_hdl(FsmEvent_t event);
+static HAL_StatusTypeDef _fsm_proc_meas_start(void);
+static HAL_StatusTypeDef _fsm_proc_meas_pause(void);
+static HAL_StatusTypeDef _fsm_proc_meas_done(void);
+static HAL_StatusTypeDef _fsm_proc_sleep(void);
 
 /* Private variables ---------------------------------------------------------*/
 static uint16_t fsm_polling_sec;
@@ -97,10 +97,10 @@ void Task_Fsm_Init(void) {
 
     //TODO
     //Sensor Init
-//    LogInfo("DAC Init");
+//    SYS_LOG_INFO("DAC Init");
 //    (void) DAC_Init(&hi2c2);
 //
-//    LogInfo("ADC Init");
+//    SYS_LOG_INFO("ADC Init");
 //    (void) ADC_Init(&hspi1);
 
     /* TEST */
@@ -127,7 +127,7 @@ void Task_Fsm_SendEvent(FsmEvent_t event) {
 }
 
 /* Private user code ---------------------------------------------------------*/
-void _fsm_send_event(FsmEvent_t event) {
+static void _fsm_send_event(FsmEvent_t event) {
     _fsm_hdl(event);
 }
 
@@ -140,7 +140,7 @@ void _fsm_send_event(FsmEvent_t event) {
  *
  * @param event The event that triggers the state transition.
  */
-void _fsm_hdl(FsmEvent_t event) {
+static void _fsm_hdl(FsmEvent_t event) {
     FsmState_t fsm_next_state = fsm_cur_state; /**< The next state to transition to if the event matches. */
     fsmActionFunc_t action_func = NULL; /**< The action function to be executed for the transition. */
     bool flag = false; /**< Flag to indicate if a matching state transition was found. */
@@ -155,7 +155,7 @@ void _fsm_hdl(FsmEvent_t event) {
             fsm_next_state = fsm_table[index].next_state;
             action_func = fsm_table[index].action_func;
 
-            LogInfo("FSM Event: %d", event);
+            SYS_LOG_INFO("FSM Event: %d", event);
             break;
         }
     }
@@ -163,22 +163,22 @@ void _fsm_hdl(FsmEvent_t event) {
     /* If a matching transition is found, proceed to state transition. */
     if (flag == true) {
         if (action_func == NULL) {
-            LogInfo("[FSM] %s ===[ No Action ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
+            SYS_LOG_INFO("[FSM] %s ===[ No Action ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
             fsm_cur_state = fsm_next_state;
         }
         else {
             if (action_func() == HAL_OK) {
-                LogInfo("[FSM] %s ===[ Action Completed ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
+                SYS_LOG_INFO("[FSM] %s ===[ Action Completed ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
                 fsm_cur_state = fsm_next_state;
             }
             else {
-                LogError("[FSM] Action Failed");
+                SYS_LOG_ERR("[FSM] Action Failed");
             }
         }
     }
 }
 
-void _fsm_task_init(void) {
+static void _fsm_task_init(void) {
     /* init state machine */
     fsm_cur_state = TASK_FSM_STATE_IDLE;
     fsm_evt_num_max = sizeof(fsm_table) / sizeof(fsmTable_t);
@@ -187,22 +187,22 @@ void _fsm_task_init(void) {
     fsm_polling_sec = 0;
 }
 
-HAL_StatusTypeDef _fsm_proc_meas_start(void) {
+static HAL_StatusTypeDef _fsm_proc_meas_start(void) {
     //TODO
     return HAL_OK;
 }
 
-HAL_StatusTypeDef _fsm_proc_meas_pause(void) {
+static HAL_StatusTypeDef _fsm_proc_meas_pause(void) {
     //TODO
     return HAL_OK;
 }
 
-HAL_StatusTypeDef _fsm_proc_meas_done(void) {
+static HAL_StatusTypeDef _fsm_proc_meas_done(void) {
     //TODO
     return HAL_OK;
 }
 
-HAL_StatusTypeDef _fsm_proc_sleep(void) {
+static HAL_StatusTypeDef _fsm_proc_sleep(void) {
     fsm_polling_sec = 0;
     //TODO
     return HAL_OK;

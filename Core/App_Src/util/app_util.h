@@ -30,7 +30,7 @@
     { \
         if( ( param ) == NULL ) \
         { \
-            LogError( "[Failed] Null Parameter" ); \
+            SYS_LOG_ERR( "[Failed] Null Parameter" ); \
             return HAL_ERROR; \
         } \
     } while( 0 );
@@ -40,7 +40,7 @@
     { \
         if( ( param ) == NULL ) \
         { \
-            LogError( "[Failed] Null Parameter" ); \
+            SYS_LOG_ERR( "[Failed] Null Parameter" ); \
             return; \
         } \
     } while( 0 );
@@ -51,7 +51,7 @@
         uint32_t _err_code = ( uint32_t ) ( statement ); \
         if( _err_code != HAL_OK ) \
         { \
-            LogError( "[Failed] Error code: %d", _err_code ); \
+            SYS_LOG_ERR( "[Failed] Error code: %d", _err_code ); \
             return _err_code; \
         } \
     } while( 0 );
@@ -62,7 +62,7 @@
         uint32_t _err_code = ( uint32_t ) ( statement ); \
         if( _err_code != HAL_OK ) \
         { \
-            LogError( "[Failed] Error code: %d", _err_code ); \
+            SYS_LOG_ERR( "[Failed] Error code: %d", _err_code ); \
             return; \
         } \
     } while( 0 );
@@ -72,7 +72,7 @@
     { \
         if( !( state ) ) \
         { \
-            LogError( "[Failed] Invalid State" ); \
+            SYS_LOG_ERR( "[Failed] Invalid State" ); \
             return HAL_ERROR; \
         } \
     } while( 0 );
@@ -82,18 +82,18 @@
     { \
         if( !( state ) ) \
         { \
-            LogError( "[Failed] Invalid State" ); \
+            SYS_LOG_ERR( "[Failed] Invalid State" ); \
             return; \
         } \
     } while( 0 );
 
-#define SYS_VERIFY_TRUE( state, err_code ) \
+#define SYS_VERIFY_TRUE( state ) \
     do \
     { \
         if( !( state ) ) \
         { \
-            LogError( "[Failed] Invalid" ); \
-            return err_code; \
+            SYS_LOG_ERR( "[Failed] Invalid" ); \
+            return HAL_ERROR; \
         } \
     } while( 0 );
 
@@ -102,7 +102,7 @@
     { \
         if( !( state ) ) \
         { \
-            LogError( "[Failed] Invalid" ); \
+            SYS_LOG_ERR( "[Failed] Invalid" ); \
             return; \
         } \
     } while( 0 );

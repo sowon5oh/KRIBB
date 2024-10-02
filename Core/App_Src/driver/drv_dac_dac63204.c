@@ -142,7 +142,7 @@ HAL_StatusTypeDef DAC_SetData(DAC_chSel_t channel, uint16_t data) {
     if (data > 0xFF0) //FF0 = 4080
             {
         write_data = 0xFF0;
-        LogWarn("Invalid DAC Set value, Value changed. %04X ==> %04X", data, write_data);
+        SYS_LOG_WARN("Invalid DAC Set value, Value changed. %04X ==> %04X", data, write_data);
     }
     else {
         write_data = (data << 4) & 0xFFF0; //FFF0 = 65520
@@ -178,10 +178,10 @@ HAL_StatusTypeDef DAC_SetData(DAC_chSel_t channel, uint16_t data) {
     }
 
     if (HAL_OK == ret) {
-        LogDebug("DAC Set ch: %d, data: %04X\r\n", channel, data);
+        SYS_LOG_DEBUG("DAC Set ch: %d, data: %04X\r\n", channel, data);
     }
     else {
-        LogError("DAC Set failed\r\n");
+        SYS_LOG_ERR("DAC Set failed\r\n");
     }
 
     return ret;

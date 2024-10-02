@@ -104,7 +104,7 @@ typedef struct {
 
     adcStateMode_t state;
 
-    MeasAvrReq_t adc_cfg;
+    MeasReqData_t adc_cfg;
 
     /* ADS130B04 Settings */
     bool lock;
@@ -264,22 +264,22 @@ HAL_StatusTypeDef ADC_Init(SPI_HandleTypeDef *p_handle) {
         /* Read ID */
         ret = _adcReadRegister(ADC_REG_ADDR_ID, 1, &read_data);
         if (ret == HAL_OK) {
-            LogInfo("ADC ID: %04X", read_data); //5404 - 21508
+            SYS_LOG_INFO("ADC ID: %04X", read_data); //5404 - 21508
         }
 
         ret = _adcReadRegister(ADC_REG_ADDR_STATUS, 1, &read_data);
         if (ret == HAL_OK) {
-            LogInfo("ADC STATUS: %04X", read_data); //0500 - 1280
+            SYS_LOG_INFO("ADC STATUS: %04X", read_data); //0500 - 1280
         }
 
         ret = _adcReadRegister(ADC_REG_ADDR_MODE, 1, &read_data);
         if (ret == HAL_OK) {
-            LogInfo("ADC MODE: %04X", read_data); //0510 - 1296
+            SYS_LOG_INFO("ADC MODE: %04X", read_data); //0510 - 1296
         }
 
         ret = _adcReadRegister(ADC_REG_ADDR_CLOCK, 1, &read_data);
         if (ret == HAL_OK) {
-            LogInfo("ADC CLOCK: %04X", read_data); //0F8E - 3970
+            SYS_LOG_INFO("ADC CLOCK: %04X", read_data); //0F8E - 3970
         }
 
         /* Standby */
@@ -331,7 +331,7 @@ HAL_StatusTypeDef ADC_Start(void) {
     return ret;
 }
 
-void ADC_CFG_Change(MeasAvrReq_t *p_req_info) {
+void ADC_CFG_Change(MeasReqData_t *p_req_info) {
     HAL_StatusTypeDef ret = HAL_OK;
 
     adc_context.adc_cfg.Mux_ch = p_req_info->Mux_ch;
@@ -343,7 +343,7 @@ void ADC_CFG_Change(MeasAvrReq_t *p_req_info) {
     //ret = _adcSetClockCfg();
 
     if (ret != HAL_OK) {
-        LogError("ADC Clock Setting failed");
+        SYS_LOG_ERR("ADC Clock Setting failed");
     }
 }
 
@@ -374,7 +374,7 @@ void ADC_MeasStop(void) {
     ret = _adcSetClockCfg();
 
     if (ret != HAL_OK) {
-        LogError("ADC Clock Setting failed");
+        SYS_LOG_ERR("ADC Clock Setting failed");
     }
 }
 
@@ -385,13 +385,13 @@ void ADC_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples, uint16_t *wait
     *wait_time = adc_context.adc_wait_time;
 }
 
-HAL_StatusTypeDef ADC_ReqAvr(MeasAvrReq_t *p_req_info, MeasAvrResultCb_t cb_fn) {
+HAL_StatusTypeDef ADC_ReqAvr(MeasReqData_t *p_req_info, MeasAvrResultCb_t cb_fn) {
     HAL_StatusTypeDef ret = HAL_OK;
     bool clock_recfg = false;
 
     if ((p_req_info == NULL) || (cb_fn == NULL)) {
         ret = HAL_ERROR;
-        LogError("Invalid Parameter");
+        SYS_LOG_ERR("Invalid Parameter");
     }
     else {
         adc_context.adc_cfg.ch = p_req_info->ch;
@@ -400,13 +400,13 @@ HAL_StatusTypeDef ADC_ReqAvr(MeasAvrReq_t *p_req_info, MeasAvrResultCb_t cb_fn) 
         adc_context.cb_fn = cb_fn;
 
         if (adc_context.ch_cfg[adc_context.adc_cfg.ch].enable != true) {
-            LogInfo("Enable CH %d", adc_context.adc_cfg.ch);
+            SYS_LOG_INFO("Enable CH %d", adc_context.adc_cfg.ch);
             adc_context.ch_cfg[adc_context.adc_cfg.ch].enable = true;
             clock_recfg = true;
         }
 
         if (adc_context.osr_mode != (adcOsrMode_t) p_req_info->sps) {
-            LogInfo("Change OSR (SPS) %d ==> %d", adc_context.osr_mode, p_req_info->sps);
+            SYS_LOG_INFO("Change OSR (SPS) %d ==> %d", adc_context.osr_mode, p_req_info->sps);
             adc_context.osr_mode = p_req_info->sps;
 
             clock_recfg = true;
@@ -418,16 +418,16 @@ HAL_StatusTypeDef ADC_ReqAvr(MeasAvrReq_t *p_req_info, MeasAvrResultCb_t cb_fn) 
 
         if (ret == HAL_OK) {
             /* Get first datay to init FIFO for data ready signal */
-            LogDebug("ADC Init FIFO");
+            SYS_LOG_DEBUG("ADC Init FIFO");
             _adcGetData(true);
             _adcGetData(true);
 
             /* Read Start */
-            LogDebug("ADC Read Start");
+            SYS_LOG_DEBUG("ADC Read Start");
             adc_context.adc_read = true;
         }
         else {
-            LogError("ADC Meas Setting failed");
+            SYS_LOG_ERR("ADC Meas Setting failed");
         }
     }
 
@@ -455,14 +455,14 @@ HAL_StatusTypeDef _adcSendCmd(adcCmdId_t cmd) {
         case ADC_CMD_ID_RESET:
             send_cmd = ADC_CMD_RESET;
             cmd_resp = ADC_CMD_RESP_RESET;
-            LogInfo("ADC Send Command Reset: %04X", send_cmd); //0011 - 17
+            SYS_LOG_INFO("ADC Send Command Reset: %04X", send_cmd); //0011 - 17
             break;
 
         case ADC_CMD_ID_STANDBY:
             send_cmd = ADC_CMD_STANDBY;
             cmd_resp = ADC_CMD_RESP_STANDBY;
             adc_context.state = ADC_STATE_STANDBY;
-            LogInfo("ADC Send Command Standby: %04X", send_cmd); // 0022 - 34
+            SYS_LOG_INFO("ADC Send Command Standby: %04X", send_cmd); // 0022 - 34
             break;
 
         case ADC_CMD_ID_WAKEUP:
@@ -474,26 +474,26 @@ HAL_StatusTypeDef _adcSendCmd(adcCmdId_t cmd) {
             else {
                 adc_context.state = ADC_STATE_GLOBAL_CHOP;
             }
-            LogInfo("ADC Send Command Wakeup: %04X", send_cmd); //
+            SYS_LOG_INFO("ADC Send Command Wakeup: %04X", send_cmd); //
             break;
 
         case ADC_CMD_ID_LOCK:
             send_cmd = ADC_CMD_LOCK;
             cmd_resp = ADC_CMD_RESP_LOCK;
             adc_context.lock = true;
-            LogInfo("ADC Send Command Lock: %04X", send_cmd);
+            SYS_LOG_INFO("ADC Send Command Lock: %04X", send_cmd);
             break;
 
         case ADC_CMD_ID_UNLOCK:
             send_cmd = ADC_CMD_UNLOCK;
             cmd_resp = ADC_CMD_RESP_UNLOCK;
             adc_context.lock = false;
-            LogInfo("ADC Send Command Unlock: %04X", send_cmd);
+            SYS_LOG_INFO("ADC Send Command Unlock: %04X", send_cmd);
             break;
 
         default:
             ret = HAL_ERROR;
-            LogInfo("Not supported command %04X", send_cmd);
+            SYS_LOG_INFO("Not supported command %04X", send_cmd);
             break;
     }
 
@@ -510,15 +510,15 @@ HAL_StatusTypeDef _adcSendCmd(adcCmdId_t cmd) {
     if (ret == HAL_OK) {
         if (cmd_resp == rx_buff[0]) {
             ret = HAL_OK;
-            LogInfo("ADC Command valid response: %04X", rx_buff[0]);
+            SYS_LOG_INFO("ADC Command valid response: %04X", rx_buff[0]);
         }
         else {
             ret = HAL_ERROR;
-            LogError("ADC Command wrong response: %04X", rx_buff[0]);
+            SYS_LOG_ERR("ADC Command wrong response: %04X", rx_buff[0]);
         }
     }
     else {
-        LogError("ADC Command response receive failed");
+        SYS_LOG_ERR("ADC Command response receive failed");
     }
 
     return ret;
@@ -540,19 +540,19 @@ HAL_StatusTypeDef _adcGetData(bool first_read) {
     ret = _adcTransmitReceive(&tx_buff[0], &rx_buff[0], 6); //3
 
     if (ret == HAL_OK) {
-        LogInfo("Get Ch Data: %04X %04X %04X %04X %04X", rx_buff[0], rx_buff[1], rx_buff[2], rx_buff[3], rx_buff[4]); /* [STATUS] [CH0 DATA] [CH1 DATA] */
+        SYS_LOG_INFO("Get Ch Data: %04X %04X %04X %04X %04X", rx_buff[0], rx_buff[1], rx_buff[2], rx_buff[3], rx_buff[4]); /* [STATUS] [CH0 DATA] [CH1 DATA] */
 
         if (first_read == false) {
             adc_result = (float) ((rx_buff[data_idx]) * lsb); //(int16_t)
             adc_result2 = (int32_t) ((rx_buff[data_idx]) * lsb * 1000); //(int16_t)
-            LogInfo("ADC Result: %d mV", adc_result2);
+            SYS_LOG_INFO("ADC Result: %d mV", adc_result2);
 
             adc_context.adc_sum += adc_result;
 
             if (++adc_context.adc_cnt >= adc_context.adc_num) {
                 adc_avr = (float) adc_context.adc_sum / adc_context.adc_cnt;
                 adc_avr2 = (int32_t) ((adc_context.adc_sum / adc_context.adc_cnt) * 1000);
-                LogInfo("ADC Average: %d mV", adc_avr2);
+                SYS_LOG_INFO("ADC Average: %d mV", adc_avr2);
                 adc_context.adc_sum = 0;
 
                 adc_context.cb_fn(adc_avr);
@@ -577,7 +577,7 @@ HAL_StatusTypeDef _adcGetData(bool first_read) {
         }
     }
     else {
-        LogError("Read Status and ADC Result failed");
+        SYS_LOG_ERR("Read Status and ADC Result failed");
     }
 
     return ret;
@@ -602,13 +602,13 @@ HAL_StatusTypeDef _adcGetData(bool first_read) {
 
  if (ret == HAL_OK)
  {
- LogInfo("Get Ch Data: %04X %04X %04X %04X %04X", rx_buff[0], rx_buff[1], rx_buff[2], rx_buff[3], rx_buff[4]); // [STATUS] [CH0 DATA] [CH1 DATA]
+ SYS_LOG_INFO("Get Ch Data: %04X %04X %04X %04X %04X", rx_buff[0], rx_buff[1], rx_buff[2], rx_buff[3], rx_buff[4]); // [STATUS] [CH0 DATA] [CH1 DATA]
 
  if (first_read == false)
  {
  adc_result = (float)((rx_buff[data_idx]) * lsb); //(int16_t)
  adc_result2 = (int32_t)((rx_buff[data_idx]) * lsb * 1000); //(int16_t)
- LogInfo("ADC Result: %d mV", adc_result2);
+ SYS_LOG_INFO("ADC Result: %d mV", adc_result2);
 
  adc_context.adc_sum += adc_result;
 
@@ -616,7 +616,7 @@ HAL_StatusTypeDef _adcGetData(bool first_read) {
  {
  adc_avr = (float)adc_context.adc_sum / adc_context.adc_cnt;
  adc_avr2 = (int32_t)((adc_context.adc_sum / adc_context.adc_cnt)*1000);
- LogInfo("ADC Average: %d mV", adc_avr2);
+ SYS_LOG_INFO("ADC Average: %d mV", adc_avr2);
  adc_context.adc_sum = 0;
 
  adc_context.cb_fn(adc_avr);
@@ -647,7 +647,7 @@ HAL_StatusTypeDef _adcGetData(bool first_read) {
  }
  else
  {
- LogError("Read Status and ADC Result failed");
+ SYS_LOG_ERR("Read Status and ADC Result failed");
  }
 
  return ret;
@@ -677,10 +677,10 @@ HAL_StatusTypeDef _adcSetClockCfg(void) {
     ret = _adcWriteRegister(ADC_REG_ADDR_CLOCK, send_cfg);
 
     if (ret == HAL_OK) {
-        LogInfo("ADC Set Clock Config Success: %04X", send_cfg); //0F0E - 3854
+        SYS_LOG_INFO("ADC Set Clock Config Success: %04X", send_cfg); //0F0E - 3854
     }
     else {
-        LogInfo("ADC Set Clock Config Failed");
+        SYS_LOG_INFO("ADC Set Clock Config Failed");
     }
 
     return ret;
@@ -700,10 +700,10 @@ HAL_StatusTypeDef _adcSetGainCfg(void) {
     ret = _adcWriteRegister(ADC_REG_ADDR_GAIN, send_cfg);
 
     if (ret == HAL_OK) {
-        LogInfo("ADC Set Gain Config Success: %04X", send_cfg); //0000
+        SYS_LOG_INFO("ADC Set Gain Config Success: %04X", send_cfg); //0000
     }
     else {
-        LogInfo("ADC Set Gain Config Failed");
+        SYS_LOG_INFO("ADC Set Gain Config Failed");
     }
 
     return ret;
@@ -727,10 +727,10 @@ HAL_StatusTypeDef _adcSetChMuxCfg(void) {
         ret = _adcWriteRegister(ADC_REG_ADDR_CH0_CFG + 5 * idx, send_cfg);
 
         if (ret == HAL_OK) {
-            LogInfo("ADC Set MUX CH%d Config Success: %04X", idx, send_cfg); // CH1234 success : 0000
+            SYS_LOG_INFO("ADC Set MUX CH%d Config Success: %04X", idx, send_cfg); // CH1234 success : 0000
         }
         else {
-            LogError("ADC Set MUX CH%d Config Failed");
+            SYS_LOG_ERR("ADC Set MUX CH%d Config Failed");
             break;
         }
     }
@@ -758,14 +758,14 @@ HAL_StatusTypeDef _adcWriteRegister(uint16_t reg, uint16_t data) {
     if (ret == HAL_OK) {
         resp_chk = BF_GET(resp_data, ADC_CMD_W_R_REG_ADDR_BCNT, ADC_CMD_W_R_REG_ADDR_BOFF);
         if (reg != resp_chk) {
-            LogError("Register Write failed, cmd don't match: %04X | %04X", reg, resp_chk);
+            SYS_LOG_ERR("Register Write failed, cmd don't match: %04X | %04X", reg, resp_chk);
 
             ret = HAL_ERROR;
         }
 
         resp_chk = BF_GET(resp_data, ADC_CMD_W_R_DATA_NUM_BCNT, ADC_CMD_W_R_DATA_NUM_BOFF);
         if (resp_chk != 0) {
-            LogError("Register Write failed, len don't match: 0 | %d", resp_chk);
+            SYS_LOG_ERR("Register Write failed, len don't match: 0 | %d", resp_chk);
 
             ret = HAL_ERROR;
         }
@@ -775,7 +775,7 @@ HAL_StatusTypeDef _adcWriteRegister(uint16_t reg, uint16_t data) {
         ret = _adcReadRegister(reg, 1, &save_data);
 
         if (data != save_data) {
-            LogError("Write & Read data don't match: %04X | %04X", data, save_data);
+            SYS_LOG_ERR("Write & Read data don't match: %04X | %04X", data, save_data);
 
             ret = HAL_ERROR;
         }
@@ -792,11 +792,11 @@ HAL_StatusTypeDef _adcReadRegister(uint16_t reg, uint8_t len, uint16_t *p_data) 
 
     if (len > ADC_CMD_RREG_MAX_LEN) {
         read_len = ADC_CMD_RREG_MAX_LEN - 1;
-        LogWarn("Read len changed: %d -> %d", read_len, ADC_CMD_RREG_MAX_LEN);
+        SYS_LOG_WARN("Read len changed: %d -> %d", read_len, ADC_CMD_RREG_MAX_LEN);
     }
     else if (len == 0) {
         read_len = 0;
-        LogWarn("Read len changed: %d -> %d", read_len, 1);
+        SYS_LOG_WARN("Read len changed: %d -> %d", read_len, 1);
     }
     else {
         read_len = len - 1;

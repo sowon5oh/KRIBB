@@ -34,10 +34,10 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 typedef void (*MeasAvrResultCb_t)(float result);
 HAL_StatusTypeDef ADC_Init(SPI_HandleTypeDef *p_handle);
-HAL_StatusTypeDef ADC_ReqAvr(MeasAvrReq_t *p_req_info, MeasAvrResultCb_t cb_fn);
+HAL_StatusTypeDef ADC_ReqAvr(MeasReqData_t *p_req_info, MeasAvrResultCb_t cb_fn);
 HAL_StatusTypeDef ADC_Start(void);
 HAL_StatusTypeDef ADC_Stop(void);
-void ADC_CFG_Change(MeasAvrReq_t *p_req_info);
+void ADC_CFG_Change(MeasReqData_t *p_req_info);
 void ADC_MeasStop(void);
 void ADC_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples, uint16_t *wait_time);
 

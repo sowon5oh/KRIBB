@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * @file           : user_mmi.h
- * @brief          : Header file for user_mmi.c.
+ * @file           : task_mmi.h
+ * @brief          : Header file for task_mmi.c.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _USER_MMI_H_
-#define _USER_MMI_H_
+#ifndef _TASK_MMI_H_
+#define _TASK_MMI_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,14 +31,10 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-void MMI_Decoder(uint8_t *p_ch, uint16_t len);
-void MMI_M1ResultSender(MeasM1Result_t *p_result, uint8_t result_num);
-void MMI_M3ResultSender(MeasM3Result_t *p_result);
-void MMI_Sender(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t *p_data,
-		uint8_t len);
+void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _USER_MMI_H_ */
+#endif /* _TASK_MMI_H_ */

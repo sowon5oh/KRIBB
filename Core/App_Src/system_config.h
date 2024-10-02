@@ -1,7 +1,8 @@
 /**
  ******************************************************************************
- * @file           : task_meas.h
- * @brief          : Header file for Task_Meas.c.
+ * @file           : system_config.h
+ * @brief          : Header file containing shared data types, structures,
+ *                   and common constants for the project.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -17,28 +18,29 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _TASK_MEAS_H_
-#define _TASK_MEAS_H_
+#ifndef _SYSTEM_CONFIG_H_
+#define _SYSTEM_CONFIG_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 
 /* Exported constants --------------------------------------------------------*/
-
+#define SYS_FW_MAJOR_VER 1
+#define SYS_FW_MINOR_VER 0
+#define SYS_FW_PATCH_VER 0
+#define SYS_HW_MAJOR_VER 2
+#define SYS_HW_MINOR_VER 0
+#define MODEL_NAME      "KRIBB_FLURESCENCE_ANALYZER"
+#define FIRMWARE_DATE   "2024-09-10"
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-void Task_Meas_Init(void);
-void Task_Meas_Start(void);
-void Task_Meas_Stop(void);
-void Task_Meas_Process(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _TASK_MEAS_H_ */
+#endif /* _SYSTEM_CONFIG_H_ */

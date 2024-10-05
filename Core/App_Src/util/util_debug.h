@@ -29,7 +29,7 @@
 #define SYS_LOG_LEVEL_DEBUG   1
 #define SYS_LOG_LEVEL_INFO    2
 #define SYS_LOG_LEVEL_WARN    3
-#define SYS_LOG_LEVEL_ERR   4
+#define SYS_LOG_LEVEL_ERR     4
 
 #define USER_SYS_LOG_LEVEL    SYS_LOG_LEVEL_DEBUG
 
@@ -46,22 +46,22 @@ void DEBUG_Printf(const char *format, ...);
 #define SYS_LOG_DEBUG( message, args ... )   PRINTFUNCTION( "[DEBUG] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #define SYS_LOG_INFO( message, args ... )    PRINTFUNCTION( "[INFO] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #define SYS_LOG_WARN( message, args ... )    PRINTFUNCTION( "[WARN] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
-#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
+#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERROR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #elif (USER_SYS_LOG_LEVEL == SYS_LOG_LEVEL_INFO)
 #define SYS_LOG_DEBUG( message, args ... )
 #define SYS_LOG_INFO( message, args ... )    PRINTFUNCTION( "[INFO] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #define SYS_LOG_WARN( message, args ... )    PRINTFUNCTION( "[WARN] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
-#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
+#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERROR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #elif (USER_SYS_LOG_LEVEL == SYS_LOG_LEVEL_WARN)
 #define SYS_LOG_DEBUG( message, args ... )
 #define SYS_LOG_INFO( message, args ... )
 #define SYS_LOG_WARN( message, args ... )    PRINTFUNCTION( "[WARN] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
-#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
+#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERROR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #elif (USER_SYS_LOG_LEVEL == SYS_LOG_LEVEL_ERR)
 #define SYS_LOG_DEBUG( message, args ... )
 #define SYS_LOG_INFO( message, args ... )
 #define SYS_LOG_WARN( message, args ... )
-#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
+#define SYS_LOG_ERR( message, args ... )   PRINTFUNCTION( "[ERROR] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #endif
 
 /* Exported functions prototypes ---------------------------------------------*/

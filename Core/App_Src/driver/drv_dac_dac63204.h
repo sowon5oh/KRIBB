@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _DRV_DAC_DAC63204_H
-#define _DRV_DAC_DAC63204_H
+#ifndef _DRV_DRV_DAC63204_H_
+#define _DRV_DRV_DAC63204_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,24 +28,23 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 typedef enum {
-    DAC_CH_0 = 0,
-    DAC_CH_1,
-    DAC_CH_2,
-    DAC_CH_3,
-    DAC_CH_NUM,
-    DAC_CH_ALL,
-} DAC_chSel_t;
+    DRV_DAC63204_CH_0 = 0,
+    DRV_DAC63204_CH_1,
+    DRV_DAC63204_CH_2,
+    DRV_DAC63204_CH_3,
+    DRV_DAC63204_CH_ALL,
+} Dac63204_chSel_t;
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
 
-HAL_StatusTypeDef DAC_Init(I2C_HandleTypeDef *p_handle);
-HAL_StatusTypeDef DAC_SetData(DAC_chSel_t channel, uint16_t data);
-HAL_StatusTypeDef DAC_CheckStatus(uint8_t *p_read_data);
+HAL_StatusTypeDef DRV_DAC63204_Init(I2C_HandleTypeDef *p_handle);
+HAL_StatusTypeDef DRV_DAC63204_SetData(Dac63204_chSel_t channel, uint16_t data);
+HAL_StatusTypeDef DRV_DAC63204_CheckStatus(uint8_t *p_read_data);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _DRV_DAC_DAC63204_H */
+#endif /* _DRV_DRV_DAC63204_H_ */

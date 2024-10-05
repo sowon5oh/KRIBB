@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _DRV_TEMPSENSOR_LMT86LP_H
-#define _DRV_TEMPSENSOR_LMT86LP_H
+#ifndef _DRV_LMT86LP_H_
+#define _DRV_LMT86LP_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,14 +27,16 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported constants --------------------------------------------------------*/
+typedef void (*DrvLmt86lpCb_t)(uint32_t *p_data);
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-HAL_StatusTypeDef TEMPSENSOR_Init(ADC_HandleTypeDef *p_handle);
+HAL_StatusTypeDef DRV_LMT86LP_Init(ADC_HandleTypeDef *p_hdl, DrvLmt86lpCb_t cb_fn);
+HAL_StatusTypeDef DRV_LMT86LP_GetValue(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _DRV_TEMPSENSOR_LMT86LP_H */
+#endif /* _DRV_LMT86LP_H_ */

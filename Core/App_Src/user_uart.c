@@ -21,9 +21,6 @@
 #include "user_uart.h"
 
 /* Private typedef -----------------------------------------------------------*/
-typedef struct {
-	UART_HandleTypeDef *uart_handle;
-} uartContext_t;
 
 /* Private define ------------------------------------------------------------*/
 #define TX_MSG_MAX_LEN	64
@@ -37,69 +34,51 @@ HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len);
 HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len);
 
 /* Private variables ---------------------------------------------------------*/
-uartContext_t uart_context;
+UART_HandleTypeDef *uart_hdl;
 uint8_t tx_buffer[TX_BUFFER_SIZE];
 uint8_t rx_buffer[RX_BUFFER_SIZE];
 
 /* Public user code ----------------------------------------------------------*/
-HAL_StatusTypeDef UART_Init(UART_HandleTypeDef *p_handle) {
-	HAL_StatusTypeDef ret = HAL_OK;
+HAL_StatusTypeDef UART_Init(UART_HandleTypeDef *p_hdl) {
+    SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
 
-	if (p_handle != NULL) {
-		/* Regist handle */
-		uart_context.uart_handle = (UART_HandleTypeDef*) p_handle;
+    /* Regist handle */
+    uart_hdl = (UART_HandleTypeDef*) p_hdl;
 
-		/* Read Start */
-		HAL_UART_Receive_IT(uart_context.uart_handle, rx_buffer, 1);
-	} else {
-		ret = HAL_ERROR;
-	}
+    /* Read Start */
+    HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
 
-	return ret;
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef UART_SendMMI(uint8_t *p_data, uint16_t len) {
-	HAL_StatusTypeDef ret = HAL_OK;
+    SYS_VERIFY_PARAM_NOT_NULL(p_data);
 
-	if (p_data == NULL) {
-		ret = HAL_ERROR;
-        SYS_LOG_ERR("Invalid parameter");
-	} else {
-		ret = _uartSendData(p_data, len);
-	}
+    memcpy(tx_buffer, p_data, len);
+    SYS_VERIFY_SUCCESS(_uartSendData(tx_buffer, len));
 
-	return ret;
+    return HAL_OK;
 }
 
 /* Private user code ---------------------------------------------------------*/
 HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len) {
-	HAL_StatusTypeDef ret = HAL_OK;
-
-	ret = HAL_UART_Transmit_IT(uart_context.uart_handle, p_data, len);
-
-	return ret;
+    return HAL_UART_Transmit_IT(uart_hdl, p_data, len);
 }
 
 HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len) {
-	HAL_StatusTypeDef ret = HAL_OK;
-
-	ret = HAL_UART_Receive_IT(uart_context.uart_handle, p_data, len);
-
-	return ret;
+    return HAL_UART_Receive_IT(uart_hdl, p_data, len);
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart->Instance == uart_context.uart_handle->Instance) {
+    if (huart->Instance == uart_hdl->Instance) {
         SYS_LOG_INFO("Send Done");
-	}
+        memset(tx_buffer, 0, sizeof(tx_buffer));
+    }
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-//    uint8_t ch;
-	if (huart->Instance == uart_context.uart_handle->Instance) {
-//		ch = rx_buffer[0];
-//		MMI_Decoder(&ch, 1); //TODO
-
-		HAL_UART_Receive_IT(uart_context.uart_handle, rx_buffer, 1);
-	}
+    if (huart->Instance == uart_hdl->Instance) {
+        Task_MMI_Decoder(&rx_buffer[0], 1);
+        HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
+    }
 }

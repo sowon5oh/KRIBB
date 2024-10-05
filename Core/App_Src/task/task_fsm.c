@@ -21,7 +21,7 @@
 #include "task_fsm.h"
 #include "hal_drv_heater.h"
 #include "hal_drv_led.h"
-#include "hal_drv_recv_pd.h"
+#include "hal_drv_pd.h"
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct {
@@ -91,9 +91,6 @@ static fsmTable_t fsm_table[] = {
 void Task_Fsm_Init(void) {
     _fsm_task_init();
 
-    /* Sensor Init */
-    Hal_Heater_Init();
-    Hal_Led_Init();
 
     //TODO
     //Sensor Init

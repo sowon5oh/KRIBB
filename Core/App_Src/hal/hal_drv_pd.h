@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
- * @file           : xx.h
+ * @file           : hal_drv_pd.h
  * @brief          : Header file for xx.c.
  * @date           : 2024.09.
  ******************************************************************************
@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _HEADER_NAME_H
-#define _HEADER_NAME_H
+#ifndef _HAL_DRV_PD_H
+#define _HAL_DRV_PD_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,4 +36,4 @@ extern "C" {
 }
 #endif
 
-#endif /* _HEADER_NAME_H */
+#endif /* _HAL_DRV_PD_H */

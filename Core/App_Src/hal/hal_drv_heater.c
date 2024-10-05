@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
- * @file           : hal_drv_heater_driver.c
+ * @file           : hal_drv_heater.c
  * @brief          :
  * @date           : 2024.09.
  ******************************************************************************
@@ -39,7 +39,7 @@ HAL_StatusTypeDef Hal_Heater_Init(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterChNUm_t ch_num) {
+HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num) {
     return HAL_OK;
 }
 

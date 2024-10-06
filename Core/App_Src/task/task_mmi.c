@@ -36,23 +36,20 @@ static bool _protocol_chksum_check(uint8_t *arr, int cnt);
 
 static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t len);
 /* PC to device */
-static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 /* device to PC (response) */
-static HAL_StatusTypeDef _process_resp_result(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+//static HAL_StatusTypeDef _process_resp_result(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 
 /* Private variables ---------------------------------------------------------*/
-uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = {
-    0, };
-uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = {
-    0, };
+uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = { 0, };
+uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
 
 /* Public user code ----------------------------------------------------------*/
 void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
-    static uint8_t one_line[PROTOCOL_BUFF_RX_LEN_MAX] = {
-        0, };
+    static uint8_t one_line[PROTOCOL_BUFF_RX_LEN_MAX] = { 0, };
     static uint8_t ch_cnt = 0;
 
     for (uint8_t idx = 0; idx < len; idx++) {
@@ -71,10 +68,15 @@ void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
     }
 }
 
+HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void) {
+    SYS_VERIFY_SUCCESS(_process_get_device_info(MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE, MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE));
+
+    return HAL_OK;
+}
+
 /* Private user code ---------------------------------------------------------*/
 static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data) {
-    uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = {
-        0, };
+    uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
     uint8_t chksum = MMI_PROTOCOL_CHKSUM_INIT;
     uint8_t chg_cnt = 0;
     uint8_t arr_idx = 1;
@@ -136,8 +138,7 @@ static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uin
 }
 
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
-    uint8_t bitsttf_line[512] = {
-        0, };
+    uint8_t bitsttf_line[512] = { 0, };
     uint8_t arr_idx = 0;
     uint8_t chg_cnt = 0;
 
@@ -208,9 +209,8 @@ static bool _protocol_chksum_check(uint8_t *arr, int cnt) {
     return true;
 }
 
-static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
-    uint8_t device_info_data_val[8] = {
-        0, };
+static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
+    uint8_t device_info_data_val[8] = { 0, };
     uint8_t device_info_data_len = 0;
     
     switch (cmd2) {
@@ -261,8 +261,7 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3, ui
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
     /* cmd3: ch select */
     uint8_t ch_cfg = cmd3;
-    uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN] = {
-        0, };
+    uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN] = { 0, };
 
     memcpy(set_data_val, p_data, data_len);
 
@@ -356,7 +355,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
     
     switch (cmd1) {
         case MMI_CMD1_INFO:
-            _process_get_device_info(cmd2, cmd3, p_data, data_len);
+            _process_get_device_info(cmd2, cmd3);
             break;
             
         case MMI_CMD1_MEAS_SET:

@@ -43,8 +43,7 @@ extern "C" {
 #include "user_uart.h"
 #include "task_mmi.h"
 #include "task_fsm.h"
-//#include "drv_adc_ads130b04.h"
-//#include "drv_dac_dac63204.h"
+#include "task_meas.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

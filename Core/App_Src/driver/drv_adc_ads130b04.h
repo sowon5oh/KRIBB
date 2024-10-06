@@ -47,17 +47,17 @@ typedef struct {
 
 #define ADS130B04_AVR_BUFF_MAX_NUM	500
 
+typedef void (*MeasAvrResultCb_t)(float result);
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-typedef void (*MeasAvrResultCb_t)(float result);
 HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_handle);
-HAL_StatusTypeDef DRV_ADS130B04_ReqAvr(ads130b04Data_t *p_req_info, MeasAvrResultCb_t cb_fn);
 HAL_StatusTypeDef DRV_ADS130B04_Start(void);
 HAL_StatusTypeDef DRV_ADS130B04_Stop(void);
-void ADC_CFG_Change(ads130b04Data_t *p_req_info);
-void ADC_MeasStop(void);
-void ADC_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples, uint16_t *wait_time);
+void DRV_ADS130B04_CFG_Change(ads130b04Data_t *p_req_info);
+void DRV_ADS130B04_MeasStop(void);
+void DRV_ADS130B04_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples, uint16_t *wait_time);
+HAL_StatusTypeDef DRV_ADS130B04_ReqAvr(ads130b04Data_t *p_req_info, MeasAvrResultCb_t cb_fn);
 
 #ifdef __cplusplus
 }

@@ -240,9 +240,8 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl) {
     HAL_StatusTypeDef ret = HAL_OK;
     uint16_t read_data = 0;
 
+    /* attach spi handle */
     SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
-
-    /* Regist handle */
     ads130b04_context.spi_handle = (SPI_HandleTypeDef*) p_hdl;
 
     /* Pin Reset */
@@ -334,7 +333,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Start(void) {
     return ret;
 }
 
-void ADS130B04_CFG_Change(ads130b04Data_t *p_req_info) {
+void DRV_ADS130B04_CFG_Change(ads130b04Data_t *p_req_info) {
     HAL_StatusTypeDef ret = HAL_OK;
 
     ads130b04_context.ads130b04_cfg.Mux_ch = p_req_info->Mux_ch;
@@ -362,7 +361,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Stop(void) {
     return ret;
 }
 
-void ADS130B04_MeasStop(void) {
+void DRV_ADS130B04_MeasStop(void) {
     HAL_StatusTypeDef ret = HAL_OK;
 
     /* Reset measure data */
@@ -381,7 +380,7 @@ void ADS130B04_MeasStop(void) {
     }
 }
 
-void ADS130B04_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples, uint16_t *wait_time) {
+void DRV_ADS130B04_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples, uint16_t *wait_time) {
     *ch = ads130b04_context.ads130b04_cfg.ch;
     *sps = ads130b04_context.osr_mode;
     *samples = ads130b04_context.ads130b04_num;

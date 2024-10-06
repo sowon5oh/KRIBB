@@ -63,8 +63,6 @@ volatile uint16_t time_1ms_cnt = 0;
 volatile uint16_t time_0_1ms_cnt = 0;
 
 #define	UART_DEBUG_MSG 	1
-char Tx_str_data[] = "UNIOTECH CORP.\r\n";
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -154,7 +152,11 @@ int main(void)
 
     /* User Module Initialize */
     (void) UART_Init(&huart1);
-    HAL_UART_Transmit(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1, 1000);
+    //TEST
+    char Tx_str_data[] = "UNIOTECH CORP.\r\n";
+//    HAL_UART_Transmit(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1, 1000);
+    HAL_UART_Transmit_IT(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1),
+    //TEST
     SYS_LOG_INFO("--------------------------------------------");
     SYS_LOG_INFO("[      UNIOTECH - 3CH FL ANALYZER UOT      ]");
     SYS_LOG_INFO("  * Build Time: %s %s", __DATE__, __TIME__);
@@ -166,9 +168,11 @@ int main(void)
     Hal_Heater_Init();
     Hal_Led_Init(&hi2c2); /* dac */
     Hal_Temp_Init(&hadc1); /* adc */
+    Hal_Pd_Init(&hspi1); /* adc */
 
     SYS_LOG_INFO("Finite State Machine Start");
     Task_Fsm_Init();
+    Task_Meas_init(); //TEST
     HAL_Delay(100);
   /* USER CODE END 2 */
 

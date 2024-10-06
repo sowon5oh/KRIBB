@@ -27,7 +27,7 @@ typedef struct {
 } dac63204Context_t;
 
 /* Private define ------------------------------------------------------------*/
-#define DAC63204_ADDRESS  				0x90  // 0x92
+#define DAC63204_ADDRESS  				0x90  /* 1001 0000 */
 
 #define DAC_REG_ADDR_COMMON_CFG			0x1F
 #define DAC_REG_ADDR_COMMON_TRIGGER		0x20
@@ -67,9 +67,8 @@ dac63204Context_t dac63204_context;
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef DRV_DAC63204_Init(I2C_HandleTypeDef *p_hdl) {
-    SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
-
     /* attach i2c handle */
+    SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
     dac63204_context.i2c_hdl = p_hdl;
 
     /* check i2c communication status */

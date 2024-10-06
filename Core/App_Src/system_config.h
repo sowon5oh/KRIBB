@@ -28,13 +28,17 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported constants --------------------------------------------------------*/
+/* system info */
 #define SYS_FW_MAJOR_VER 1
 #define SYS_FW_MINOR_VER 0
 #define SYS_FW_PATCH_VER 0
 #define SYS_HW_MAJOR_VER 2
 #define SYS_HW_MINOR_VER 0
 #define MODEL_NAME      "KRIBB_FLURESCENCE_ANALYZER"
-#define FIRMWARE_DATE   "2024-09-10"
+
+/* config for features */
+#define STABLE_TEMPERATURE_DEGREE 30
+
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/

@@ -71,7 +71,7 @@ HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len) {
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == uart_hdl->Instance) {
-        SYS_LOG_INFO("Send Done");
+        SYS_LOG_DEBUG("Uart Message Send Done");
         memset(tx_buffer, 0, sizeof(tx_buffer));
     }
 }

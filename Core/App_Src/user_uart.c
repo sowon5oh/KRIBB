@@ -28,15 +28,18 @@
 #define RX_MSG_MAX_LEN	64
 #define RX_BUFFER_SIZE 	(RX_MSG_MAX_LEN + 1)
 /* Private macro -------------------------------------------------------------*/
+#define MMI_MSG_DEBUG_LOG 1
 
 /* Private function prototypes -----------------------------------------------*/
-HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len);
-HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len);
+static HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len);
+static HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len);
+static void _hex_to_string(uint8_t *hex_array, size_t hex_array_len, char *output_string);
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef *uart_hdl;
-uint8_t tx_buffer[TX_BUFFER_SIZE];
-uint8_t rx_buffer[RX_BUFFER_SIZE];
+static UART_HandleTypeDef *uart_hdl;
+static uint8_t tx_buffer[TX_BUFFER_SIZE];
+static uint8_t rx_buffer[RX_BUFFER_SIZE];
+static char tx_str_buffer[TX_BUFFER_SIZE * 2] = { '\0', };
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef UART_Init(UART_HandleTypeDef *p_hdl) {
@@ -57,21 +60,19 @@ HAL_StatusTypeDef UART_SendMMI(uint8_t *p_data, uint16_t len) {
     memcpy(tx_buffer, p_data, len);
     SYS_VERIFY_SUCCESS(_uartSendData(tx_buffer, len));
 
+#if (MMI_MSG_DEBUG_LOG == 1)
+    _hex_to_string(tx_buffer, len, tx_str_buffer);
+#endif
+
     return HAL_OK;
-}
-
-/* Private user code ---------------------------------------------------------*/
-HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len) {
-    return HAL_UART_Transmit_IT(uart_hdl, p_data, len);
-}
-
-HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len) {
-    return HAL_UART_Receive_IT(uart_hdl, p_data, len);
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == uart_hdl->Instance) {
-        SYS_LOG_DEBUG("Uart Message Send Done");
+#if (MMI_MSG_DEBUG_LOG == 1)
+        SYS_LOG_DEBUG("Uart Message Send Done: %s", tx_str_buffer);
+        memset(tx_str_buffer, 0, sizeof(tx_str_buffer));
+#endif
         memset(tx_buffer, 0, sizeof(tx_buffer));
     }
 }
@@ -81,4 +82,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         Task_MMI_Decoder(&rx_buffer[0], 1);
         HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
     }
+}
+
+/* Private user code ---------------------------------------------------------*/
+static HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len) {
+    return HAL_UART_Transmit_IT(uart_hdl, p_data, len);
+}
+
+static HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len) {
+    return HAL_UART_Receive_IT(uart_hdl, p_data, len);
+}
+
+static void _hex_to_string(uint8_t *hex_array, size_t hex_array_len, char *output_string) {
+    for (size_t i = 0; i < hex_array_len; i++) {
+        // 각 바이트를 16진수 형식으로 변환하여 출력
+        sprintf(output_string + (i * 2), "%02X", hex_array[i]);
+    }
+    output_string[hex_array_len * 2] = '\0';  // Null-terminator 추가
 }

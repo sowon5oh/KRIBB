@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "drv_tempsensor_lmt86lp.h"
-#include "hal_drv_heater.h"
+#include "hal_drv_temperature.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -30,26 +30,35 @@
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-static void _temp_read_cb(uint32_t *p_data);
+static HalTempData_t temp_data;
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef Hal_Temp_Init(ADC_HandleTypeDef *p_hdl) {
     SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
+    SYS_VERIFY_SUCCESS(DRV_LMT86LP_Init(p_hdl));
+    return HAL_OK;
+}
 
-    DRV_LMT86LP_Init(p_hdl, _temp_read_cb);
+void Hal_Temp_AdcCb(void) {
+    SYS_VERIFY_SUCCESS_VOID(DRV_LMT86LP_GetValue(&temp_data));
+    SYS_LOG_INFO("Temperature ADC Result: %d, %d, %d", temp_data.ch1_temp, temp_data.ch2_temp, temp_data.ch3_temp);
+}
+
+HAL_StatusTypeDef Hal_Temp_Start(void) {
+    SYS_VERIFY_SUCCESS(DRV_LMT86LP_Start());
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef Hal_Temp_Stop(void) {
+    SYS_VERIFY_SUCCESS(DRV_LMT86LP_Stop());
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef Hal_Temp_Read(HalTempData_t *p_data) {
+    memcpy(p_data, &temp_data, sizeof(HalTempData_t));
 
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Hal_Temp_Read(void) {
-    uint32_t adc_val_1;
-
-    DRV_LMT86LP_GetValue();
-
-}
-
 /* Private user code ---------------------------------------------------------*/
 
-static void _temp_read_cb(uint32_t *p_data) {
-
-}

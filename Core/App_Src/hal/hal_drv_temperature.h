@@ -35,11 +35,20 @@ typedef enum {
     HAL_TEMP_CH_NUM_MAX = 4,
 } HalTempCh_t;
 
+typedef struct {
+    int16_t ch1_temp;
+    int16_t ch2_temp;
+    int16_t ch3_temp;
+} HalTempData_t;
+
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-HAL_StatusTypeDef Hal_Temp_Init(ADC_HandleTypeDef p_hdl);
-HAL_StatusTypeDef Hal_Temp_Read(void);
+HAL_StatusTypeDef Hal_Temp_Init(ADC_HandleTypeDef *p_hdl);
+void Hal_Temp_AdcCb(void);
+HAL_StatusTypeDef Hal_Temp_Start(void);
+HAL_StatusTypeDef Hal_Temp_Stop(void);
+HAL_StatusTypeDef Hal_Temp_Read(HalTempData_t *p_data);
 
 #ifdef __cplusplus
 }

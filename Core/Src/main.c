@@ -23,6 +23,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "hal_drv_heater.h"
+#include "hal_drv_led.h"
+#include "hal_drv_pd.h"
+#include "hal_drv_temperature.h"
 
 /* USER CODE END Includes */
 
@@ -95,6 +99,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
 }
 
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+    if (hadc->Instance == ADC1) {
+        Hal_Temp_AdcCb();
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -152,6 +161,11 @@ int main(void)
     SYS_LOG_INFO("  * FW Ver    : Ver. %d.%d.%2d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
     SYS_LOG_INFO("  * HW Ver    : Ver. %d.%d", SYS_HW_MAJOR_VER, SYS_HW_MINOR_VER);
     SYS_LOG_INFO("--------------------------------------------");
+
+    /* Sensor Init */
+    Hal_Heater_Init();
+    Hal_Led_Init(&hi2c2); /* dac */
+    Hal_Temp_Init(&hadc1); /* adc */
 
     SYS_LOG_INFO("Finite State Machine Start");
     Task_Fsm_Init();

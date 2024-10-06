@@ -25,15 +25,17 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "hal_drv_temperature.h"
 
 /* Exported constants --------------------------------------------------------*/
-typedef void (*DrvLmt86lpCb_t)(uint32_t *p_data);
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-HAL_StatusTypeDef DRV_LMT86LP_Init(ADC_HandleTypeDef *p_hdl, DrvLmt86lpCb_t cb_fn);
-HAL_StatusTypeDef DRV_LMT86LP_GetValue(void);
+HAL_StatusTypeDef DRV_LMT86LP_Init(ADC_HandleTypeDef *p_hdl);
+HAL_StatusTypeDef DRV_LMT86LP_Start(void);
+HAL_StatusTypeDef DRV_LMT86LP_Stop(void);
+HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data);
 
 #ifdef __cplusplus
 }

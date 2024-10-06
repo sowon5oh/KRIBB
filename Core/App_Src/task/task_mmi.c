@@ -21,27 +21,31 @@
 #include "task_mmi.h"
 #include "task_meas.h"
 
-extern MeasReqData_t meas_cfg;
-
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
 #define PROTOCOL_BUFF_TX_LEN_MAX	128
-#define PROTOCOL_BUFF_RX_LEN_MAX	128
+#define PROTOCOL_BUFF_RX_LEN_MAX	MMI_PROTOCOL_HEADER_LEN_MAX + MMI_PROTOCOL_DATA_LEN_MAX
 
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t len);
+static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data);
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len);
 static bool _protocol_chksum_check(uint8_t *arr, int cnt);
-static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t cnt);
-static HAL_StatusTypeDef _process_get_device_info(uint8_t *p_arr);
-static HAL_StatusTypeDef _process_set_meas(uint8_t *p_arr);
-static HAL_StatusTypeDef _process_req_meas(uint8_t *p_arr);
-static HAL_StatusTypeDef _process_get_device_status(uint8_t *p_arr);
+
+static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t len);
+/* PC to device */
+static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+/* device to PC (response) */
+static HAL_StatusTypeDef _process_resp_result(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 
 /* Private variables ---------------------------------------------------------*/
+uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = {
+    0, };
 uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = {
     0, };
 
@@ -68,22 +72,22 @@ void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
 }
 
 /* Private user code ---------------------------------------------------------*/
-static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t len) {
+static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data) {
     uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = {
         0, };
     uint8_t chksum = MMI_PROTOCOL_CHKSUM_INIT;
     uint8_t chg_cnt = 0;
     uint8_t arr_idx = 1;
 
-orig_arr[MMI_PROTOCOL_IDX_STX] = 0xC0;
-orig_arr[MMI_PROTOCOL_IDX_LEN] = (len >> 8) & 0xFF;
-orig_arr[MMI_PROTOCOL_IDX_LEN + 1] = (len) & 0xFF;
-orig_arr[MMI_PROTOCOL_IDX_CMD1] = cmd1;
-orig_arr[MMI_PROTOCOL_IDX_CMD2] = cmd2;
-orig_arr[MMI_PROTOCOL_IDX_CMD3] = cmd3;
+    orig_arr[MMI_PROTOCOL_IDX_STX] = MMI_PROTOCOL_STX;
+    orig_arr[MMI_PROTOCOL_IDX_LEN] = (data_len >> 8) & 0xFF;
+    orig_arr[MMI_PROTOCOL_IDX_LEN + 1] = (data_len) & 0xFF;
+    orig_arr[MMI_PROTOCOL_IDX_CMD1] = cmd1;
+    orig_arr[MMI_PROTOCOL_IDX_CMD2] = cmd2;
+    orig_arr[MMI_PROTOCOL_IDX_CMD3] = cmd3;
 
-    for (uint16_t i = 0; i < len; i++) {
-    orig_arr[MMI_PROTOCOL_IDX_DATA + i] = p_data[i];
+    for (uint16_t i = 0; i < data_len; i++) {
+        orig_arr[MMI_PROTOCOL_IDX_DATA + i] = p_data[i];
         chksum += p_data[i];
     }
 
@@ -91,13 +95,13 @@ orig_arr[MMI_PROTOCOL_IDX_CMD3] = cmd3;
         chksum += orig_arr[i];
     }
 
-orig_arr[MMI_PROTOCOL_IDX_DATA + len] = chksum;
-orig_arr[MMI_PROTOCOL_IDX_DATA + len + 1] = MMI_PROTOCOL_ETX;
+    orig_arr[MMI_PROTOCOL_IDX_DATA + data_len] = chksum;
+    orig_arr[MMI_PROTOCOL_IDX_DATA + data_len + 1] = MMI_PROTOCOL_ETX;
 
     /* Make bitstuffing array */
-tx_msg_buff[MMI_PROTOCOL_IDX_STX] = MMI_PROTOCOL_STX;
+    tx_msg_buff[MMI_PROTOCOL_IDX_STX] = MMI_PROTOCOL_STX;
 
-    for (arr_idx = 1; arr_idx < 6 + len + 1; arr_idx++) {
+    for (arr_idx = 1; arr_idx < 6 + data_len + 1; arr_idx++) {
         switch (orig_arr[arr_idx]) {
             case 0xC0:
                 tx_msg_buff[arr_idx + chg_cnt++] =
@@ -204,37 +208,44 @@ static bool _protocol_chksum_check(uint8_t *arr, int cnt) {
     return true;
 }
 
-static HAL_StatusTypeDef _process_get_device_info(uint8_t *p_arr) {
-    uint8_t cmd2 = p_arr[MMI_PROTOCOL_IDX_CMD2];
-    uint8_t cmd3 = p_arr[MMI_PROTOCOL_IDX_CMD3];
-    uint8_t data_val[MMI_CMD1_INFO_DATA_MAX_LEN];
-    uint8_t data_len = 0;
-
+static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
+    uint8_t device_info_data_val[8] = {
+        0, };
+    uint8_t device_info_data_len = 0;
+    
     switch (cmd2) {
         case MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE:
             SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE == cmd3)
             ;
-                data_len = MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE_DATA_LEN;
+            device_info_data_len = MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE_DATA_LEN;
+            device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 3) & 0xFF;
+            device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 2) & 0xFF;
+            device_info_data_val[2] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 1) & 0xFF;
+            device_info_data_val[3] = MMI_PROTOCOL_WHO_AM_I_VAL & 0xFF;
+            device_info_data_val[4] = SYS_FW_MAJOR_VER;
+            device_info_data_val[5] = SYS_FW_MINOR_VER;
+            device_info_data_val[6] = (SYS_FW_PATCH_VER >> 1) & 0xFF;
+            device_info_data_val[7] = SYS_FW_PATCH_VER & 0xFF;
             break;
 
         case MMI_CMD2_INFO_WHO_AM_I:
             SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I == cmd3)
             ;
-                data_len = MMI_CMD3_INFO_WHO_AM_I_DATA_LEN;
-                data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 3) & 0xFF;
-                data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 2) & 0xFF;
-                data_val[2] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 1) & 0xFF;
-                data_val[3] = MMI_PROTOCOL_WHO_AM_I_VAL & 0xFF;
+            device_info_data_len = MMI_CMD3_INFO_WHO_AM_I_DATA_LEN;
+            device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 3) & 0xFF;
+            device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 2) & 0xFF;
+            device_info_data_val[2] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 1) & 0xFF;
+            device_info_data_val[3] = MMI_PROTOCOL_WHO_AM_I_VAL & 0xFF;
             break;
 
         case MMI_CMD2_INFO_DEVICE:
             SYS_VERIFY_TRUE(MMI_CMD3_INFO_DEVICE == cmd3)
             ;
-            data_len = MMI_CMD3_INFO_DEVICE_DATA_LEN;
-            data_val[0] = SYS_FW_MAJOR_VER;
-            data_val[1] = SYS_FW_MINOR_VER;
-            data_val[2] = (SYS_FW_PATCH_VER >> 1) & 0xFF;
-            data_val[3] = SYS_FW_PATCH_VER & 0xFF;
+            device_info_data_len = MMI_CMD3_INFO_DEVICE_DATA_LEN;
+            device_info_data_val[0] = SYS_FW_MAJOR_VER;
+            device_info_data_val[1] = SYS_FW_MINOR_VER;
+            device_info_data_val[2] = (SYS_FW_PATCH_VER >> 1) & 0xFF;
+            device_info_data_val[3] = SYS_FW_PATCH_VER & 0xFF;
             break;
 
         default:
@@ -242,44 +253,67 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t *p_arr) {
             break;
     }
 
-    return _mmi_send(MMI_CMD1_INFO, cmd2, cmd3, &data_val[0], data_len);
+    SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_INFO, cmd2, cmd3, device_info_data_len, &device_info_data_val[0]));
+
+    return HAL_OK;
 }
 
-static HAL_StatusTypeDef _process_set_meas(uint8_t *p_arr) {
-    uint8_t cmd2 = p_arr[MMI_PROTOCOL_IDX_CMD2];
-    uint8_t cmd3 = p_arr[MMI_PROTOCOL_IDX_CMD3];
-    uint8_t data_len = (p_arr[MMI_PROTOCOL_IDX_LEN] << 8) | p_arr[MMI_PROTOCOL_IDX_LEN + 1];
-    uint8_t data_val[12];
+static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
+    /* cmd3: ch select */
+    uint8_t ch_cfg = cmd3;
+    uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN] = {
+        0, };
 
-    memcpy(data_val, p_arr + 6, 12); //두번째 인자 = 복사할 메모리를 가리키고 있는 포인터
+    memcpy(set_data_val, p_data, data_len);
 
     switch (cmd2) {
         case MMI_CMD2_SET_MEAS_TEMP:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_TEMP_ONOFF_DATA_LEN)
+            ;
+            Task_Meas_Apply_Set(MEAS_SET_CAT_TEMP_ON_OFF, ch_cfg, set_data_val);
             break;
-
+            
         case MMI_CMD2_SET_MEAS_LED_ON_TIME:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_LED_ON_TIME_DATA_LEN)
+            ;
+            Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_TIME, ch_cfg, set_data_val);
             break;
-
+            
         case MMI_CMD2_SET_MEAS_LED_LEVEL:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_LED_LEVEL_DATA_LEN)
+            ;
+            Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_LEVEL, ch_cfg, set_data_val);
             break;
-
+            
         case MMI_CMD2_SET_MEAS_ADC_SAMPLE_CNT:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_ADC_SAMPLE_CNT_DATA_LEN)
+            ;
+            Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_SAMPLE_CNT, ch_cfg, set_data_val);
             break;
 
         case MMI_CMD2_SET_MEAS_ADC_DELAY_MS:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_ADC_DELAY_DATA_LEN)
+            ;
+            Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_ON_DELAY, ch_cfg, set_data_val);
             break;
 
         default:
             return HAL_ERROR;
             break;
     }
+    
+    // 응답
+//    SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET, cmd2, cmd3, data_len, &set_data_val[0]));
+
+    return HAL_OK;
 }
 
-static HAL_StatusTypeDef _process_req_meas(uint8_t *p_arr) {
-    uint8_t cmd2 = p_arr[MMI_PROTOCOL_IDX_CMD2];
-    uint8_t cmd3 = p_arr[MMI_PROTOCOL_IDX_CMD3];
-
+static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
+    
     switch (cmd2) {
+        case MMI_CMD2_REQ_MEAS_ALL:
+            break;
+
         case MMI_CMD2_REQ_MEAS_TEMP_ADC:
 
             break;
@@ -299,47 +333,55 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t *p_arr) {
             return HAL_ERROR;
             break;
     }
-}
-
-static HAL_StatusTypeDef _process_get_device_status(uint8_t *p_arr) {
-    uint8_t cmd2 = p_arr[MMI_PROTOCOL_IDX_CMD2];
-    uint8_t cmd3 = p_arr[MMI_PROTOCOL_IDX_CMD3];
-
-    SYS_VERIFY_TRUE(MMI_CMD2_REQ_DEVICE_STATUS == cmd2);
-    SYS_VERIFY_TRUE(MMI_CMD3_REQ_DEVICE_STATUS == cmd3);
-
-    //TODO
 
     return HAL_OK;
 }
 
-static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t cnt) {
-    uint8_t cmd1 = p_arr[MMI_PROTOCOL_IDX_CMD1];
+static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
+    SYS_VERIFY_TRUE(MMI_CMD2_REQ_DEVICE_STATUS == cmd2);
+    SYS_VERIFY_TRUE(MMI_CMD3_REQ_DEVICE_STATUS == cmd3);
+    
+    //TODO
+    
+    return HAL_OK;
+}
 
+static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
+    memcpy(rx_msg_buff, p_arr, len);
+    uint8_t cmd1 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD1];
+    uint8_t cmd2 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD2];
+    uint8_t cmd3 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD3];
+    uint8_t data_len = (rx_msg_buff[MMI_PROTOCOL_IDX_LEN] << 8) | rx_msg_buff[MMI_PROTOCOL_IDX_LEN + 1];
+    uint8_t *p_data = &rx_msg_buff[MMI_PROTOCOL_IDX_DATA];
+    
     switch (cmd1) {
         case MMI_CMD1_INFO:
-            _process_get_device_info(p_arr);
+            _process_get_device_info(cmd2, cmd3, p_data, data_len);
             break;
-
+            
         case MMI_CMD1_MEAS_SET:
-            _process_set_meas(p_arr);
+            _process_set_meas(cmd2, cmd3, p_data, data_len);
             break;
-
+            
         case MMI_CMD1_REQ_MEAS:
-            _process_req_meas(p_arr);
+            _process_req_meas(cmd2, cmd3, p_data, data_len);
             break;
-
+            
         case MMI_CMD1_REQ_DEVICE_STATUS:
-            _process_get_device_status(p_arr);
+            _process_get_device_status(cmd2, cmd3, p_data, data_len);
             break;
-
+            
         case MMI_CMD1_CTRL_DEVICE:
             //TODO
             break;
-
+            
         default:
-
             return HAL_ERROR;
             break;
     }
+    
+    /* clean rx buffer */
+    memset(rx_msg_buff, 0, sizeof(rx_msg_buff));
+    
+    return HAL_OK;
 }

@@ -171,7 +171,6 @@ int main(void) {
 
     SYS_LOG_INFO("Finite State Machine Start");
     Task_Fsm_Init();
-    Task_Meas_init(); //TEST
     HAL_Delay(100);
     /* USER CODE END 2 */
 

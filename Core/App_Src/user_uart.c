@@ -23,10 +23,10 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define TX_MSG_MAX_LEN	64
-#define TX_BUFFER_SIZE 	(TX_MSG_MAX_LEN + 1)
-#define RX_MSG_MAX_LEN	64
-#define RX_BUFFER_SIZE 	(RX_MSG_MAX_LEN + 1)
+#define TX_MSG_MAX_LEN	MMI_PROTOCOL_TX_MSG_LEN_MAX
+#define TX_BUFFER_SIZE 	(TX_MSG_MAX_LEN * 2)
+#define RX_MSG_MAX_LEN	MMI_PROTOCOL_RX_MSG_LEN_MAX
+#define RX_BUFFER_SIZE 	(RX_MSG_MAX_LEN * 2)
 /* Private macro -------------------------------------------------------------*/
 #define MMI_MSG_DEBUG_LOG 1
 
@@ -39,7 +39,7 @@ static void _hex_to_string(uint8_t *hex_array, size_t hex_array_len, char *outpu
 static UART_HandleTypeDef *uart_hdl;
 static uint8_t tx_buffer[TX_BUFFER_SIZE];
 static uint8_t rx_buffer[RX_BUFFER_SIZE];
-static char tx_str_buffer[TX_BUFFER_SIZE * 2] = { '\0', };
+static char tx_str_buffer[(TX_BUFFER_SIZE * 2) + 1] = { '\0', };
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef UART_Init(UART_HandleTypeDef *p_hdl) {
@@ -49,7 +49,7 @@ HAL_StatusTypeDef UART_Init(UART_HandleTypeDef *p_hdl) {
     uart_hdl = (UART_HandleTypeDef*) p_hdl;
 
     /* Read Start */
-    HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
+    HAL_UART_Receive_IT(uart_hdl, rx_buffer, RX_MSG_MAX_LEN);
 
     return HAL_OK;
 }
@@ -80,7 +80,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == uart_hdl->Instance) {
         Task_MMI_Decoder(&rx_buffer[0], 1);
-        HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
+        //TODO
+//        HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
+//        SYS_VERIFY_SUCCESS_VOID(_uartReceiveData(rx_buffer, RX_MSG_MAX_LEN));
+        SYS_VERIFY_SUCCESS_VOID(_uartReceiveData(rx_buffer, 1));
     }
 }
 

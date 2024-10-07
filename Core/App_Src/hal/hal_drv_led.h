@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
- * @file           : hal_drv_led_driver.h
+ * @file           : hal_drv_led.h
  * @brief          : Header file for hal_drv_led_driver.c.
  * @date           : 2024.09.
  ******************************************************************************
@@ -28,18 +28,23 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 typedef enum {
-    HAL_LED_CH_NUM_1 = 0,
-    HAL_LED_CH_NUM_2,
-    HAL_LED_CH_NUM_3,
-    HAL_LED_CH_NUM_ALL,
-    HAL_LED_CH_NUM_MAX
-} HalLedChNUm_t;
+    HAL_LED_CH_1 = 0,
+    HAL_LED_CH_2,
+    HAL_LED_CH_3,
+    HAL_LED_CH_ALL,
+    HAL_LED_CH_MAX = HAL_LED_CH_ALL,
+} HalLedCh_t;
+
+typedef enum {
+    HAL_LED_OFF = 0,
+    HAL_LED_ON = 1,
+} HalLedCtrl_t;
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-HAL_StatusTypeDef Hal_Led_Init(void);
-HAL_StatusTypeDef Hal_Led_Ctrl(HalLedChNUm_t ch_num);
+HAL_StatusTypeDef Hal_Led_Init(I2C_HandleTypeDef *p_hdl);
+HAL_StatusTypeDef Hal_Led_Ctrl(HalLedCh_t ch_num, HalLedCtrl_t ctrl_set);
 
 #ifdef __cplusplus
 }

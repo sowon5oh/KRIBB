@@ -24,8 +24,8 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define PROTOCOL_BUFF_TX_LEN_MAX	128
-#define PROTOCOL_BUFF_RX_LEN_MAX	MMI_PROTOCOL_HEADER_LEN_MAX + MMI_PROTOCOL_DATA_LEN_MAX
+#define PROTOCOL_BUFF_TX_LEN_MAX	MMI_PROTOCOL_TX_MSG_LEN_MAX
+#define PROTOCOL_BUFF_RX_LEN_MAX	MMI_PROTOCOL_RX_MSG_LEN_MAX
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -40,9 +40,9 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 /* device to PC (response) */
 //static HAL_StatusTypeDef _process_resp_result(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
-
 /* Private variables ---------------------------------------------------------*/
 uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = { 0, };
 uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
@@ -209,6 +209,51 @@ static bool _protocol_chksum_check(uint8_t *arr, int cnt) {
     return true;
 }
 
+static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
+    memcpy(rx_msg_buff, p_arr, len);
+    uint8_t cmd1 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD1];
+    uint8_t cmd2 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD2];
+    uint8_t cmd3 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD3];
+    uint8_t data_len = (rx_msg_buff[MMI_PROTOCOL_IDX_LEN] << 8) | rx_msg_buff[MMI_PROTOCOL_IDX_LEN + 1];
+    uint8_t *p_data = &rx_msg_buff[MMI_PROTOCOL_IDX_DATA];
+
+    switch (cmd1) {
+        case MMI_CMD1_INFO:
+            SYS_LOG_INFO("[Command 1-1: %0x0X] Get device information", cmd1);
+            _process_get_device_info(cmd2, cmd3);
+            break;
+
+        case MMI_CMD1_MEAS_SET:
+            SYS_LOG_INFO("[Command 1-2: %0x0X] Set measure settings", cmd1);
+            _process_set_meas(cmd2, cmd3, p_data, data_len);
+            break;
+
+        case MMI_CMD1_REQ_MEAS:
+            SYS_LOG_INFO("[Command 1-3: %0x0X] Request measure", cmd1);
+            _process_req_meas(cmd2, cmd3, p_data, data_len);
+            break;
+
+        case MMI_CMD1_REQ_DEVICE_STATUS:
+            SYS_LOG_INFO("[Command 1-4: %0x0X] Request device status", cmd1);
+            _process_get_device_status(cmd2, cmd3, p_data, data_len);
+            break;
+
+        case MMI_CMD1_CTRL_DEVICE:
+            SYS_LOG_INFO("[Command 1-5: %0x0X] control device", cmd1);
+            _process_ctrl_device(cmd2, cmd3, p_data, data_len);
+            break;
+
+        default:
+            return HAL_ERROR;
+            break;
+    }
+
+    /* clean rx buffer */
+    memset(rx_msg_buff, 0, sizeof(rx_msg_buff));
+
+    return HAL_OK;
+}
+
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
     uint8_t device_info_data_val[8] = { 0, };
     uint8_t device_info_data_len = 0;
@@ -260,9 +305,10 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
 
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
     /* cmd3: ch select */
-    uint8_t ch_cfg = cmd3;
-    uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN] = { 0, };
+    MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3;
+    uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN];
 
+    SYS_VERIFY_TRUE(data_len<=MMI_CMD1_MEAS_SET_MAX_DATA_LEN);
     memcpy(set_data_val, p_data, data_len);
 
     switch (cmd2) {
@@ -300,9 +346,6 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
             return HAL_ERROR;
             break;
     }
-    
-    // 응답
-//    SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET, cmd2, cmd3, data_len, &set_data_val[0]));
 
     return HAL_OK;
 }
@@ -326,6 +369,8 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
             break;
 
         case MMI_CMD2_REQ_MEAS_START:
+            //TODO
+
             break;
 
         default:
@@ -345,42 +390,32 @@ static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, 
     return HAL_OK;
 }
 
-static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
-    memcpy(rx_msg_buff, p_arr, len);
-    uint8_t cmd1 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD1];
-    uint8_t cmd2 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD2];
-    uint8_t cmd3 = rx_msg_buff[MMI_PROTOCOL_IDX_CMD3];
-    uint8_t data_len = (rx_msg_buff[MMI_PROTOCOL_IDX_LEN] << 8) | rx_msg_buff[MMI_PROTOCOL_IDX_LEN + 1];
-    uint8_t *p_data = &rx_msg_buff[MMI_PROTOCOL_IDX_DATA];
-    
-    switch (cmd1) {
-        case MMI_CMD1_INFO:
-            _process_get_device_info(cmd2, cmd3);
+static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
+    /* cmd3: ch select */
+    MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3;
+    uint8_t set_data_val[MMI_CMD1_CTRL_DEVICE_MAX_DATA_LEN];
+
+    SYS_VERIFY_TRUE(data_len <= MMI_CMD1_CTRL_DEVICE_MAX_DATA_LEN);
+    memcpy(set_data_val, p_data, data_len);
+
+    switch (cmd2) {
+        case MMI_CMD2_CTRL_DEVICE_LED:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN)
+            ;
+            Task_Meas_Ctrl_Led(ch_cfg, set_data_val);
             break;
-            
-        case MMI_CMD1_MEAS_SET:
-            _process_set_meas(cmd2, cmd3, p_data, data_len);
+
+        case MMI_CMD2_CTRL_DEVICE_MONITOR:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_MONITOR_LEN)
+            ;
+            Task_Meas_Ctrl_Monitor(ch_cfg, set_data_val);
             break;
-            
-        case MMI_CMD1_REQ_MEAS:
-            _process_req_meas(cmd2, cmd3, p_data, data_len);
-            break;
-            
-        case MMI_CMD1_REQ_DEVICE_STATUS:
-            _process_get_device_status(cmd2, cmd3, p_data, data_len);
-            break;
-            
-        case MMI_CMD1_CTRL_DEVICE:
-            //TODO
-            break;
-            
+
         default:
             return HAL_ERROR;
             break;
     }
     
-    /* clean rx buffer */
-    memset(rx_msg_buff, 0, sizeof(rx_msg_buff));
-    
     return HAL_OK;
 }
+

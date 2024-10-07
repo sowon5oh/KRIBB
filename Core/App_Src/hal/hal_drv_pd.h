@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
  * @file           : hal_drv_pd.h
- * @brief          : Header file for xx.c.
+ * @brief          : Header file for hal_drv_pd.c.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -31,6 +31,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
+HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl);
 
 #ifdef __cplusplus
 }

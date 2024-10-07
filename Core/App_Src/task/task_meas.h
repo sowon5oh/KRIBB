@@ -36,6 +36,10 @@ void Task_Meas_Init(void);
 void Task_Meas_Start(void);
 void Task_Meas_Stop(void);
 void Task_Meas_Process(void);
+HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, uint8_t *p_set_val);
+HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, uint8_t *p_result_val);
+HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, uint8_t *p_set_val);
+HAL_StatusTypeDef Task_Meas_Ctrl_Monitor(MeasSetChVal_t ch, uint8_t *p_set_val);
 
 #ifdef __cplusplus
 }

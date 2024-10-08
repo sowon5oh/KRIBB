@@ -91,7 +91,6 @@ static fsmTable_t fsm_table[] = {
 void Task_Fsm_Init(void) {
     _fsm_task_init();
 
-
     //TODO
     //Sensor Init
 //    SYS_LOG_INFO("DAC Init");

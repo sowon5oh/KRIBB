@@ -99,7 +99,6 @@ typedef enum {
     ADS130B04_CMD_ID_UNLOCK,
 } ads130b04CmdId_t;
 
-
 typedef struct {
     SPI_HandleTypeDef *spi_handle;
 

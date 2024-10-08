@@ -139,7 +139,7 @@ HAL_StatusTypeDef DRV_DAC63204_SetData(Dac63204_chSel_t channel, uint16_t data) 
     uint16_t write_data = 0;
 
     if (data > 0xFF0) //FF0 = 4080
-        {
+    {
         write_data = 0xFF0;
         SYS_LOG_WARN("Invalid DAC Set value, Value changed. %04X ==> %04X", data, write_data);
     }

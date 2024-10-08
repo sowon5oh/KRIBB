@@ -33,23 +33,22 @@
 static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data);
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len);
 static bool _protocol_chksum_check(uint8_t *arr, int cnt);
-
 static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t len);
-/* PC to device */
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
-/* device to PC (response) */
-//static HAL_StatusTypeDef _process_resp_result(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 /* Private variables ---------------------------------------------------------*/
-uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = { 0, };
-uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
+uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = {
+    0, };
+uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = {
+    0, };
 
 /* Public user code ----------------------------------------------------------*/
 void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
-    static uint8_t one_line[PROTOCOL_BUFF_RX_LEN_MAX] = { 0, };
+    static uint8_t one_line[PROTOCOL_BUFF_RX_LEN_MAX] = {
+        0, };
     static uint8_t ch_cnt = 0;
 
     for (uint8_t idx = 0; idx < len; idx++) {
@@ -69,14 +68,15 @@ void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
 }
 
 HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void) {
-    SYS_VERIFY_SUCCESS(_process_get_device_info(MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE, MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE));
+    SYS_VERIFY_SUCCESS(_process_get_device_info(MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE_I_W_RESP, MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE_I_W_RESP));
 
     return HAL_OK;
 }
 
 /* Private user code ---------------------------------------------------------*/
 static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data) {
-    uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
+    uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = {
+        0, };
     uint8_t chksum = MMI_PROTOCOL_CHKSUM_INIT;
     uint8_t chg_cnt = 0;
     uint8_t arr_idx = 1;
@@ -138,7 +138,8 @@ static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uin
 }
 
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
-    uint8_t bitsttf_line[512] = { 0, };
+    uint8_t bitsttf_line[512] = {
+        0, };
     uint8_t arr_idx = 0;
     uint8_t chg_cnt = 0;
 
@@ -228,7 +229,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
             _process_set_meas(cmd2, cmd3, p_data, data_len);
             break;
 
-        case MMI_CMD1_REQ_MEAS:
+        case MMI_CMD1_MEAS_REQ:
             SYS_LOG_INFO("[Command 1-3: %0x0X] Request measure", cmd1);
             _process_req_meas(cmd2, cmd3);
             break;
@@ -244,8 +245,8 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
             break;
 
         default:
+            SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
             return HAL_ERROR;
-            break;
     }
 
     /* clean rx buffer */
@@ -255,13 +256,13 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
 }
 
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
-    uint8_t device_info_data_val[8] = { 0, };
+    uint8_t device_info_data_val[8] = {
+        0, };
     uint8_t device_info_data_len = 0;
     
     switch (cmd2) {
-        case MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE:
-            SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE == cmd3)
-            ;
+        case MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE_I_W_RESP:
+            SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE == cmd3);
             device_info_data_len = MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE_DATA_LEN;
             device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 3) & 0xFF;
             device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 2) & 0xFF;
@@ -273,9 +274,8 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
             device_info_data_val[7] = SYS_FW_PATCH_VER & 0xFF;
             break;
 
-        case MMI_CMD2_INFO_WHO_AM_I:
-            SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I == cmd3)
-            ;
+        case MMI_CMD2_INFO_WHO_AM_I_W_RESP:
+            SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I == cmd3);
             device_info_data_len = MMI_CMD3_INFO_WHO_AM_I_DATA_LEN;
             device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 3) & 0xFF;
             device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 2) & 0xFF;
@@ -283,9 +283,8 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
             device_info_data_val[3] = MMI_PROTOCOL_WHO_AM_I_VAL & 0xFF;
             break;
 
-        case MMI_CMD2_INFO_DEVICE:
-            SYS_VERIFY_TRUE(MMI_CMD3_INFO_DEVICE == cmd3)
-            ;
+        case MMI_CMD2_INFO_DEVICE_I_W_RESP:
+            SYS_VERIFY_TRUE(MMI_CMD3_INFO_DEVICE == cmd3);
             device_info_data_len = MMI_CMD3_INFO_DEVICE_DATA_LEN;
             device_info_data_val[0] = SYS_FW_MAJOR_VER;
             device_info_data_val[1] = SYS_FW_MINOR_VER;
@@ -294,8 +293,8 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
             break;
 
         default:
+            SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
             return HAL_ERROR;
-            break;
     }
 
     SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_INFO, cmd2, cmd3, device_info_data_len, &device_info_data_val[0]));
@@ -304,93 +303,92 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
 }
 
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
-    /* cmd3: ch select */
-    MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3;
-    uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN];
+    if (MMI_CMD2_MEAS_SET_VAL_REQ_W_RESP == cmd2) {
+        MeasSetDataMsg_t set_data_buff;
 
-    SYS_VERIFY_TRUE(data_len<=MMI_CMD1_MEAS_SET_MAX_DATA_LEN);
-    memcpy(set_data_val, p_data, data_len);
+        SYS_VERIFY_TRUE(MMI_CMD3_MEAS_SET_VAL_REQ == cmd3);
 
-    switch (cmd2) {
-        case MMI_CMD2_SET_MEAS_TEMP:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_TEMP_ONOFF_DATA_LEN)
-            ;
-            Task_Meas_Apply_Set(MEAS_SET_CAT_TEMP_ON_OFF, ch_cfg, set_data_val);
-            break;
-            
-        case MMI_CMD2_SET_MEAS_LED_ON_TIME:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_LED_ON_TIME_DATA_LEN)
-            ;
-            Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_TIME, ch_cfg, set_data_val);
-            break;
-            
-        case MMI_CMD2_SET_MEAS_LED_LEVEL:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_LED_LEVEL_DATA_LEN)
-            ;
-            Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_LEVEL, ch_cfg, set_data_val);
-            break;
-            
-        case MMI_CMD2_SET_MEAS_ADC_SAMPLE_CNT:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_ADC_SAMPLE_CNT_DATA_LEN)
-            ;
-            Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_SAMPLE_CNT, ch_cfg, set_data_val);
-            break;
+        Task_Meas_Get_Set(&set_data_buff.settings);
+        SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET, cmd2, cmd3, MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN, &set_data_buff.msg[0]));
 
-        case MMI_CMD2_SET_MEAS_ADC_DELAY_MS:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_SET_MEAS_ADC_DELAY_DATA_LEN)
-            ;
-            Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_ON_DELAY, ch_cfg, set_data_val);
-            break;
-
-        default:
-            return HAL_ERROR;
-            break;
+        return HAL_OK;
     }
+    else {
+        MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
+        uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN];
 
-    return HAL_OK;
+        memcpy(set_data_val, p_data, (data_len > sizeof(set_data_val) ? sizeof(set_data_val) : data_len));
+
+        switch (cmd2) {
+            case MMI_CMD2_MEAS_SET_TEMP:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN);
+                return Task_Meas_Apply_Set(MEAS_SET_CAT_TEMP_ON_OFF, ch_cfg, set_data_val);
+
+            case MMI_CMD2_MEAS_SET_LED_ON_TIME:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN);
+                return Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_TIME, ch_cfg, set_data_val);
+
+            case MMI_CMD2_MEAS_SET_LED_LEVEL:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN);
+                return Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_LEVEL, ch_cfg, set_data_val);
+
+            case MMI_CMD2_MEAS_SET_ADC_SAMPLE_CNT:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN);
+                return Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_SAMPLE_CNT, ch_cfg, set_data_val);
+
+            case MMI_CMD2_MEAS_SET_ADC_DELAY_MS:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN);
+                return Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_ON_DELAY, ch_cfg, set_data_val);
+
+            default:
+                SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
+                return HAL_ERROR;
+
+        }
+    }
 }
 
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
-    /* cmd3: ch select */
-    MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3;
-    MeasResultData_t result_data_val;
-    
-    switch (cmd2) {
-        case MMI_CMD2_REQ_MEAS_ALL:
-            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_val.temperature_data[0]))
-            ;
-            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, &result_data_val.recv_pd_data[0]))
-            ;
-            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &result_data_val.monitor_pd_data[0]))
-            ;
-            break;
+    if (MMI_CMD2_MEAS_REQ_ALL_W_RESP == cmd2) {
+        MeasResultAllDataMsg_t result_all_data_buff;
 
-        case MMI_CMD2_REQ_MEAS_TEMP_ADC:
-            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_val.temperature_data[0]))
-            ;
-            break;
-
-        case MMI_CMD2_REQ_MEAS_PD_ADC:
-            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, &result_data_val.recv_pd_data[0]))
-            ;
-            break;
-
-        case MMI_CMD2_REQ_MEAS_MONITOR_ADC:
-            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &result_data_val.monitor_pd_data[0]))
-            ;
-            break;
-
-        case MMI_CMD2_REQ_MEAS_START:
-            //TODO
-
-            break;
-
-        default:
-            return HAL_ERROR;
-            break;
+        SYS_VERIFY_TRUE(MMI_CMD3_MEAS_REQ_ALL == cmd3);
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, MEAS_SET_CH_ALL, &result_all_data_buff.results.temperature_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, MEAS_SET_CH_ALL, &result_all_data_buff.results.recv_pd_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, MEAS_SET_CH_ALL, &result_all_data_buff.results.monitor_pd_data[0]));
+        return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, &result_all_data_buff.msg[0]);
     }
+    else if (MMI_CMD2_MEAS_REQ_START_W_RESP == cmd2) {
+        MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
+        MeasResultDataMsg_t result_data_buff;
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_buff.results.temperature_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, &result_data_buff.results.recv_pd_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &result_data_buff.results.monitor_pd_data[0]));
+        return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, &result_data_buff.msg[0]);
+    }
+    else {
+        MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
+        MeasResultData_t result_data_val;
+        uint8_t result_data_len = (MEAS_SET_CH_ALL == ch_cfg) ? MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN : MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN;
 
-    return HAL_OK;
+        switch (cmd2) {
+            case MMI_CMD2_MEAS_REQ_TEMP_ADC_W_RESP:
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_val.temperature_data[0]));
+                return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.temperature_data[0]);
+
+            case MMI_CMD2_MEAS_REQ_RESP_ADC_W_RESP:
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, &result_data_val.recv_pd_data[0]));
+                return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.recv_pd_data[0]);
+
+            case MMI_CMD2_MEAS_REQ_MONITOR_ADC_W_RESP:
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &result_data_val.monitor_pd_data[0]));
+                return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.monitor_pd_data[0]);
+
+            default:
+                SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
+                return HAL_ERROR;
+        }
+    }
 }
 
 static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
@@ -403,8 +401,7 @@ static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, 
 }
 
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
-    /* cmd3: ch select */
-    MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3;
+    MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
     uint8_t set_data_val[MMI_CMD1_CTRL_DEVICE_MAX_DATA_LEN];
 
     SYS_VERIFY_TRUE(data_len <= MMI_CMD1_CTRL_DEVICE_MAX_DATA_LEN);
@@ -412,14 +409,12 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
 
     switch (cmd2) {
         case MMI_CMD2_CTRL_DEVICE_LED:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN)
-            ;
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN);
             Task_Meas_Ctrl_Led(ch_cfg, set_data_val);
             break;
 
         case MMI_CMD2_CTRL_DEVICE_MONITOR:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_MONITOR_LEN)
-            ;
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_MONITOR_LEN);
             Task_Meas_Ctrl_Monitor(ch_cfg, set_data_val);
             break;
 

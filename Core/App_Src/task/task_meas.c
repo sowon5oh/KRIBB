@@ -66,8 +66,11 @@ static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch);
 static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
 
 /* Private variables ---------------------------------------------------------*/
-static measTaskContext_t meas_task_context = { .task_init = false, .meas_state = MEAS_STATE_STANDBY, .meas_done =
-false, };
+static measTaskContext_t meas_task_context = {
+    .task_init = false,
+    .meas_state = MEAS_STATE_STANDBY,
+    .meas_done =
+    false, };
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static uint16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
@@ -100,6 +103,7 @@ void Task_Meas_Process(void) {
 HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, uint8_t *p_set_val) {
     SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
     SYS_VERIFY_TRUE(set_cat <= MEAS_SET_CAT_MAX);
+    SYS_VERIFY_PARAM_NOT_NULL(p_set_val);
 
     switch (set_cat) {
         case MEAS_SET_CAT_TEMP_ON_OFF: {
@@ -136,9 +140,18 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
     return HAL_OK;
 }
 
+HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val) {
+    SYS_VERIFY_PARAM_NOT_NULL(p_set_val);
+
+    memcpy(p_set_val, &meas_set_data, sizeof(MeasSetData_t));
+
+    return HAL_OK;
+}
+
 HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val) {
     SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
     SYS_VERIFY_TRUE(result_cat <= MEAS_RESULT_CAT_MAX);
+    SYS_VERIFY_PARAM_NOT_NULL(p_result_val);
 
     switch (result_cat) {
         case MEAS_RESULT_CAT_TEMP_ADC:
@@ -158,8 +171,10 @@ HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_
 }
 
 HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, uint8_t *p_set_val) {
-    SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
     uint8_t set_val = *p_set_val;
+
+    SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
+    SYS_VERIFY_PARAM_NOT_NULL(p_set_val);
 
     switch (ch) {
         case MEAS_SET_CH_1:
@@ -188,6 +203,7 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, uint8_t *p_set_val) {
 
 HAL_StatusTypeDef Task_Meas_Ctrl_Monitor(MeasSetChVal_t ch, uint8_t *p_set_val) {
     SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
+    SYS_VERIFY_PARAM_NOT_NULL(p_set_val);
 
     switch (ch) {
         case MEAS_SET_CH_1:
@@ -430,7 +446,7 @@ static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch) {
             SYS_LOG_ERR("Sampling num 0 Error");
             return HAL_ERROR;
         }
-
+        
         SYS_LOG_DEBUG("Recv PD [%d]ch: sampling num: [%d]", ch, meas_set_data.adc_sample_cnt[ch]);
         fail_cnt = 0;
         for (data_idx = 0; data_idx < meas_set_data.adc_sample_cnt[ch]; data_idx++) {

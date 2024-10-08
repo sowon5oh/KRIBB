@@ -39,7 +39,8 @@ static void _hex_to_string(uint8_t *hex_array, size_t hex_array_len, char *outpu
 static UART_HandleTypeDef *uart_hdl;
 static uint8_t tx_buffer[TX_BUFFER_SIZE];
 static uint8_t rx_buffer[RX_BUFFER_SIZE];
-static char tx_str_buffer[(TX_BUFFER_SIZE * 2) + 1] = { '\0', };
+static char tx_str_buffer[(TX_BUFFER_SIZE * 2) + 1] = {
+    '\0', };
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef UART_Init(UART_HandleTypeDef *p_hdl) {
@@ -101,5 +102,5 @@ static void _hex_to_string(uint8_t *hex_array, size_t hex_array_len, char *outpu
         // 각 바이트를 16진수 형식으로 변환하여 출력
         sprintf(output_string + (i * 2), "%02X", hex_array[i]);
     }
-    output_string[hex_array_len * 2] = '\0';  // Null-terminator 추가
+    output_string[hex_array_len * 2] = '\0'; // Null-terminator 추가
 }

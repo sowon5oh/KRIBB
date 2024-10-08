@@ -33,7 +33,7 @@
             SYS_LOG_ERR( "[Failed] Null Parameter" ); \
             return HAL_ERROR; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 #define SYS_VERIFY_PARAM_NOT_NULL_VOID( param ) \
     do \
@@ -43,7 +43,7 @@
             SYS_LOG_ERR( "[Failed] Null Parameter" ); \
             return; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 #define SYS_VERIFY_SUCCESS( statement ) \
     do \
@@ -54,7 +54,7 @@
             SYS_LOG_ERR( "[Failed] Error code: %d", _err_code ); \
             return _err_code; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 #define SYS_VERIFY_SUCCESS_VOID( statement ) \
     do \
@@ -65,7 +65,7 @@
             SYS_LOG_ERR( "[Failed] Error code: %d", _err_code ); \
             return; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 #define SYS_VERIFY_VALID_STATE( state ) \
     do \
@@ -75,7 +75,7 @@
             SYS_LOG_ERR( "[Failed] Invalid State" ); \
             return HAL_ERROR; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 #define SYS_VERIFY_VALID_STATE_VOID( state ) \
     do \
@@ -85,7 +85,7 @@
             SYS_LOG_ERR( "[Failed] Invalid State" ); \
             return; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 #define SYS_VERIFY_TRUE( state ) \
     do \
@@ -95,7 +95,7 @@
             SYS_LOG_ERR( "[Failed] Invalid" ); \
             return HAL_ERROR; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 #define SYS_VERIFY_TRUE_VOID( state ) \
     do \
@@ -105,7 +105,7 @@
             SYS_LOG_ERR( "[Failed] Invalid" ); \
             return; \
         } \
-    } while( 0 );
+    } while( 0 )
 
 /**
  * @brief Define Bit-field mask

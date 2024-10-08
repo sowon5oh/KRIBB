@@ -208,9 +208,9 @@ typedef enum {
 
 typedef enum {
     MEAS_RESULT_CAT_TEMP_ADC = 0,
-    MEAS_RESULT_CAT_PD_ADC,
-    MEAS_RESULT_CAT_MONITOR_ADC,
-    MEAS_RESULT_CAT_MAX = MEAS_RESULT_CAT_MONITOR_ADC,
+    MEAS_RESULT_CAT_RECV_PD_ADC,
+    MEAS_RESULT_CAT_MONITOR_PD_ADC,
+    MEAS_RESULT_CAT_MAX = MEAS_RESULT_CAT_MONITOR_PD_ADC,
 } MeasResultCat_t;
 
 typedef enum {
@@ -261,9 +261,7 @@ typedef struct {
 typedef struct {
     uint16_t temperature_data[CH_NUM];
     uint16_t recv_pd_data[CH_NUM];
-    uint16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
-    uint16_t monitor_data[CH_NUM];
-    uint16_t monitor_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+    uint16_t monitor_pd_data[CH_NUM];
 } MeasResultData_t;
 
 typedef enum {

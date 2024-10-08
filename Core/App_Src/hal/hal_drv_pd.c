@@ -40,5 +40,17 @@ HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, uint16_t *p_data) {
+    //TODO
+
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, uint16_t *p_data) {
+    //TODO
+
+    return HAL_OK;
+}
+
 /* Private user code ---------------------------------------------------------*/
 

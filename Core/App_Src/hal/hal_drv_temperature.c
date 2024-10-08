@@ -54,7 +54,7 @@ HAL_StatusTypeDef Hal_Temp_Stop(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Hal_Temp_Read(HalTempData_t *p_data) {
+HAL_StatusTypeDef Hal_Temp_GetData(HalTempData_t *p_data) {
     memcpy(p_data, &temp_data, sizeof(HalTempData_t));
 
     return HAL_OK;

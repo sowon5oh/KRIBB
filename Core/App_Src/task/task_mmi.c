@@ -38,7 +38,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t len);
 /* PC to device */
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
-static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 /* device to PC (response) */
@@ -230,7 +230,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
 
         case MMI_CMD1_REQ_MEAS:
             SYS_LOG_INFO("[Command 1-3: %0x0X] Request measure", cmd1);
-            _process_req_meas(cmd2, cmd3, p_data, data_len);
+            _process_req_meas(cmd2, cmd3);
             break;
 
         case MMI_CMD1_REQ_DEVICE_STATUS:
@@ -350,22 +350,34 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
     return HAL_OK;
 }
 
-static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
+static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
+    /* cmd3: ch select */
+    MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3;
+    MeasResultData_t result_data_val;
     
     switch (cmd2) {
         case MMI_CMD2_REQ_MEAS_ALL:
+            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_val.temperature_data[0]))
+            ;
+            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, &result_data_val.recv_pd_data[0]))
+            ;
+            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &result_data_val.monitor_pd_data[0]))
+            ;
             break;
 
         case MMI_CMD2_REQ_MEAS_TEMP_ADC:
-
+            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_val.temperature_data[0]))
+            ;
             break;
 
         case MMI_CMD2_REQ_MEAS_PD_ADC:
-
+            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, &result_data_val.recv_pd_data[0]))
+            ;
             break;
 
         case MMI_CMD2_REQ_MEAS_MONITOR_ADC:
-
+            SYS_VERIFY_TRUE(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &result_data_val.monitor_pd_data[0]))
+            ;
             break;
 
         case MMI_CMD2_REQ_MEAS_START:

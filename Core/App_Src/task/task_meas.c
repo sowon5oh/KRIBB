@@ -18,6 +18,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "app_util.h"
 #include "task_meas.h"
 #include "task_mmi.h"
 #include "hal_drv_heater.h"
@@ -39,7 +40,7 @@ typedef struct {
     bool task_init;
     bool meas_done;
     meas_State_t meas_state;
-} ledTaskContext_t;
+} measTaskContext_t;
 
 /* Private define ------------------------------------------------------------*/
 
@@ -60,12 +61,17 @@ static void _meas_set_led_on_time_ms(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_led_on_level(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_sample_cnt(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val);
+static HAL_StatusTypeDef _meas_get_temperature_data(void);
+static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch);
+static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
 
 /* Private variables ---------------------------------------------------------*/
-static ledTaskContext_t meas_task_context = { .task_init = false, .meas_state = MEAS_STATE_STANDBY, .meas_done =
+static measTaskContext_t meas_task_context = { .task_init = false, .meas_state = MEAS_STATE_STANDBY, .meas_done =
 false, };
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
+static uint16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static uint16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
 
 /* Public user code ----------------------------------------------------------*/
 void Task_Meas_init(void) {
@@ -130,18 +136,21 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, uint8_t *p_result_val) {
+HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val) {
+    SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
     SYS_VERIFY_TRUE(result_cat <= MEAS_RESULT_CAT_MAX);
 
     switch (result_cat) {
         case MEAS_RESULT_CAT_TEMP_ADC:
-
+            return _meas_get_temperature_data();
             break;
 
-        case MEAS_RESULT_CAT_PD_ADC:
+        case MEAS_RESULT_CAT_RECV_PD_ADC:
+            return _meas_get_recv_pd_data(ch);
             break;
 
-        case MEAS_RESULT_CAT_MONITOR_ADC:
+        case MEAS_RESULT_CAT_MONITOR_PD_ADC:
+            return _meas_get_monitor_pd_data(ch);
             break;
     }
 
@@ -378,4 +387,109 @@ static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val) {
     }
 
     SYS_LOG_DEBUG("ADC Delay time(ms) settings: %d, %d, %d", meas_set_data.adc_delay_ms[CH1_IDX], meas_set_data.adc_delay_ms[CH2_IDX], meas_set_data.adc_delay_ms[CH3_IDX]);
+}
+
+static HAL_StatusTypeDef _meas_get_temperature_data(void) {
+    HalTempData_t temp_data_buff;
+
+    SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp_data_buff));
+    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.ch1_temp;
+    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.ch2_temp;
+    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.ch3_temp;
+
+    return HAL_OK;
+}
+
+static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch) {
+    uint8_t ch_idx;
+    uint8_t data_idx;
+    uint8_t fail_cnt;
+
+    if (MEAS_SET_CH_ALL == ch) {
+        for (ch_idx = 0; ch_idx < MEAS_SET_CH_MAX; ch_idx++) {
+            if (meas_set_data.adc_sample_cnt[ch_idx] == 0) {
+                SYS_LOG_ERR("Sampling num 0 Error");
+                return HAL_ERROR;
+            }
+
+            SYS_LOG_DEBUG("Recv PD [%d]ch: sampling num: [%d]", ch_idx, meas_set_data.adc_sample_cnt[ch_idx]);
+            fail_cnt = 0;
+            for (data_idx = 0; data_idx < meas_set_data.adc_sample_cnt[ch_idx]; data_idx++) {
+                if (HAL_OK != Hal_Pd_GetRecvData(ch_idx, &recv_pd_buff[ch_idx][data_idx])) {
+                    if (++fail_cnt > (meas_set_data.adc_sample_cnt[ch_idx] / 2)) {
+                        SYS_LOG_ERR("Recv PD [%d]ch: Data collection failed. Fail count: %d", ch_idx, fail_cnt);
+                        return HAL_ERROR;
+                    }
+                }
+            }
+            meas_result_data.recv_pd_data[ch_idx] = ARRAY_AVERAGE(recv_pd_buff[ch_idx], meas_set_data.adc_sample_cnt[ch_idx]);
+        }
+    }
+    else {
+        if (meas_set_data.adc_sample_cnt[ch] == 0) {
+            SYS_LOG_ERR("Sampling num 0 Error");
+            return HAL_ERROR;
+        }
+
+        SYS_LOG_DEBUG("Recv PD [%d]ch: sampling num: [%d]", ch, meas_set_data.adc_sample_cnt[ch]);
+        fail_cnt = 0;
+        for (data_idx = 0; data_idx < meas_set_data.adc_sample_cnt[ch]; data_idx++) {
+            if (HAL_OK != Hal_Pd_GetRecvData(ch, &recv_pd_buff[ch][data_idx])) {
+                if (++fail_cnt > (meas_set_data.adc_sample_cnt[ch] / 2)) {
+                    SYS_LOG_ERR("Recv PD [%d]ch: Data collection failed. Fail count: %d", ch, fail_cnt);
+                    return HAL_ERROR;
+                }
+            }
+        }
+        meas_result_data.recv_pd_data[ch] = ARRAY_AVERAGE(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+    }
+    
+    return HAL_OK;
+}
+
+static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
+    uint8_t ch_idx;
+    uint8_t data_idx;
+    uint8_t fail_cnt;
+    
+    if (MEAS_SET_CH_ALL == ch) {
+        for (ch_idx = 0; ch_idx < MEAS_SET_CH_MAX; ch_idx++) {
+            if (meas_set_data.adc_sample_cnt[ch_idx] == 0) {
+                SYS_LOG_ERR("Sampling num 0 Error");
+                return HAL_ERROR;
+            }
+            
+            SYS_LOG_DEBUG("Monitor PD [%d]ch: sampling num: [%d]", ch_idx, meas_set_data.adc_sample_cnt[ch_idx]);
+            fail_cnt = 0;
+            for (data_idx = 0; data_idx < meas_set_data.adc_sample_cnt[ch_idx]; data_idx++) {
+                if (HAL_OK != Hal_Pd_GetMonitorData(ch_idx, &monitor_pd_buff[ch_idx][data_idx])) {
+                    if (++fail_cnt > (meas_set_data.adc_sample_cnt[ch_idx] / 2)) {
+                        SYS_LOG_ERR("Monitor PD [%d]ch: Data collection failed. Fail count: %d", ch_idx, fail_cnt);
+                        return HAL_ERROR;
+                    }
+                }
+            }
+            meas_result_data.monitor_pd_data[ch_idx] = ARRAY_AVERAGE(monitor_pd_buff[ch_idx], meas_set_data.adc_sample_cnt[ch_idx]);
+        }
+    }
+    else {
+        if (meas_set_data.adc_sample_cnt[ch] == 0) {
+            SYS_LOG_ERR("Sampling num 0 Error");
+            return HAL_ERROR;
+        }
+        
+        SYS_LOG_DEBUG("Monitor PD [%d]ch: sampling num: [%d]", ch, meas_set_data.adc_sample_cnt[ch]);
+        fail_cnt = 0;
+        for (data_idx = 0; data_idx < meas_set_data.adc_sample_cnt[ch]; data_idx++) {
+            if (HAL_OK != Hal_Pd_GetMonitorData(ch, &monitor_pd_buff[ch][data_idx])) {
+                if (++fail_cnt > (meas_set_data.adc_sample_cnt[ch] / 2)) {
+                    SYS_LOG_ERR("Monitor PD [%d]ch: Data collection failed. Fail count: %d", ch, fail_cnt);
+                    return HAL_ERROR;
+                }
+            }
+        }
+        meas_result_data.monitor_pd_data[ch] = ARRAY_AVERAGE(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+    }
+    
+    return HAL_OK;
 }

@@ -2,8 +2,13 @@
 .vscode/
 .project
 .cproject
-.settings/
 *.launch
+
+# 전체 폴더 제외
+.settings/*
+
+# 포매터 설정 파일만 포함
+!.settings/org.eclipse.cdt.core.prefs
 
 # STM32CubeIDE 빌드 파일 및 바이너리 파일
 /Debug/

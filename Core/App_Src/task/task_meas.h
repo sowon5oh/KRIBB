@@ -33,9 +33,6 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Task_Meas_Init(void);
-void Task_Meas_Start(void);
-void Task_Meas_Stop(void);
-void Task_Meas_Process(void);
 HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, uint8_t *p_set_val);
 HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val);
 HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t ch);

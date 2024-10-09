@@ -37,14 +37,15 @@ typedef enum {
     HAL_PD_CH_NUM_1 = 0,
     HAL_PD_CH_NUM_2,
     HAL_PD_CH_NUM_3,
-    HAL_PD_CH_NUM_ALL = 4,
-    HAL_PD_CH_NUM_MAX = 4,
+    HAL_PD_CH_NUM_NUM,
 } HalPdCh_t;
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
 HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl);
+HAL_StatusTypeDef Hal_Pd_Start(void);
+HAL_StatusTypeDef Hal_Pd_Stop(void);
 HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, uint16_t *p_data);
 HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, uint16_t *p_data);
 

@@ -83,18 +83,6 @@ void Task_Meas_Init(void) {
     Task_MMI_SendDeviceInfo();
 }
 
-void Task_Meas_Start(void) {
-    //TODO
-}
-
-void Task_Meas_Stop(void) {
-    //TODO
-}
-
-void Task_Meas_Process(void) {
-    //TODO
-}
-
 HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, uint8_t *p_set_val) {
     SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
     SYS_VERIFY_TRUE(set_cat <= MEAS_SET_CAT_MAX);
@@ -337,17 +325,18 @@ static void _meas_task_req_cb(void) {
         case MEAS_STATE_ADC:
             SYS_LOG_INFO("[MEAS] ADC Delay Complete. Read ADC");
             /* Read ADC */
-            //TODO
-            meas_task_context.meas_state = MEAS_STATE_STANDBY;
+            Hal_Pd_Start();
 
             SYS_LOG_INFO("[MEAS] ADC Read Complete. Send MMI Message");
+            Hal_Pd_Stop();
+            meas_task_context.meas_state = MEAS_STATE_STANDBY;
+
             Task_MMI_SendMeasResult();
             break;
 
         default:
             break;
     }
-
 }
 
 static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val) {

@@ -59,8 +59,8 @@ TIM_HandleTypeDef htim10;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-volatile uint16_t time_1ms_cnt = 0;
-volatile uint16_t time_0_1ms_cnt = 0;
+static uint16_t led_timer_1sec_cnt;
+static AppTimer_t app_timers[APP_TIMER_TYPE_MAX];
 
 #define	UART_DEBUG_MSG 	1
 /* USER CODE END PV */
@@ -86,15 +86,29 @@ int __io_putchar(int ch) {
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-    /* 1 kHz Timer */
+    /* 1 kHz Timer (1 msec) */
+    /* increase led 1sec counter */
+    led_timer_1sec_cnt++;
+
+    /* app timer */
     if (htim->Instance == TIM7) {
-        time_1ms_cnt++;
+        for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_TYPE_MAX; timer_idx++) {
+            if (app_timers[timer_idx].active && app_timers[timer_idx].remaining_ms > 0) {
+                app_timers[timer_idx].remaining_ms--; // 1ms 감소
+                if (app_timers[timer_idx].remaining_ms == 0) {
+                    // 타이머 만료
+                    if (NULL != app_timers[timer_idx].timer_cb) {
+                        app_timers[timer_idx].timer_cb(); // 콜백 함수 호출
+                    }
+                }
+            }
+        }
     }
 
-    /* 10 kHz Timer */
-    if (htim->Instance == TIM10) {
-        time_0_1ms_cnt++;
-    }
+
+//    /* 10 kHz Timer (0.1 msec) */
+//    if (htim->Instance == TIM10) {
+//    }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
@@ -145,9 +159,9 @@ int main(void) {
     setbuf(stdout, NULL);
 #endif
 
-    /* Interrupt Config */
+    /* Timer Start */
     HAL_TIM_Base_Start_IT(&htim7);
-    HAL_TIM_Base_Start_IT(&htim10);
+//    HAL_TIM_Base_Start_IT(&htim10);
 
     /* User Module Initialize */
     (void) UART_Init(&huart1);
@@ -178,14 +192,9 @@ int main(void) {
     /* USER CODE BEGIN WHILE */
     while (1) {
         /* 1 sec timer */
-        if (time_1ms_cnt >= 1000) {
+        if (led_timer_1sec_cnt >= 1000) {
             HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
-            time_1ms_cnt = 0;
-        }
-
-        /* 1 msec timer */
-        if (time_0_1ms_cnt >= 10) {
-            time_0_1ms_cnt = 0;
+            led_timer_1sec_cnt = 0;
         }
         /* USER CODE END WHILE */
 
@@ -200,8 +209,10 @@ int main(void) {
  * @retval None
  */
 void SystemClock_Config(void) {
-    RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        0 };
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {
+        0 };
 
     /** Configure the main internal regulator output voltage
      */
@@ -254,8 +265,10 @@ static void MX_ADC1_Init(void) {
 
     /* USER CODE END ADC1_Init 0 */
 
-    ADC_ChannelConfTypeDef sConfig = { 0 };
-    ADC_InjectionConfTypeDef sConfigInjected = { 0 };
+    ADC_ChannelConfTypeDef sConfig = {
+        0 };
+    ADC_InjectionConfTypeDef sConfigInjected = {
+        0 };
 
     /* USER CODE BEGIN ADC1_Init 1 */
 
@@ -449,7 +462,8 @@ static void MX_TIM7_Init(void) {
 
     /* USER CODE END TIM7_Init 0 */
 
-    TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+    TIM_MasterConfigTypeDef sMasterConfig = {
+        0 };
 
     /* USER CODE BEGIN TIM7_Init 1 */
 
@@ -539,7 +553,8 @@ static void MX_USART1_UART_Init(void) {
  * @retval None
  */
 static void MX_GPIO_Init(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+    GPIO_InitTypeDef GPIO_InitStruct = {
+        0 };
     /* USER CODE BEGIN MX_GPIO_Init_1 */
     /* USER CODE END MX_GPIO_Init_1 */
 
@@ -601,6 +616,20 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
+void App_Timer_Start(AppTimerType_t timer_id, uint32_t timeout_ms, void (*timer_cb)(void)) {
+    if (timer_id < APP_TIMER_TYPE_MAX) {
+        app_timers[timer_id].timeout_ms = timeout_ms;
+        app_timers[timer_id].remaining_ms = timeout_ms;
+        app_timers[timer_id].timer_cb = timer_cb;
+        app_timers[timer_id].active = 1;
+    }
+}
+
+void App_Timer_Stop(AppTimerType_t timer_id) {
+    if (timer_id < APP_TIMER_TYPE_MAX) {
+        app_timers[timer_id].active = 0;
+    }
+}
 
 /* USER CODE END 4 */
 

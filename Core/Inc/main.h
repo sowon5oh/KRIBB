@@ -48,7 +48,18 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct {
+    uint32_t timeout_ms; // 타이머 간격 (ms)
+    uint32_t remaining_ms; // 남은 시간 (ms)
+    void (*timer_cb)(void); // 타이머 만료 시 호출할 콜백 함수
+    uint8_t active; // 타이머 활성화 여부
+} AppTimer_t;
 
+typedef enum {
+    APP_TIMER_TYPE_FSM = 0,
+    APP_TIMER_TYPE_MEAS,
+    APP_TIMER_TYPE_MAX,
+} AppTimerType_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -65,6 +76,9 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+void App_Timer_Start(AppTimerType_t timer_id, uint32_t timeout_ms, void (*timer_cb)(void));
+void App_Timer_Stop(AppTimerType_t timer_id);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

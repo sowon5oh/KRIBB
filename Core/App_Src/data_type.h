@@ -163,16 +163,17 @@ extern "C" {
 #define MMI_CMD3_MEAS_REQ_START_MIN_DATA_LEN (2)
 #define MMI_CMD3_MEAS_REQ_START_MAX_DATA_LEN (6)
 
-#define MMI_CMD2_MEAS_REQ_START_W_RESP   0x04
+#define MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP   0x04
 #define MMI_CMD3_MEAS_REQ_START_CH1      0x01
 #define MMI_CMD3_MEAS_REQ_START_CH2      0x02
 #define MMI_CMD3_MEAS_REQ_START_CH3      0x03
 #define MMI_CMD3_MEAS_REQ_START_DATA_LEN (7)
 
 /* RX Command Group 4: Request Device Status */
-#define MMI_CMD1_REQ_DEVICE_STATUS       0x0C
-#define MMI_CMD2_REQ_DEVICE_STATUS       0x00
-#define MMI_CMD3_REQ_DEVICE_STATUS       0x00
+#define MMI_CMD1_REQ_DEVICE_STATUS          0x0C
+#define MMI_CMD2_REQ_DEVICE_STATUS_W_RESP   0x00
+#define MMI_CMD3_REQ_DEVICE_STATUS          0x00
+#define MMI_CMD3_REQ_DEVICE_STATUS_DATA_LEN (4)
 
 /* RX Command Group 5: Device Control */
 #define MMI_CMD1_CTRL_DEVICE               0x0D
@@ -284,6 +285,20 @@ typedef struct {
         uint8_t msg[MMI_CMD3_MEAS_REQ_ALL];
     };
 } MeasResultAllDataMsg_t;
+
+#define MEAS_TARGET_CH_DEACTIV 0
+#define MEAS_TARGET_CH_ACTIVE  1
+typedef struct {
+    uint8_t ch_onoff_status[CH_NUM];
+    uint8_t target_ch[CH_NUM];
+} MeasReqStatus_t;
+
+typedef struct {
+    union {
+        MeasReqStatus_t status;
+        uint8_t msg[MMI_CMD3_REQ_DEVICE_STATUS_DATA_LEN];
+    };
+} MeasReqStatusMsg_t;
 
 typedef enum {
     ADC_SPS_32K = 0,

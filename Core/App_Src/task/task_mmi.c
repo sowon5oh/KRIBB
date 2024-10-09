@@ -37,7 +37,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t len);
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3);
-static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
+static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 /* Private variables ---------------------------------------------------------*/
 uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = {
@@ -236,7 +236,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
 
         case MMI_CMD1_REQ_DEVICE_STATUS:
             SYS_LOG_INFO("[Command 1-4: %0x0X] Request device status", cmd1);
-            _process_get_device_status(cmd2, cmd3, p_data, data_len);
+            _process_get_device_status(cmd2, cmd3);
             break;
 
         case MMI_CMD1_CTRL_DEVICE:
@@ -348,6 +348,20 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
     }
 }
 
+HAL_StatusTypeDef Task_MMI_SendMeasResult(void) {
+    MeasSetChVal_t result_ch;
+    MeasResultData_t result_data_buff;
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_START_DATA_LEN];
+    Task_Meas_RequestResult(&result_ch, &result_data_buff);
+
+    temp_msg_buff[0] = result_ch;
+    memcpy(&temp_msg_buff[1], &result_data_buff.temperature_data[result_ch], 2);
+    memcpy(&temp_msg_buff[3], &result_data_buff.recv_pd_data[result_ch], 2);
+    memcpy(&temp_msg_buff[5], &result_data_buff.monitor_pd_data[result_ch], 2);
+
+    return _mmi_send(MMI_CMD1_MEAS_REQ, MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP, result_ch, MMI_CMD3_MEAS_REQ_START_DATA_LEN, &temp_msg_buff[0]);
+}
+
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
     if (MMI_CMD2_MEAS_REQ_ALL_W_RESP == cmd2) {
         MeasResultAllDataMsg_t result_all_data_buff;
@@ -358,13 +372,9 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
         SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, MEAS_SET_CH_ALL, &result_all_data_buff.results.monitor_pd_data[0]));
         return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, &result_all_data_buff.msg[0]);
     }
-    else if (MMI_CMD2_MEAS_REQ_START_W_RESP == cmd2) {
+    else if (MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP == cmd2) {
         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
-        MeasResultDataMsg_t result_data_buff;
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_buff.results.temperature_data[0]));
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, &result_data_buff.results.recv_pd_data[0]));
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &result_data_buff.results.monitor_pd_data[0]));
-        return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, &result_data_buff.msg[0]);
+        return Task_Meas_Request(ch_cfg);
     }
     else {
         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
@@ -391,13 +401,15 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
     }
 }
 
-static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
-    SYS_VERIFY_TRUE(MMI_CMD2_REQ_DEVICE_STATUS == cmd2);
+static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3) {
+    MeasReqStatusMsg_t status_data_buff;
+
+    SYS_VERIFY_TRUE(MMI_CMD2_REQ_DEVICE_STATUS_W_RESP == cmd2);
     SYS_VERIFY_TRUE(MMI_CMD3_REQ_DEVICE_STATUS == cmd3);
     
-    //TODO
+    SYS_VERIFY_SUCCESS(Task_Meas_Get_Status(&status_data_buff.status));
     
-    return HAL_OK;
+    return _mmi_send(MMI_CMD1_REQ_DEVICE_STATUS, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, &status_data_buff.msg[0]);
 }
 
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {

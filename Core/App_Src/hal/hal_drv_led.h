@@ -31,8 +31,7 @@ typedef enum {
     HAL_LED_CH_1 = 0,
     HAL_LED_CH_2,
     HAL_LED_CH_3,
-    HAL_LED_CH_ALL,
-    HAL_LED_CH_MAX = HAL_LED_CH_ALL,
+    HAL_LED_CH_NUM,
 } HalLedCh_t;
 
 typedef enum {

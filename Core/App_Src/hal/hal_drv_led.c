@@ -41,7 +41,7 @@ HAL_StatusTypeDef Hal_Led_Init(I2C_HandleTypeDef *p_hdl) {
 }
 
 HAL_StatusTypeDef Hal_Led_Ctrl(HalLedCh_t ch_num, HalLedCtrl_t ctrl_set) {
-    SYS_VERIFY_TRUE(ch_num <= HAL_LED_CH_MAX);
+    SYS_VERIFY_TRUE(ch_num <= HAL_LED_CH_NUM);
 
     return HAL_OK;
 }

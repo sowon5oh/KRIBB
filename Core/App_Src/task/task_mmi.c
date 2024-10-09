@@ -183,12 +183,12 @@ static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
             case MMI_PROTOCOL_ETX:
                 if (_protocol_chksum_check(bitsttf_line, arr_idx)) {
                     _process_command(bitsttf_line, arr_idx);
+                    break;
                 }
                 else {
                     SYS_LOG_ERR("Checksum failed");
-                    // return HAL_ERROR;
+                    return;
                 }
-                break;
 
             default:
                 bitsttf_line[arr_idx] = p_org_line_arr[arr_idx + chg_cnt];

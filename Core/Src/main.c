@@ -189,12 +189,12 @@ int main(void) {
     HAL_UART_Transmit(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1, 1000);
 #endif
 
-    SYS_LOG_INFO("--------------------------------------------");
-    SYS_LOG_INFO("[      UNIOTECH - 3CH FL ANALYZER UOT      ]");
-    SYS_LOG_INFO("  * Build Time: %s %s", __DATE__, __TIME__);
-    SYS_LOG_INFO("  * FW Ver    : Ver. %d.%d.%2d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
-    SYS_LOG_INFO("  * HW Ver    : Ver. %d.%d", SYS_HW_MAJOR_VER, SYS_HW_MINOR_VER);
-    SYS_LOG_INFO("--------------------------------------------");
+    SYS_LOG_INFO("----------------------------------");
+    SYS_LOG_INFO("  [UNIOTECH] 3CH FL ANALYZER UOT   ");
+    SYS_LOG_INFO("* Build Time: %s %s", __DATE__, __TIME__);
+    SYS_LOG_INFO("* FW Ver    : Ver. %d.%d.%2d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
+    SYS_LOG_INFO("* HW Ver    : Ver. %d.%d", SYS_HW_MAJOR_VER, SYS_HW_MINOR_VER);
+    SYS_LOG_INFO("----------------------------------");
 
     /* Sensor Init */
     Hal_Heater_Init();
@@ -202,7 +202,9 @@ int main(void) {
     Hal_Temp_Init(&hadc1); /* adc */
     Hal_Pd_Init(&hspi1); /* adc */
 
+    SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("Finite State Machine Start");
+    SYS_LOG_INFO("----------------------------------");
     Task_Fsm_Init();
     Task_Meas_Init();
     HAL_Delay(100);

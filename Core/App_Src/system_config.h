@@ -44,7 +44,7 @@ extern "C" {
 
 #define FEATURE_TEMPERATURE_DATA_ADC    0
 #define FEATURE_TEMPERATURE_DATA_DEGREE 1
-#define FEATURE_TEMPERATURE_DATA_TYPE   FEATURE_TEMPERATURE_DATA_DEGREE
+#define FEATURE_TEMPERATURE_DATA_TYPE   FEATURE_TEMPERATURE_DATA_ADC
 
 /* Exported macro ------------------------------------------------------------*/
 

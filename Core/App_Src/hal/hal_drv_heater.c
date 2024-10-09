@@ -23,25 +23,52 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
+#define FEATURE_HAL_HEATER_TEST 0
 
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
+static void _heater_ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl);
 
 /* Private variables ---------------------------------------------------------*/
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef Hal_Heater_Init(void) {
-    HAL_GPIO_WritePin(HEAT_CON1_GPIO_Port, HEAT_CON1_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(HEAT_CON2_GPIO_Port, HEAT_CON2_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(HEAT_CON3_GPIO_Port, HEAT_CON3_Pin, GPIO_PIN_RESET);
+    _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_OFF);
+    _heater_ctrl(HAL_HEATER_CH_NUM_2, HAL_HEATER_OFF);
+    _heater_ctrl(HAL_HEATER_CH_NUM_3, HAL_HEATER_OFF);
+
+#if FEATURE_HAL_HEATER_TEST
+    SYS_LOG_INFO("HEATER TEST");
+    _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_ON);
+    HAL_Delay(10000);
+    _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_OFF);
+#endif
 
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num) {
+HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl) {
+
     return HAL_OK;
 }
 
 /* Private user code ---------------------------------------------------------*/
+static void _heater_ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl) {
+    switch (ch_num) {
+        case HAL_HEATER_CH_NUM_1:
+            HAL_GPIO_WritePin(HEAT_CON1_GPIO_Port, HEAT_CON1_Pin, ctrl);
+            break;
 
+        case HAL_HEATER_CH_NUM_2:
+            HAL_GPIO_WritePin(HEAT_CON2_GPIO_Port, HEAT_CON2_Pin, ctrl);
+            break;
+
+        case HAL_HEATER_CH_NUM_3:
+            HAL_GPIO_WritePin(HEAT_CON3_GPIO_Port, HEAT_CON3_Pin, ctrl);
+            break;
+
+        default:
+            break;
+    }
+}

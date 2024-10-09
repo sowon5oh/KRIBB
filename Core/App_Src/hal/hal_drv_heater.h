@@ -31,15 +31,19 @@ typedef enum {
     HAL_HEATER_CH_NUM_1 = 0,
     HAL_HEATER_CH_NUM_2,
     HAL_HEATER_CH_NUM_3,
-    HAL_HEATER_CH_NUM_ALL,
-    HAL_HEATER_CH_NUM_MAX
+    HAL_HEATER_CH_NUM_MAX,
 } HalHeaterCh_t;
+
+typedef enum {
+    HAL_HEATER_OFF = 0,
+    HAL_HEATER_ON,
+} HalHeaterCtrl_t;
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
 HAL_StatusTypeDef Hal_Heater_Init(void);
-HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num);
+HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl);
 
 #ifdef __cplusplus
 }

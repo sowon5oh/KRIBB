@@ -29,7 +29,8 @@
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {
     MEAS_STATE_STANDBY = 0, /* Wail for start command */
-    MEAS_STATE_MEAS,
+    MEAS_STATE_LED_ON,
+    MEAS_STATE_ADC,
     MEAS_STATE_ERROR,
     MEAS_STATE_MAX
 } measState_t;
@@ -71,7 +72,7 @@ static uint16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
 static uint16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
 
 /* Public user code ----------------------------------------------------------*/
-void Task_Meas_init(void) {
+void Task_Meas_Init(void) {
     _meas_task_init();
     
     /* initialize data */
@@ -152,7 +153,7 @@ HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t ch) {
     //            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_ON));
     //        }
     //        else {
-    //            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_OFF));
+    //            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_SET_OFF));
     //        }
     //    }
 
@@ -242,7 +243,7 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Monitor(MeasSetChVal_t ch, uint8_t *p_set_val) 
     SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
     SYS_VERIFY_PARAM_NOT_NULL(p_set_val);
     
-    if (MEAS_STATE_MEAS == meas_task_context.meas_state) {
+    if (MEAS_STATE_STANDBY != meas_task_context.meas_state) {
         SYS_LOG_ERR("Privious measure not conmplted");
         return HAL_ERROR;
     }
@@ -297,38 +298,55 @@ static void _meas_result_init(void) {
 }
 
 static HAL_StatusTypeDef _meas_op_start(MeasSetChVal_t ch) {
-    if (MEAS_STATE_MEAS == meas_task_context.meas_state) {
+    if (MEAS_STATE_STANDBY != meas_task_context.meas_state) {
         SYS_LOG_ERR("Privious measure not conmplted");
         return HAL_ERROR;
     }
 
-    meas_task_context.meas_state = MEAS_STATE_MEAS;
+    meas_task_context.meas_state = MEAS_STATE_ADC;
     
     for (uint8_t ch_idx = 0; ch_idx <= MEAS_SET_CH_3; ch_idx++) {
         meas_req_status_data.target_ch[ch_idx] = (ch == ch_idx) ? MEAS_TARGET_CH_ACTIVE : MEAS_TARGET_CH_DEACTIV;
     }
 
     SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
-    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch, HAL_LED_ON));
-    App_Timer_Start(APP_TIMER_TYPE_MEAS, meas_set_data.adc_delay_ms[ch], _meas_task_req_cb);
+    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch, meas_set_data.led_on_level[ch]));
+    App_Timer_Start(APP_TIMER_TYPE_MEAS, meas_set_data.led_on_time[ch], _meas_task_req_cb);
     
     return HAL_OK;
 }
 
 static void _meas_task_req_cb(void) {
-    SYS_LOG_INFO("[MEAS] Done. Read adc result");
+    static MeasSetChVal_t ch;
+    switch (meas_task_context.meas_state) {
+        case MEAS_STATE_LED_ON:
+            SYS_LOG_INFO("[MEAS] LED Time Complete. Start ADC Delay");
+            /* LED Off */
+            (void) Hal_Led_Ctrl(MEAS_SET_CH_1, HAL_LED_SET_OFF);
+            (void) Hal_Led_Ctrl(MEAS_SET_CH_2, HAL_LED_SET_OFF);
+            (void) Hal_Led_Ctrl(MEAS_SET_CH_3, HAL_LED_SET_OFF);
 
-    //Start ADC
-//    _meas_set_adc_sample_cnt
+            for (ch = 0; ch <= MEAS_SET_CH_3; ch++) {
+                if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch]) {
+                    break;
+                }
+            }
+            App_Timer_Start(APP_TIMER_TYPE_MEAS, meas_set_data.adc_delay_ms[ch], _meas_task_req_cb);
+            break;
 
-    //LED Off
-    (void) Hal_Led_Ctrl(MEAS_SET_CH_1, HAL_LED_OFF);
-    (void) Hal_Led_Ctrl(MEAS_SET_CH_2, HAL_LED_OFF);
-    (void) Hal_Led_Ctrl(MEAS_SET_CH_3, HAL_LED_OFF);
+        case MEAS_STATE_ADC:
+            SYS_LOG_INFO("[MEAS] ADC Delay Complete. Read ADC");
+            /* Read ADC */
+            //TODO
+            meas_task_context.meas_state = MEAS_STATE_STANDBY;
 
-    meas_task_context.meas_state = MEAS_STATE_STANDBY;
+            SYS_LOG_INFO("[MEAS] ADC Read Complete. Send MMI Message");
+            Task_MMI_SendMeasResult();
+            break;
 
-    SYS_LOG_INFO("[MEAS] Send mmi");
+        default:
+            break;
+    }
 
 }
 

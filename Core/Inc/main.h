@@ -49,10 +49,10 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 typedef struct {
-    uint32_t timeout_ms; // 타이머 간격 (ms)
-    uint32_t remaining_ms; // 남은 시간 (ms)
-    void (*timer_cb)(void); // 타이머 만료 시 호출할 콜백 함수
-    uint8_t active; // 타이머 활성화 여부
+    uint32_t timeout_ms; // Timer interval in milliseconds
+    uint32_t remaining_ms; // Remaining time in milliseconds
+    void (*timer_cb)(void); // Callback function to call when the timer expires
+    uint8_t active; // Timer activation status
 } AppTimer_t;
 
 typedef enum {

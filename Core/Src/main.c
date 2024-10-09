@@ -85,26 +85,43 @@ int __io_putchar(int ch) {
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/**
+ * @brief Timer interrupt callback function.
+ *
+ * This function is called when the timer reaches the end of its period.
+ * It is designed to handle a 1 kHz timer (1 ms tick) and increment a counter for a 1-second LED timer.
+ * Additionally, it checks the application timers (handled by TIM7) and decrements their remaining time.
+ * When an application timer reaches 0, it triggers a user-defined callback function if it's set.
+ *
+ * - 1 ms tick increments the LED 1-second counter.
+ * - Monitors the application timers in TIM7, decrements their remaining time,
+ *   and calls the registered callback when the timer expires.
+ *
+ * @param htim  TIM handle associated with the timer interrupt.
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     /* 1 kHz Timer (1 msec) */
-    /* increase led 1sec counter */
-    led_timer_1sec_cnt++;
+
+    /* 1 sec timer */
+    if (++led_timer_1sec_cnt >= 1000) {
+        HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
+        led_timer_1sec_cnt = 0;
+    }
 
     /* app timer */
     if (htim->Instance == TIM7) {
         for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_TYPE_MAX; timer_idx++) {
+            /* Check if the timer is active and if there is remaining time */
             if (app_timers[timer_idx].active && app_timers[timer_idx].remaining_ms > 0) {
-                app_timers[timer_idx].remaining_ms--; // 1ms 감소
+                app_timers[timer_idx].remaining_ms--; /* Decrease the remaining time by 1 ms */
                 if (app_timers[timer_idx].remaining_ms == 0) {
-                    // 타이머 만료
                     if (NULL != app_timers[timer_idx].timer_cb) {
-                        app_timers[timer_idx].timer_cb(); // 콜백 함수 호출
+                        app_timers[timer_idx].timer_cb(); /* Call the timer callback function */
                     }
                 }
             }
         }
     }
-
 
 //    /* 10 kHz Timer (0.1 msec) */
 //    if (htim->Instance == TIM10) {
@@ -166,9 +183,11 @@ int main(void) {
     /* User Module Initialize */
     (void) UART_Init(&huart1);
 
-    //TEST
-//    char Tx_str_data[] = "UNIOTECH CORP.\r\n";
-//    HAL_UART_Transmit(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1, 1000);
+#define TEST_UART_TX 0
+#if (TEST_UART_TX == 1)
+    char Tx_str_data[] = "UNIOTECH CORP.\r\n";
+    HAL_UART_Transmit(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1, 1000);
+#endif
 
     SYS_LOG_INFO("--------------------------------------------");
     SYS_LOG_INFO("[      UNIOTECH - 3CH FL ANALYZER UOT      ]");
@@ -185,17 +204,13 @@ int main(void) {
 
     SYS_LOG_INFO("Finite State Machine Start");
     Task_Fsm_Init();
+    Task_Meas_Init();
     HAL_Delay(100);
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
-        /* 1 sec timer */
-        if (led_timer_1sec_cnt >= 1000) {
-            HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
-            led_timer_1sec_cnt = 0;
-        }
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -287,7 +302,7 @@ static void MX_ADC1_Init(void) {
     hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
     hadc1.Init.NbrOfConversion = 3;
     hadc1.Init.DMAContinuousRequests = DISABLE;
-    hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+    hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
     if (HAL_ADC_Init(&hadc1) != HAL_OK) {
         Error_Handler();
     }
@@ -296,7 +311,7 @@ static void MX_ADC1_Init(void) {
      */
     sConfig.Channel = ADC_CHANNEL_5;
     sConfig.Rank = 1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+    sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
         Error_Handler();
     }

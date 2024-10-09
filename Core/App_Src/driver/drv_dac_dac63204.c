@@ -177,22 +177,27 @@ HAL_StatusTypeDef DRV_DAC63204_SetData(Dac63204_chSel_t channel, uint16_t data) 
     }
 
     if (HAL_OK == ret) {
-        SYS_LOG_DEBUG("DAC Set ch: %d, data: %04X\r\n", channel, data);
+        SYS_LOG_DEBUG("DAC Set ch: %d, data: %04X", channel, data);
     }
     else {
-        SYS_LOG_ERR("DAC Set failed\r\n");
+        SYS_LOG_ERR("DAC Set failed");
     }
 
     return ret;
 }
 
 HAL_StatusTypeDef DRV_DAC63204_CheckStatus(uint8_t *p_read_data) {
-    uint8_t read_buff[2] = {
-        0, };
+    uint16_t read_buff = 0;
 
     SYS_VERIFY_PARAM_NOT_NULL(p_read_data);
     SYS_VERIFY_PARAM_NOT_NULL(dac63204_context.i2c_hdl);
-    SYS_VERIFY_SUCCESS(_dac63204Read(DAC_REG_ADDR_GENERAL_STATUS, &read_buff[0]));
+    SYS_VERIFY_SUCCESS(_dac63204Read(DAC_REG_ADDR_GENERAL_STATUS, (uint8_t *)&read_buff));
+
+    SYS_LOG_DEBUG("DAC Version ID: %d", BF_GET(read_buff,1,0));
+    SYS_LOG_DEBUG("DAC Device ID: %d", BF_GET(read_buff,1,2));
+    SYS_LOG_DEBUG("DAC CH0 State: %d", BF_GET(read_buff,1,9));
+    SYS_LOG_DEBUG("DAC CH1 State: %d", BF_GET(read_buff,1,10));
+    SYS_LOG_DEBUG("DAC CH2 State: %d", BF_GET(read_buff,1,11));
 
     return HAL_OK;
 }

@@ -33,7 +33,7 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len);
 HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void);
-
+HAL_StatusTypeDef Task_MMI_SendMeasResult(void);
 #ifdef __cplusplus
 }
 #endif

@@ -24,6 +24,7 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
+#define FEATURE_HAL_TEMPERATURE_TEST 1
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -36,12 +37,18 @@ static HalTempData_t temp_data;
 HAL_StatusTypeDef Hal_Temp_Init(ADC_HandleTypeDef *p_hdl) {
     SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
     SYS_VERIFY_SUCCESS(DRV_LMT86LP_Init(p_hdl));
+
+#if FEATURE_HAL_TEMPERATURE_TEST
+    SYS_LOG_INFO("[Test] Temperature ADC");
+    SYS_VERIFY_SUCCESS(DRV_LMT86LP_Start());
+#endif
+    
     return HAL_OK;
 }
 
 void Hal_Temp_AdcCb(void) {
     SYS_VERIFY_SUCCESS_VOID(DRV_LMT86LP_GetValue(&temp_data));
-    SYS_LOG_INFO("Temperature ADC Result: %d, %d, %d", temp_data.ch1_temp, temp_data.ch2_temp, temp_data.ch3_temp);
+    SYS_LOG_INFO("Temperature ADC Result: %d, %d, %d", temp_data.ch1_adc, temp_data.ch2_adc, temp_data.ch3_adc);
 }
 
 HAL_StatusTypeDef Hal_Temp_Start(void) {

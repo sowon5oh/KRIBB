@@ -34,16 +34,12 @@ typedef enum {
     HAL_LED_CH_NUM,
 } HalLedCh_t;
 
-typedef enum {
-    HAL_LED_OFF = 0,
-    HAL_LED_ON = 1,
-} HalLedCtrl_t;
-
+#define HAL_LED_SET_OFF 0x0000
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
 HAL_StatusTypeDef Hal_Led_Init(I2C_HandleTypeDef *p_hdl);
-HAL_StatusTypeDef Hal_Led_Ctrl(HalLedCh_t ch_num, HalLedCtrl_t ctrl_set);
+HAL_StatusTypeDef Hal_Led_Ctrl(HalLedCh_t ch_num, uint16_t set_data);
 
 #ifdef __cplusplus
 }

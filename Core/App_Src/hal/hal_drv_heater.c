@@ -39,7 +39,7 @@ HAL_StatusTypeDef Hal_Heater_Init(void) {
     _heater_ctrl(HAL_HEATER_CH_NUM_3, HAL_HEATER_OFF);
 
 #if FEATURE_HAL_HEATER_TEST
-    SYS_LOG_INFO("HEATER TEST");
+    SYS_LOG_TEST("HEATER 1 TEST");
     _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_ON);
     HAL_Delay(10000);
     _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_OFF);

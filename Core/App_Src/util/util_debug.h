@@ -43,6 +43,7 @@ void DEBUG_Printf(const char *format, ...);
 #define SYS_LOG_WARN( message, args ... )
 #define SYS_LOG_ERR( message, args ... )
 #elif (USER_SYS_LOG_LEVEL == SYS_LOG_LEVEL_DEBUG)
+#define SYS_LOG_TEST( message, args ... )   PRINTFUNCTION( "[TEST] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #define SYS_LOG_DEBUG( message, args ... )   PRINTFUNCTION( "[DEBUG] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #define SYS_LOG_INFO( message, args ... )    PRINTFUNCTION( "[INFO] [%s: %d] " message, DBG_METADATA_ARGS, ## args )
 #define SYS_LOG_WARN( message, args ... )    PRINTFUNCTION( "[WARN] [%s: %d] " message, DBG_METADATA_ARGS, ## args )

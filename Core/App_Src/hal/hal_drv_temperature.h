@@ -36,9 +36,12 @@ typedef enum {
 } HalTempCh_t;
 
 typedef struct {
-    uint16_t ch1_temp;
-    uint16_t ch2_temp;
-    uint16_t ch3_temp;
+    uint16_t ch1_adc;
+    uint16_t ch2_adc;
+    uint16_t ch3_adc;
+    float ch1_temp;
+    float ch2_temp;
+    float ch3_temp;
 } HalTempData_t;
 
 /* Exported macro ------------------------------------------------------------*/

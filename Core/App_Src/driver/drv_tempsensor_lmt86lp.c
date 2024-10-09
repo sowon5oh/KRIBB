@@ -79,16 +79,17 @@ HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data) {
     adc_val[0] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
     adc_val[1] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
     adc_val[2] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
+    p_data->ch1_adc = adc_val[0];
+    p_data->ch2_adc = adc_val[1];
+    p_data->ch3_adc = adc_val[2];
+    SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", p_data->ch1_adc, p_data->ch2_adc, p_data->ch3_adc);
 
 #ifdef FEATURE_TEMPERATURE_DATA_TYPE
-#if (FEATURE_TEMPERATURE_DATA_ADC == FEATURE_TEMPERATURE_DATA_TYPE)
-    p_data->ch1_temp = adc_val[0];
-    p_data->ch2_temp = adc_val[1];
-    p_data->ch3_temp = adc_val[2];
-#else
+#if (FEATURE_TEMPERATURE_DATA_DEGREE == FEATURE_TEMPERATURE_DATA_TYPE)
     p_data->ch1_temp = _temp_converter_from_vout(adc_val[0]);
-        p_data->ch2_temp = _temp_converter_from_vout(adc_val[1]);
-        p_data->ch3_temp = _temp_converter_from_vout(adc_val[2]);
+    p_data->ch2_temp = _temp_converter_from_vout(adc_val[1]);
+    p_data->ch3_temp = _temp_converter_from_vout(adc_val[2]);
+    SYS_LOG_DEBUG("Temperature Adc Degree: %d, %d, %d", (int16_t )p_data->ch1_temp, (int16_t ) p_data->ch2_temp, (int16_t ) p_data->ch3_temp);
 #endif
 #endif
     return HAL_OK;
@@ -105,20 +106,20 @@ static float _interpolate(uint32_t vout, uint32_t vout1, float temp1, uint32_t v
 // Function to get temperature from Vout using lookup table
 static float _temp_converter_from_vout(uint32_t vout) {
     // If Vout is below the range, return the lowest temperature
-    if (vout <= lmt86lp_vout_table[0]) {
+    if (vout >= lmt86lp_vout_table[0]) {
         return lmt86lp_temp_table[0];
     }
 
     // If Vout is above the range, return the highest temperature
-    if (vout >= lmt86lp_vout_table[LMT86LP_TABLE_SIZE - 1]) {
+    if (vout <= lmt86lp_vout_table[LMT86LP_TABLE_SIZE - 1]) {
         return lmt86lp_temp_table[LMT86LP_TABLE_SIZE - 1];
     }
 
     // Search in the lookup table
     for (uint8_t idx = 0; idx < LMT86LP_TABLE_SIZE - 1; idx++) {
-        if (vout >= lmt86lp_vout_table[idx] && vout <= lmt86lp_vout_table[idx + 1]) {
+        if (vout >= lmt86lp_vout_table[idx + 1] && vout <= lmt86lp_vout_table[idx]) {
             // Linear interpolation between two points in the table
-            return _interpolate(vout, lmt86lp_vout_table[idx], lmt86lp_temp_table[idx], lmt86lp_vout_table[idx + 1], lmt86lp_temp_table[idx + 1]);
+            return _interpolate(vout, lmt86lp_vout_table[idx + 1], lmt86lp_temp_table[idx + 1], lmt86lp_vout_table[idx], lmt86lp_temp_table[idx]);
         }
     }
 

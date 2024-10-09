@@ -73,6 +73,20 @@ HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef Task_MMI_SendMeasResult(void) {
+    MeasSetChVal_t result_ch;
+    MeasResultData_t result_data_buff;
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_START_DATA_LEN];
+    Task_Meas_RequestResult(&result_ch, &result_data_buff);
+
+    temp_msg_buff[0] = result_ch;
+    memcpy(&temp_msg_buff[1], &result_data_buff.temperature_data[result_ch], 2);
+    memcpy(&temp_msg_buff[3], &result_data_buff.recv_pd_data[result_ch], 2);
+    memcpy(&temp_msg_buff[5], &result_data_buff.monitor_pd_data[result_ch], 2);
+
+    return _mmi_send(MMI_CMD1_MEAS_REQ, MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP, result_ch, MMI_CMD3_MEAS_REQ_START_DATA_LEN, &temp_msg_buff[0]);
+}
+
 /* Private user code ---------------------------------------------------------*/
 static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data) {
     uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = {
@@ -346,20 +360,6 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
         }
     }
-}
-
-HAL_StatusTypeDef Task_MMI_SendMeasResult(void) {
-    MeasSetChVal_t result_ch;
-    MeasResultData_t result_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_START_DATA_LEN];
-    Task_Meas_RequestResult(&result_ch, &result_data_buff);
-
-    temp_msg_buff[0] = result_ch;
-    memcpy(&temp_msg_buff[1], &result_data_buff.temperature_data[result_ch], 2);
-    memcpy(&temp_msg_buff[3], &result_data_buff.recv_pd_data[result_ch], 2);
-    memcpy(&temp_msg_buff[5], &result_data_buff.monitor_pd_data[result_ch], 2);
-
-    return _mmi_send(MMI_CMD1_MEAS_REQ, MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP, result_ch, MMI_CMD3_MEAS_REQ_START_DATA_LEN, &temp_msg_buff[0]);
 }
 
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {

@@ -47,7 +47,6 @@ static void _fsm_task_init(void);
 static void _fsm_send_event(FsmEvent_t event);
 static void _fsm_hdl(FsmEvent_t event);
 static HAL_StatusTypeDef _fsm_proc_meas_start(void);
-static HAL_StatusTypeDef _fsm_proc_meas_pause(void);
 static HAL_StatusTypeDef _fsm_proc_meas_done(void);
 static HAL_StatusTypeDef _fsm_proc_sleep(void);
 
@@ -184,11 +183,6 @@ static void _fsm_task_init(void) {
 }
 
 static HAL_StatusTypeDef _fsm_proc_meas_start(void) {
-    //TODO
-    return HAL_OK;
-}
-
-static HAL_StatusTypeDef _fsm_proc_meas_pause(void) {
     //TODO
     return HAL_OK;
 }

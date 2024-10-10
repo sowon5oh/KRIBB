@@ -57,7 +57,8 @@ typedef struct {
 
 typedef enum {
     APP_TIMER_TYPE_FSM = 0,
-    APP_TIMER_TYPE_MEAS,
+    APP_TIMER_TYPE_LED_ON_TIME,
+    APP_TIMER_TYPE_ADC_DELAY,
     APP_TIMER_TYPE_MAX,
 } AppTimerType_t;
 /* USER CODE END ET */

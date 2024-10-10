@@ -29,6 +29,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 
+
 /* Private variables ---------------------------------------------------------*/
 
 /* Public user code ----------------------------------------------------------*/
@@ -41,11 +42,39 @@ HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl) {
 }
 
 HAL_StatusTypeDef Hal_Pd_Start(void) {
-    return DRV_ADS130B04_Start();
+    /* Start ADC */
+    SYS_VERIFY_SUCCESS(DRV_ADS130B04_Start());
+
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef Hal_Pd_Stop(void) {
-    return DRV_ADS130B04_Stop();
+    /* Stop ADC */
+    SYS_VERIFY_SUCCESS(DRV_ADS130B04_Stop());
+
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, uint16_t *p_data) {
+    SYS_VERIFY_TRUE(ch <= HAL_PD_CH_MAX);
+    SYS_VERIFY_PARAM_NOT_NULL(p_data);
+
+    if (HAL_PD_CH_ALL == ch) {
+        int16_t pd_data_all[HAL_PD_CH_MAX];
+        SYS_VERIFY_SUCCESS(DRV_ADS130B04_GetData(DRV_ADS130B04_CH_3, &pd_data_all[HAL_PD_CH_1]));
+        SYS_VERIFY_SUCCESS(DRV_ADS130B04_GetData(DRV_ADS130B04_CH_3, &pd_data_all[HAL_PD_CH_2]));
+        SYS_VERIFY_SUCCESS(DRV_ADS130B04_GetData(DRV_ADS130B04_CH_3, &pd_data_all[HAL_PD_CH_3]));
+
+        memcpy(p_data, pd_data_all, sizeof(pd_data_all));
+    }
+    else {
+        int16_t pd_data;
+        SYS_VERIFY_SUCCESS(DRV_ADS130B04_GetData(DRV_ADS130B04_CH_3, &pd_data));
+
+        *p_data = pd_data;
+    }
+
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, uint16_t *p_data) {
@@ -54,59 +83,11 @@ HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, uint16_t *p_data) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, uint16_t *p_data) {
+HAL_StatusTypeDef Hal_Pd_Read(HalPdCh_t ch, uint16_t *p_data) {
     //TODO
+    //CH0, CH1, CH2 Read
 
     return HAL_OK;
 }
 
 /* Private user code ---------------------------------------------------------*/
-/*
- * MUX Channel Selection Table
- *
- * EN   A1   A0   | Selected Input Connected to Drain (D) Pin
- * ----------------------------------------------------------
- *  0    X    X   | All channels are off
- *  1    0    0   | S1: MP_SIG_CH_1
- *  1    0    1   | S2: MP_SIG_CH_2
- *  1    1    0   | S3: MP_SIG_CH_3
- *  1    1    1   | S4: DAC_CHECK
- *
- * - EN: Enable bit, when set to 0, all channels are off regardless of A1 and A0.
- * - A1, A0: Address bits to select the channel when EN is 1.
- * - X: Don’t care; the value of this bit doesn't matter when EN is 0.
- * - S1, S2, S3, S4: Represents the channels that can be selected.
- */
-void _monitor_mux_enable(bool enable) {
-    if (enable) {
-        HAL_GPIO_WritePin(M_SEL_EN_GPIO_Port, M_SEL_EN_Pin, GPIO_PIN_SET);
-    }
-    else {
-        HAL_GPIO_WritePin(M_SEL_EN_GPIO_Port, M_SEL_EN_Pin, GPIO_PIN_RESET);
-    }
-}
-
-void _monitor_mux_select(HalPdCh_t ch) {
-    switch (ch) {
-        case HAL_PD_CH_NUM_1:
-            HAL_GPIO_WritePin(M_SEL_A1_GPIO_Port, M_SEL_A1_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(M_SEL_A0_GPIO_Port, M_SEL_A0_Pin, GPIO_PIN_RESET);
-            break;
-            
-        case HAL_PD_CH_NUM_2:
-            HAL_GPIO_WritePin(M_SEL_A1_GPIO_Port, M_SEL_A1_Pin, GPIO_PIN_RESET);
-            HAL_GPIO_WritePin(M_SEL_A0_GPIO_Port, M_SEL_A0_Pin, GPIO_PIN_SET);
-            break;
-            
-        case HAL_PD_CH_NUM_3:
-            HAL_GPIO_WritePin(M_SEL_A1_GPIO_Port, M_SEL_A1_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(M_SEL_A0_GPIO_Port, M_SEL_A0_Pin, GPIO_PIN_RESET);
-            break;
-            
-        default:
-            SYS_LOG_ERR("Invalid Monitor Ch Selected: %d", ch);
-            return;
-    }
-
-    SYS_LOG_DEBUG("Monitor Ch %d Selected", ch);
-}

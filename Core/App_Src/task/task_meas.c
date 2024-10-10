@@ -31,6 +31,7 @@ typedef enum {
     MEAS_STATE_STANDBY = 0, /* Wail for start command */
     MEAS_STATE_LED_ON,
     MEAS_STATE_ADC,
+    MEAS_STATE_DONE,
     MEAS_STATE_ERROR,
     MEAS_STATE_MAX
 } measState_t;
@@ -69,7 +70,9 @@ static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
 static uint16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static uint16_t recv_pd_idx;
 static uint16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static uint16_t monitor_pd_idx;
 
 /* Public user code ----------------------------------------------------------*/
 void Task_Meas_Init(void) {
@@ -291,7 +294,7 @@ static HAL_StatusTypeDef _meas_op_start(MeasSetChVal_t ch) {
         return HAL_ERROR;
     }
 
-    meas_task_context.meas_state = MEAS_STATE_ADC;
+    meas_task_context.meas_state = MEAS_STATE_LED_ON;
     
     for (uint8_t ch_idx = 0; ch_idx <= MEAS_SET_CH_3; ch_idx++) {
         meas_req_status_data.target_ch[ch_idx] = (ch == ch_idx) ? MEAS_TARGET_CH_ACTIVE : MEAS_TARGET_CH_DEACTIV;
@@ -299,13 +302,16 @@ static HAL_StatusTypeDef _meas_op_start(MeasSetChVal_t ch) {
 
     SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
     SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch, meas_set_data.led_on_level[ch]));
-    App_Timer_Start(APP_TIMER_TYPE_MEAS, meas_set_data.led_on_time[ch], _meas_task_req_cb);
+    App_Timer_Start(APP_TIMER_TYPE_LED_ON_TIME, meas_set_data.led_on_time[ch], _meas_task_req_cb);
     
     return HAL_OK;
 }
 
 static void _meas_task_req_cb(void) {
     static MeasSetChVal_t ch;
+    uint32_t start_tick, end_tick;
+    uint16_t elapsed_ms;
+
     switch (meas_task_context.meas_state) {
         case MEAS_STATE_LED_ON:
             SYS_LOG_INFO("[MEAS] LED Time Complete. Start ADC Delay");
@@ -319,18 +325,32 @@ static void _meas_task_req_cb(void) {
                     break;
                 }
             }
-            App_Timer_Start(APP_TIMER_TYPE_MEAS, meas_set_data.adc_delay_ms[ch], _meas_task_req_cb);
+
+            /* Read ADC */
+            Hal_Pd_Start();
+            recv_pd_idx = 0;
+            monitor_pd_idx = 0;
+            SYS_LOG_INFO("[MEAS] ADC Read Complete. Send MMI Message");
             break;
 
         case MEAS_STATE_ADC:
-            SYS_LOG_INFO("[MEAS] ADC Delay Complete. Read ADC");
-            /* Read ADC */
-            Hal_Pd_Start();
+            start_tick = HAL_GetTick();
+//            Hal_Pd_Read();
+            end_tick = HAL_GetTick();
+            elapsed_ms = (uint16_t) (end_tick - start_tick);
+            SYS_LOG_DEBUG("Elapsed Time: %d ms", elapsed_ms);
 
-            SYS_LOG_INFO("[MEAS] ADC Read Complete. Send MMI Message");
+            if (meas_set_data.adc_delay_ms[ch] > elapsed_ms) {
+                App_Timer_Start(APP_TIMER_TYPE_ADC_DELAY, (meas_set_data.adc_delay_ms[ch] - elapsed_ms), _meas_task_req_cb);
+            }
+            else {
+                _meas_task_req_cb();
+            }
+            break;
+
+        case MEAS_STATE_DONE:
             Hal_Pd_Stop();
             meas_task_context.meas_state = MEAS_STATE_STANDBY;
-
             Task_MMI_SendMeasResult();
             break;
 

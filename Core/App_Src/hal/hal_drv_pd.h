@@ -34,10 +34,12 @@ typedef enum {
 } HalPdCat_t;
 
 typedef enum {
-    HAL_PD_CH_NUM_1 = 0,
-    HAL_PD_CH_NUM_2,
-    HAL_PD_CH_NUM_3,
-    HAL_PD_CH_NUM_NUM,
+    HAL_PD_CH_1 = 0,
+    HAL_PD_CH_2,
+    HAL_PD_CH_3,
+    HAL_PD_CH_ALL,
+    HAL_PD_CH_NUM = 3,
+    HAL_PD_CH_MAX = HAL_PD_CH_ALL,
 } HalPdCh_t;
 
 /* Exported macro ------------------------------------------------------------*/

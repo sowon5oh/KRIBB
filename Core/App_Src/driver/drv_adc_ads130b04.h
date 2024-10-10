@@ -31,10 +31,21 @@ typedef enum {
     DRV_ADS130B04_CH_0 = 0,
     DRV_ADS130B04_CH_1,
     DRV_ADS130B04_CH_2,
-    DRV_ADS130B04_CH_3,
-    DRV_ADS130B04_CH_ALL = 4,
-    DRV_ADS130B04_CH_NUM = 4,
-} Ads130b04_chSel_t;
+    DRV_ADS130B04_CH_3_0,
+    DRV_ADS130B04_CH_3_1,
+    DRV_ADS130B04_CH_3_2,
+    DRV_ADS130B04_CH_NUM = 6,
+    DRV_ADS130B04_CH_3 = DRV_ADS130B04_CH_3_0,
+    DRV_ADS130B04_CH_MAX = DRV_ADS130B04_CH_NUM,
+} Ads130b04ChSel_t;
+
+typedef enum {
+    DRV_ADS130B04_MUX_CH_0 = 0,
+    DRV_ADS130B04_MUX_CH_1,
+    DRV_ADS130B04_MUX_CH_2,
+    DRV_ADS130B04_MUX_CH_NUM = 3,
+    DRV_ADS130B04_MUX_CH_MAX = DRV_ADS130B04_MUX_CH_NUM,
+} Ads130b04Ch3MuxCh_t;
 
 typedef struct {
     uint8_t ch;
@@ -54,10 +65,7 @@ typedef void (*MeasAvrResultCb_t)(float result);
 HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_handle);
 HAL_StatusTypeDef DRV_ADS130B04_Start(void);
 HAL_StatusTypeDef DRV_ADS130B04_Stop(void);
-void DRV_ADS130B04_CFG_Change(ads130b04Data_t *p_req_info);
-void DRV_ADS130B04_MeasStop(void);
-void DRV_ADS130B04_GetSetting(uint8_t *ch, uint8_t *sps, uint16_t *samples, uint16_t *wait_time);
-HAL_StatusTypeDef DRV_ADS130B04_ReqAvr(ads130b04Data_t *p_req_info, MeasAvrResultCb_t cb_fn);
+HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data);
 
 #ifdef __cplusplus
 }

@@ -100,14 +100,13 @@ int __io_putchar(int ch) {
  * @param htim  TIM handle associated with the timer interrupt.
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-    /* 1 kHz Timer (1 msec) */
-
-    /* 1 sec timer */
+    /* 1 kHz LED timer (1 msec) */
     if (++led_timer_1sec_cnt >= 1000) {
         HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
         led_timer_1sec_cnt = 0;
     }
 
+    /* 1 kHz APP Timer (1 msec) */
     /* app timer */
     if (htim->Instance == TIM7) {
         for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_TYPE_MAX; timer_idx++) {
@@ -196,12 +195,6 @@ int main(void)
     SYS_LOG_INFO("* FW Ver    : Ver. %d.%d.%2d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
     SYS_LOG_INFO("* HW Ver    : Ver. %d.%d", SYS_HW_MAJOR_VER, SYS_HW_MINOR_VER);
     SYS_LOG_INFO("----------------------------------");
-
-    /* Sensor Init */
-    Hal_Heater_Init();
-    Hal_Led_Init(&hi2c2); /* dac */
-    Hal_Temp_Init(&hadc1); /* adc */
-    Hal_Pd_Init(&hspi1); /* adc */
 
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("Finite State Machine Start");
@@ -648,9 +641,13 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ADC_DRDY__Pin */
   GPIO_InitStruct.Pin = ADC_DRDY__Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ADC_DRDY__GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

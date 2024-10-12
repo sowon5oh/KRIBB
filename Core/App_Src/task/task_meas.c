@@ -30,10 +30,11 @@
 typedef enum {
     MEAS_STATE_STANDBY = 0, /* Wail for start command */
     MEAS_STATE_LED_ON,
-    MEAS_STATE_ADC,
-    MEAS_STATE_DONE,
+    MEAS_STATE_ADC_REQ,
+    MEAS_STATE_ADC_DONE,
+    MEAS_STATE_SEND_RESULT,
     MEAS_STATE_ERROR,
-    MEAS_STATE_MAX
+    MEAS_STATE_MAX = MEAS_STATE_ERROR,
 } measState_t;
 
 typedef struct {
@@ -69,13 +70,19 @@ static measTaskContext_t meas_task_context = {
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
-static uint16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
-static uint16_t recv_pd_idx;
-static uint16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
-static uint16_t monitor_pd_idx;
+static int16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static int16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static uint16_t temperature_adc_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static uint16_t sample_idx;
 
 /* Public user code ----------------------------------------------------------*/
 void Task_Meas_Init(void) {
+    /* Sensor Init */
+    SYS_VERIFY_SUCCESS_VOID(Hal_Heater_Init());
+    SYS_VERIFY_SUCCESS_VOID(Hal_Led_Init(&hi2c2)); /* dac */
+    SYS_VERIFY_SUCCESS_VOID(Hal_Temp_Init(&hadc1)); /* adc */
+    SYS_VERIFY_SUCCESS_VOID(Hal_Pd_Init(&hspi1, _meas_task_req_cb)); /* adc */
+
     _meas_task_init();
     
     /* initialize data */
@@ -134,19 +141,51 @@ HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t ch) {
-    //Single Read
-    _meas_op_start(ch);
+HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t meas_ch) {
+    uint8_t ch;
 
-    //Multi Read
-    //    for (uint8_t ch_idx = 0; ch_idx <= MEAS_SET_CH_3; ch_idx++) {
-    //        if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch_idx]) {
-    //            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_ON));
-    //        }
-    //        else {
-    //            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_SET_OFF));
-    //        }
-    //    }
+    if (MEAS_STATE_STANDBY != meas_task_context.meas_state) {
+        SYS_LOG_ERR("Privious measure not conmplted");
+        return HAL_ERROR;
+    }
+
+    switch (meas_ch) {
+        case MEAS_SET_CH_1:
+            ch = CH1_IDX;
+            break;
+
+        case MEAS_SET_CH_2:
+            ch = CH2_IDX;
+            break;
+
+        case MEAS_SET_CH_3:
+            ch = CH3_IDX;
+            break;
+
+        case MEAS_SET_CH_ALL:
+            SYS_LOG_ERR("All Ch Measure is TBD");
+//            for (uint8_t ch_idx = 0; ch_idx <= MEAS_SET_CH_3; ch_idx++) {
+//                if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch_idx]) {
+//                    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_ON));
+//                }
+//                else {
+//                    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_SET_OFF));
+//                }
+//            }
+            return HAL_ERROR;
+
+        default:
+            SYS_LOG_ERR("Invalid Ch %d", meas_ch);
+            return HAL_ERROR;
+    }
+
+    SYS_LOG_INFO("[MEASURE START]");
+    SYS_LOG_INFO("- CH            :%d", ch);
+    SYS_LOG_INFO("- LED ON TIME MS: %d", meas_set_data.led_on_time[ch]);
+    SYS_LOG_INFO("- LED ON LEVEL  : %d", meas_set_data.led_on_level[ch]);
+    SYS_LOG_INFO("- ADC DELAY MS  : %d", meas_set_data.adc_delay_ms[ch]);
+    SYS_LOG_INFO("- ADC ON LEVEL  : %d", meas_set_data.adc_sample_cnt[ch]);
+    _meas_op_start(ch);
 
     return HAL_OK;
 }
@@ -288,20 +327,14 @@ static void _meas_result_init(void) {
     memset(&meas_result_data, 0, sizeof(MeasResultData_t));
 }
 
-static HAL_StatusTypeDef _meas_op_start(MeasSetChVal_t ch) {
-    if (MEAS_STATE_STANDBY != meas_task_context.meas_state) {
-        SYS_LOG_ERR("Privious measure not conmplted");
-        return HAL_ERROR;
-    }
-
-    meas_task_context.meas_state = MEAS_STATE_LED_ON;
-    
-    for (uint8_t ch_idx = 0; ch_idx <= MEAS_SET_CH_3; ch_idx++) {
+static HAL_StatusTypeDef _meas_op_start(uint8_t ch) {
+    for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
         meas_req_status_data.target_ch[ch_idx] = (ch == ch_idx) ? MEAS_TARGET_CH_ACTIVE : MEAS_TARGET_CH_DEACTIV;
     }
+    meas_task_context.meas_state = MEAS_STATE_LED_ON;
 
     SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
-    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch, meas_set_data.led_on_level[ch]));
+    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl((HalLedCh_t )ch, meas_set_data.led_on_level[ch]));
     App_Timer_Start(APP_TIMER_TYPE_LED_ON_TIME, meas_set_data.led_on_time[ch], _meas_task_req_cb);
     
     return HAL_OK;
@@ -309,52 +342,91 @@ static HAL_StatusTypeDef _meas_op_start(MeasSetChVal_t ch) {
 
 static void _meas_task_req_cb(void) {
     static MeasSetChVal_t ch;
-    uint32_t start_tick, end_tick;
-    uint16_t elapsed_ms;
+    HalTempData_t temperature;
+    int16_t monitor_pd, recv_pd;
+    uint16_t temperature_adc;
 
     switch (meas_task_context.meas_state) {
+        case MEAS_STATE_STANDBY:
+            Hal_Pd_Stop();
+            break;
+
         case MEAS_STATE_LED_ON:
             SYS_LOG_INFO("[MEAS] LED Time Complete. Start ADC Delay");
             /* LED Off */
-            (void) Hal_Led_Ctrl(MEAS_SET_CH_1, HAL_LED_SET_OFF);
-            (void) Hal_Led_Ctrl(MEAS_SET_CH_2, HAL_LED_SET_OFF);
-            (void) Hal_Led_Ctrl(MEAS_SET_CH_3, HAL_LED_SET_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_SET_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_SET_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_SET_OFF);
 
             for (ch = 0; ch <= MEAS_SET_CH_3; ch++) {
                 if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch]) {
+                    SYS_LOG_DEBUG("[MEAS] CH %d Selected", ch);
                     break;
                 }
             }
 
             /* Read ADC */
-            Hal_Pd_Start();
-            recv_pd_idx = 0;
-            monitor_pd_idx = 0;
-            SYS_LOG_INFO("[MEAS] ADC Read Complete. Send MMI Message");
-            break;
-
-        case MEAS_STATE_ADC:
-            start_tick = HAL_GetTick();
-//            Hal_Pd_Read();
-            end_tick = HAL_GetTick();
-            elapsed_ms = (uint16_t) (end_tick - start_tick);
-            SYS_LOG_DEBUG("Elapsed Time: %d ms", elapsed_ms);
-
-            if (meas_set_data.adc_delay_ms[ch] > elapsed_ms) {
-                App_Timer_Start(APP_TIMER_TYPE_ADC_DELAY, (meas_set_data.adc_delay_ms[ch] - elapsed_ms), _meas_task_req_cb);
+            if (HAL_OK == Hal_Pd_Start()) {
+                if (HAL_OK == Hal_Pd_Read()) {
+                    sample_idx = 0;
+                    meas_task_context.meas_state = MEAS_STATE_ADC_REQ;
+                }
             }
             else {
+                meas_task_context.meas_state = MEAS_STATE_ERROR;
+            }
+            break;
+
+        case MEAS_STATE_ADC_REQ:
+            if (HAL_OK == Hal_Pd_Read()) {
+                meas_task_context.meas_state = MEAS_STATE_ADC_DONE;
+            }
+            else {
+                meas_task_context.meas_state = MEAS_STATE_ERROR;
                 _meas_task_req_cb();
             }
             break;
 
-        case MEAS_STATE_DONE:
-            Hal_Pd_Stop();
+        case MEAS_STATE_ADC_DONE:
+            /* Calculate Average */
+            Hal_Pd_GetMonitorData(ch, &monitor_pd_buff[ch][sample_idx]);
+            Hal_Pd_GetRecvData(ch, &recv_pd_buff[ch][sample_idx]);
+            Hal_Temp_GetData(&temperature);
+            temperature_adc = temperature.adc[ch];
+            temperature_adc_buff[ch][sample_idx] = temperature_adc;
+
+            /* Time count */
+            if (++sample_idx >= meas_set_data.adc_sample_cnt[ch]) {
+                meas_task_context.meas_state = MEAS_STATE_SEND_RESULT;
+                _meas_task_req_cb();
+            }
+            else {
+                meas_task_context.meas_state = MEAS_STATE_ADC_REQ;
+                App_Timer_Start(APP_TIMER_TYPE_ADC_DELAY, meas_set_data.adc_delay_ms[ch], _meas_task_req_cb);
+            }
+            break;
+
+        case MEAS_STATE_SEND_RESULT:
+            /* Save result */
+            recv_pd = ARRAY_AVERAGE(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+            monitor_pd = ARRAY_AVERAGE(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+            temperature_adc = ARRAY_AVERAGE(temperature_adc_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+            meas_result_data.recv_pd_data[ch] = recv_pd;
+            meas_result_data.monitor_pd_data[ch] = monitor_pd;
+            meas_result_data.temperature_data[ch] = temperature_adc;
+            SYS_LOG_INFO("[MEAS] ADC Result");
+            SYS_LOG_INFO("- receive pd : %d", meas_result_data.recv_pd_data[ch]);
+            SYS_LOG_INFO("- monitor pd : %d", meas_result_data.monitor_pd_data[ch]);
+            SYS_LOG_INFO("- temperature: %d", meas_result_data.temperature_data[ch]);
+
             meas_task_context.meas_state = MEAS_STATE_STANDBY;
+            SYS_LOG_INFO("[MEAS] ADC Read Complete. Send MMI Message");
             Task_MMI_SendMeasResult();
             break;
 
-        default:
+        case MEAS_STATE_ERROR:
+            SYS_LOG_ERR("[MEAS] Error State");
+            meas_task_context.meas_state = MEAS_STATE_STANDBY;
             break;
     }
 }
@@ -505,12 +577,12 @@ static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val) {
 
 static HAL_StatusTypeDef _meas_get_temperature_data(void) {
     HalTempData_t temp_data_buff;
-    
+
     SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp_data_buff));
-    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.ch1_temp;
-    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.ch2_temp;
-    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.ch3_temp;
-    
+    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.temp[HAL_TEMP_CH_NUM_0];
+    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.temp[HAL_TEMP_CH_NUM_1];
+    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.temp[HAL_TEMP_CH_NUM_2];
+
     return HAL_OK;
 }
 
@@ -518,7 +590,7 @@ static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch) {
     uint8_t ch_idx;
     uint8_t data_idx;
     uint8_t fail_cnt;
-    
+
     if (MEAS_SET_CH_ALL == ch) {
         for (ch_idx = 0; ch_idx < MEAS_SET_CH_MAX; ch_idx++) {
             if (meas_set_data.adc_sample_cnt[ch_idx] == 0) {
@@ -557,7 +629,7 @@ static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch) {
         }
         meas_result_data.recv_pd_data[ch] = ARRAY_AVERAGE(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
     }
-    
+
     return HAL_OK;
 }
 
@@ -572,7 +644,7 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
                 SYS_LOG_ERR("Sampling num 0 Error");
                 return HAL_ERROR;
             }
-            
+
             SYS_LOG_DEBUG("Monitor PD [%d]ch: sampling num: [%d]", ch_idx, meas_set_data.adc_sample_cnt[ch_idx]);
             fail_cnt = 0;
             for (data_idx = 0; data_idx < meas_set_data.adc_sample_cnt[ch_idx]; data_idx++) {

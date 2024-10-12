@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "hal_drv_pd.h"
 
 /* Exported constants --------------------------------------------------------*/
 typedef enum {
@@ -58,14 +59,14 @@ typedef struct {
 
 #define ADS130B04_AVR_BUFF_MAX_NUM	500
 
-typedef void (*MeasAvrResultCb_t)(float result);
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_handle);
+HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_handle, HalPdMeasRespCb_t cb_fn);
 HAL_StatusTypeDef DRV_ADS130B04_Start(void);
 HAL_StatusTypeDef DRV_ADS130B04_Stop(void);
 HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data);
+HAL_StatusTypeDef DRV_ADS130B04_Read(void);
 
 #ifdef __cplusplus
 }

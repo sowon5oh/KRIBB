@@ -42,14 +42,16 @@ typedef enum {
     HAL_PD_CH_MAX = HAL_PD_CH_ALL,
 } HalPdCh_t;
 
+typedef void (*HalPdMeasRespCb_t)(void);
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl);
+HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t cb_fn);
 HAL_StatusTypeDef Hal_Pd_Start(void);
 HAL_StatusTypeDef Hal_Pd_Stop(void);
-HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, uint16_t *p_data);
-HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, uint16_t *p_data);
+HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, int16_t *p_data);
+HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, int16_t *p_data);
+HAL_StatusTypeDef Hal_Pd_Read(void);
 
 #ifdef __cplusplus
 }

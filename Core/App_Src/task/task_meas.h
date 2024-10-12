@@ -36,6 +36,8 @@ void Task_Meas_Init(void);
 HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, uint8_t *p_set_val);
 HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val);
 HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t ch);
+void Task_Meas_RequestCb(void);
+HAL_StatusTypeDef Task_Meas_Response(void);
 HAL_StatusTypeDef Task_Meas_RequestResult(MeasSetChVal_t *p_ch, MeasResultData_t *p_data);
 HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val);
 HAL_StatusTypeDef Task_Meas_Get_Status(MeasReqStatus_t *p_status_val);

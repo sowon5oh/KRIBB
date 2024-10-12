@@ -65,6 +65,9 @@ typedef enum {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+extern I2C_HandleTypeDef hi2c2;
+extern ADC_HandleTypeDef hadc1;
+extern SPI_HandleTypeDef hspi1;
 
 /* USER CODE END EC */
 
@@ -117,6 +120,7 @@ void App_Timer_Stop(AppTimerType_t timer_id);
 #define ADC_RST__GPIO_Port GPIOC
 #define ADC_DRDY__Pin GPIO_PIN_7
 #define ADC_DRDY__GPIO_Port GPIOC
+#define ADC_DRDY__EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 

@@ -18,6 +18,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "hal_drv_pd.h"
 #include "drv_adc_ads130b04.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -107,17 +108,16 @@ typedef enum {
 
 typedef struct {
     SPI_HandleTypeDef *spi_handle;
-    ads130b04Data_t ads130b04_cfg;
-    uint8_t ads130b04_ch;
+    HalPdMeasRespCb_t cb_fn;
+    Ads130b04Ch3MuxCh_t ch_num;
+    bool data_update;
 } ads130b04Context_t;
 
 typedef struct {
     int16_t ch0;
     int16_t ch1;
     int16_t ch2;
-    int16_t ch3_0;
-    int16_t ch3_1;
-    int16_t ch3_2;
+    int16_t ch3_mux[DRV_ADS130B04_MUX_CH_NUM];
 } ads130b04Result_t;
 
 /* Private define ------------------------------------------------------------*/
@@ -208,7 +208,7 @@ typedef struct {
 #define ADS130B04_SEND_CMD_TX_LEN  2 /* [Command] + [CRC] */
 #define ADS130B04_SEND_CMD_IDX_CMD 0
 #define ADS130B04_SEND_CMD_IDX_CRC 1
-#define ADS130B04_READ_DATA_RX_LEN (DRV_ADS130B04_CH_NUM + 2) /* [Status] [CH0] [CH1] [CH2] [CH3] [CRC] */
+#define ADS130B04_READ_DATA_RX_LEN 6 /* [Status] [CH0] [CH1] [CH2] [CH3] [CRC] */
 
 #define ADS130B04_WRITE_REG_SINGLE_TX_LEN   3 /* [Command] [Write Data] [CRC] */
 #define ADS130B04_WRITE_REG_SINGLE_IDX_CMD  0
@@ -221,7 +221,7 @@ typedef struct {
 /* Private function prototypes -----------------------------------------------*/
 static HAL_StatusTypeDef _meas_enable(bool enable);
 static HAL_StatusTypeDef _send_cmd(ads130b04CmdId_t cmd);
-static HAL_StatusTypeDef _read_data(void);
+static void _read_data(void);
 static HAL_StatusTypeDef _set_clock_cfg(void);
 static HAL_StatusTypeDef _set_gain_cfg(void);
 static HAL_StatusTypeDef _set_ch_mux_cfg(void);
@@ -240,7 +240,9 @@ static uint16_t _make_crc(uint16_t *p_data);
 static void _ch4_mux_enable(bool enable);
 static void _ch4_mux_select(Ads130b04Ch3MuxCh_t ch);
 /* Private variables ---------------------------------------------------------*/
-ads130b04Context_t ads130b04_context;
+ads130b04Context_t ads130b04_context = {
+    .ch_num = DRV_ADS130B04_MUX_CH_0,
+    .data_update = false, };
 /* ADS130B04 Settings */
 static ads130b04StateMode_t ads130b04_state_mode;
 static bool ads130b04_lock;
@@ -257,12 +259,16 @@ static ads130b04ChCfg_t ads130b04_ch_cfg[DRV_ADS130B04_CH_NUM];
 static ads130b04Result_t ads130b04_result;
 
 /* Public user code ----------------------------------------------------------*/
-HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl) {
+HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t cb_fn) {
     uint16_t read_data = 0;
 
     /* attach spi handle */
     SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
     ads130b04_context.spi_handle = p_hdl;
+
+    /* attach callback function */
+    SYS_VERIFY_PARAM_NOT_NULL(cb_fn);
+    ads130b04_context.cb_fn = cb_fn;
 
     /* Pin Reset */
     HAL_GPIO_WritePin(ADC_RST__GPIO_Port, ADC_RST__Pin, GPIO_PIN_RESET);
@@ -271,7 +277,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl) {
 
     /* General Config */
     ads130b04_lock = false;
-    ads130b04_global_chop = true;
+    ads130b04_global_chop = false;
     ads130b04_sync_mode = ADS130B04_SYNC_MODE_OFF;
 
     ads130b04_word_size.crc_enable = ADS130B04_CRC_DISABLE;
@@ -324,19 +330,23 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl) {
 //    /* Reset */
 //    SYS_VERIFY_SUCCESS(_send_cmd(ADS130B04_CMD_ID_RESET));
 
-//    /* Standby */
-//    SYS_VERIFY_SUCCESS(_send_cmd(ADS130B04_CMD_ID_STANDBY));
+    /* Standby */
+    SYS_VERIFY_SUCCESS(_send_cmd(ADS130B04_CMD_ID_STANDBY));
 
     /* Apply Config */
     _set_clock_cfg();
-//    SYS_VERIFY_SUCCESS(_register_read(ADS130B04_REG_ADDR_CLOCK, 1, &read_data));
-//    /* Check Config result */
-//    SYS_LOG_DEBUG("ADC CLOCK: %04X", read_data); //0x0F8E - 3970
-//    SYS_LOG_DEBUG("- POER MODE: %04X", BF_GET(read_data, ADS130B04_PWR_MODE_BCNT, ADS130B04_PWR_MODE_BOFF));
-//    SYS_LOG_DEBUG("- OSR       : %04X", BF_GET(read_data, ADS130B04_OSR_MODE_BCNT, ADS130B04_OSR_MODE_BOFF));
-//    SYS_LOG_DEBUG("- CH ENBLE  : %04X", BF_GET(read_data, 4, ADS130B04_CH0_EN_BOFF));
+    SYS_VERIFY_SUCCESS(_register_read(ADS130B04_REG_ADDR_CLOCK, 1, &read_data));
+    /* Check Config result */
+    SYS_LOG_DEBUG("[ADC CLOCK: %04X]", read_data); //0x0F8E - 3970
+    SYS_LOG_DEBUG("- POER MODE: %04X", BF_GET(read_data, ADS130B04_PWR_MODE_BCNT, ADS130B04_PWR_MODE_BOFF));
+    SYS_LOG_DEBUG("- OSR      : %04X", BF_GET(read_data, ADS130B04_OSR_MODE_BCNT, ADS130B04_OSR_MODE_BOFF));
+    SYS_LOG_DEBUG("- CH ENBLE : %04X", BF_GET(read_data, 4, ADS130B04_CH0_EN_BOFF));
     _set_gain_cfg();
     _set_ch_mux_cfg();
+
+    /* Mux config */
+    _ch4_mux_enable(false);
+    _ch4_mux_select(DRV_ADS130B04_MUX_CH_0);
 
     return HAL_OK;
 }
@@ -352,6 +362,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Start(void) {
 
 HAL_StatusTypeDef DRV_ADS130B04_Stop(void) {
     /* Standby */
+    ads130b04_context.data_update = false;
     SYS_VERIFY_SUCCESS(_meas_enable(false));
     SYS_VERIFY_SUCCESS(_send_cmd(ADS130B04_CMD_ID_STANDBY));
     _ch4_mux_enable(false);
@@ -377,15 +388,15 @@ HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data) {
             break;
 
         case DRV_ADS130B04_CH_3_0:
-            *p_data = ads130b04_result.ch3_0;
+            *p_data = ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_0];
             break;
 
         case DRV_ADS130B04_CH_3_1:
-            *p_data = ads130b04_result.ch3_1;
+            *p_data = ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_1];
             break;
 
         case DRV_ADS130B04_CH_3_2:
-            *p_data = ads130b04_result.ch3_2;
+            *p_data = ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_2];
             break;
 
         default:
@@ -395,9 +406,18 @@ HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef DRV_ADS130B04_Read(void) {
+    ads130b04_context.data_update = true;
+    ads130b04_context.ch_num = DRV_ADS130B04_MUX_CH_0;
+
+    return HAL_OK;
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == ADC_DRDY__Pin) {
-        _read_data();
+        if (ads130b04_context.data_update) {
+            _read_data();
+        }
     }
 }
 
@@ -506,44 +526,48 @@ static HAL_StatusTypeDef _send_cmd(ads130b04CmdId_t cmd) {
  *   - If an invalid command is sent, the device responds as if the NULL command was received,
  *     outputting the STATUS register contents as the response.
  */
-static HAL_StatusTypeDef _read_data(void) {
+static void _read_data(void) {
+    uint8_t drdy_status = 0;
     uint16_t tx_buff[ADS130B04_SEND_CMD_TX_LEN];
     int16_t rx_buff[ADS130B04_READ_DATA_RX_LEN];
 
     tx_buff[ADS130B04_SEND_CMD_IDX_CMD] = ADS130B04_CMD_NULL;
     if (ADS130B04_CRC_ENABLE == ads130b04_word_size.crc_enable) {
         tx_buff[ADS130B04_SEND_CMD_IDX_CRC] = _make_crc(&tx_buff[ADS130B04_SEND_CMD_IDX_CMD]);
-        return HAL_ERROR;
     }
     else {
         tx_buff[ADS130B04_SEND_CMD_IDX_CRC] = 0; /* CRC */
     }
 
-    //TODO
+    _ch4_mux_select(ads130b04_context.ch_num);
 
-    _ch4_mux_select(DRV_ADS130B04_MUX_CH_0);
-    SYS_VERIFY_SUCCESS(_comm_tx_rx(&tx_buff[0], ADS130B04_SEND_CMD_TX_LEN, &rx_buff[0], ADS130B04_READ_DATA_RX_LEN));
+    SYS_VERIFY_SUCCESS_VOID(_comm_tx_rx(&tx_buff[0], ADS130B04_SEND_CMD_TX_LEN, &rx_buff[0], ADS130B04_READ_DATA_RX_LEN));
+
+    drdy_status = BF_GET(rx_buff[0], 4, ADS130B04_CH0_DRDY_BOFF);
+    if (drdy_status != 0x0f) {
+        SYS_LOG_ERR("[ADC MEASURE], INVALID STATUS: %0x", drdy_status);
+    }
+
     ads130b04_result.ch0 = rx_buff[1];
     ads130b04_result.ch1 = rx_buff[2];
     ads130b04_result.ch2 = rx_buff[3];
-    ads130b04_result.ch3_0 = rx_buff[4];
+    ads130b04_result.ch3_mux[ads130b04_context.ch_num] = rx_buff[4];
     
-    _ch4_mux_select(DRV_ADS130B04_MUX_CH_1);
-    SYS_VERIFY_SUCCESS(_comm_tx_rx(&tx_buff[0], ADS130B04_SEND_CMD_TX_LEN, &rx_buff[0], ADS130B04_READ_DATA_RX_LEN));
-    ads130b04_result.ch3_1 = rx_buff[4];
-    
-    _ch4_mux_select(DRV_ADS130B04_MUX_CH_2);
-    SYS_VERIFY_SUCCESS(_comm_tx_rx(&tx_buff[0], ADS130B04_SEND_CMD_TX_LEN, &rx_buff[0], ADS130B04_READ_DATA_RX_LEN));
-    ads130b04_result.ch3_2 = rx_buff[4];
-    
-    SYS_LOG_INFO("CH 0  : %04X", ads130b04_result.ch0);
-    SYS_LOG_INFO("CH 1  : %04X", ads130b04_result.ch1);
-    SYS_LOG_INFO("CH 2  : %04X", ads130b04_result.ch2);
-    SYS_LOG_INFO("CH 3-1: %04X", ads130b04_result.ch3_0);
-    SYS_LOG_INFO("CH 3-2: %04X", ads130b04_result.ch3_1);
-    SYS_LOG_INFO("CH 3-3: %04X", ads130b04_result.ch3_2);
-    
-    return HAL_OK;
+    if (++ads130b04_context.ch_num >= DRV_ADS130B04_MUX_CH_NUM) {
+        SYS_LOG_DEBUG("[ADC MEASURE] Result");
+        SYS_LOG_INFO("CH 0  : %08X, %d", ads130b04_result.ch0, ads130b04_result.ch0);
+        SYS_LOG_INFO("CH 1  : %08X, %d", ads130b04_result.ch1, ads130b04_result.ch1);
+        SYS_LOG_INFO("CH 2  : %08X, %d", ads130b04_result.ch2, ads130b04_result.ch2);
+        SYS_LOG_INFO("CH 3-1: %08X, %d", ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_0], ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_0]);
+        SYS_LOG_INFO("CH 3-2: %08X, %d", ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_1], ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_1]);
+        SYS_LOG_INFO("CH 3-3: %08X, %d", ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_2], ads130b04_result.ch3_mux[DRV_ADS130B04_MUX_CH_2]);
+
+        ads130b04_context.ch_num = DRV_ADS130B04_MUX_CH_0;
+
+        /* Callback */
+        ads130b04_context.data_update = false;
+        ads130b04_context.cb_fn();
+    }
 }
 
 static HAL_StatusTypeDef _set_clock_cfg(void) {

@@ -48,7 +48,7 @@ HAL_StatusTypeDef Hal_Temp_Init(ADC_HandleTypeDef *p_hdl) {
 
 void Hal_Temp_AdcCb(void) {
     SYS_VERIFY_SUCCESS_VOID(DRV_LMT86LP_GetValue(&temp_data));
-    SYS_LOG_INFO("Temperature ADC Result: %d, %d, %d", temp_data.ch1_adc, temp_data.ch2_adc, temp_data.ch3_adc);
+    SYS_LOG_INFO("Temperature ADC Result: %d, %d, %d", temp_data.adc[HAL_TEMP_CH_NUM_0], temp_data.adc[HAL_TEMP_CH_NUM_1], temp_data.adc[HAL_TEMP_CH_NUM_2]);
 }
 
 HAL_StatusTypeDef Hal_Temp_Start(void) {

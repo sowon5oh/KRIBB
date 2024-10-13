@@ -300,17 +300,6 @@ typedef struct {
     };
 } MeasReqStatusMsg_t;
 
-typedef enum {
-    ADC_SPS_32K = 0,
-    ADC_SPS_16K,
-    ADC_SPS_8K,
-    ADC_SPS_4K,
-    ADC_SPS_2K,
-    ADC_SPS_1K, /* Default */
-    ADC_SPS_0_5K,
-    ADC_SPS_0_25K,
-} MeasSpsSel_t;
-
 /* FRAM Address */
 #define FRAM_TEMP_SETTING_ADDR   0x00
 #define FRAM_LED_ON_TIME_ADDR    0x03

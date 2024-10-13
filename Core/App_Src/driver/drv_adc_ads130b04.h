@@ -48,17 +48,6 @@ typedef enum {
     DRV_ADS130B04_MUX_CH_MAX = DRV_ADS130B04_MUX_CH_NUM,
 } Ads130b04Ch3MuxCh_t;
 
-typedef struct {
-    uint8_t ch;
-    uint16_t Mux_ch;
-    MeasSpsSel_t sps;
-    uint16_t ads130b04_num;
-    uint16_t wait_time;
-    bool measFlag;
-} ads130b04Data_t;
-
-#define ADS130B04_AVR_BUFF_MAX_NUM	500
-
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/

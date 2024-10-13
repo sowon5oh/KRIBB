@@ -53,6 +53,25 @@ HAL_StatusTypeDef FRAM_Init(I2C_HandleTypeDef *p_handle) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef FRAM_Write(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
+    SYS_VERIFY_PARAM_NOT_NULL(p_data);
+
+    _fram_w_protection(false);
+    SYS_VERIFY_SUCCESS(_fram_write(mem_addr, p_data, data_len));
+    _fram_w_protection(true);
+
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef FRAM_Read(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
+    SYS_VERIFY_PARAM_NOT_NULL(p_data);
+
+    _fram_w_protection(false);
+    SYS_VERIFY_SUCCESS(_fram_read(mem_addr, p_data, data_len));
+
+    return HAL_OK;
+}
+
 /* Private user code ---------------------------------------------------------*/
 void _fram_w_protection(bool set) {
     (set == true) ? HAL_GPIO_WritePin(EEPROM_WP_GPIO_Port, EEPROM_WP_Pin, SET) : HAL_GPIO_WritePin(EEPROM_WP_GPIO_Port, EEPROM_WP_Pin, RESET);
@@ -62,11 +81,11 @@ void _fram_w_protection(bool set) {
 HAL_StatusTypeDef _fram_write(uint16_t mem_addr, uint8_t *data, uint16_t size) {
     SYS_VERIFY_PARAM_NOT_NULL(fram_i2c_hdl);
 
-    return HAL_I2C_Mem_Write(fram_i2c_hdl, FM24CL64_I2C_ADDR, mem_addr, I2C_MEMADD_SIZE_16BIT, data, size, HAL_MAX_DELAY);
+    return HAL_I2C_Mem_Write(fram_i2c_hdl, FM24CL64_I2C_ADDR, mem_addr, I2C_MEMADD_SIZE_8BIT, data, size, HAL_MAX_DELAY);
 }
 
 HAL_StatusTypeDef _fram_read(uint16_t mem_addr, uint8_t *data, uint16_t size) {
     SYS_VERIFY_PARAM_NOT_NULL(fram_i2c_hdl);
 
-    return HAL_I2C_Mem_Read(fram_i2c_hdl, FM24CL64_I2C_ADDR, mem_addr, I2C_MEMADD_SIZE_16BIT, data, size, HAL_MAX_DELAY);
+    return HAL_I2C_Mem_Read(fram_i2c_hdl, FM24CL64_I2C_ADDR, mem_addr, I2C_MEMADD_SIZE_8BIT, data, size, HAL_MAX_DELAY);
 }

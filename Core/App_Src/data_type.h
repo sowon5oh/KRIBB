@@ -311,6 +311,18 @@ typedef enum {
     ADC_SPS_0_25K,
 } MeasSpsSel_t;
 
+/* FRAM Address */
+#define FRAM_TEMP_SETTING_ADDR   0x00
+#define FRAM_LED_ON_TIME_ADDR    0x03
+#define FRAM_LED_ON_LEVEL_ADDR   0x09
+#define FRAM_ADC_SAMPLE_CNT_ADDR 0x0D
+#define FRAM_ADC_DELAY_MS_ADDR   0x16
+#define FRAM_TEMP_RESULT_ADDR       0x1B
+#define FRAM_RECV_PD_RESULT_ADDR    0x22
+#define FRAM_MONITOR_PD_RESULT_ADDR 0x28
+#define FRAM_DEV_CTRL_LED_STATUS_ADDR 0x2E
+#define FRAM_DEV_CTRL_TARGET_CH_ADDR  0x2F
+
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/

@@ -32,6 +32,8 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 HAL_StatusTypeDef FRAM_Init(I2C_HandleTypeDef *p_handle);
+HAL_StatusTypeDef FRAM_Write(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data);
+HAL_StatusTypeDef FRAM_Read(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data);
 
 #ifdef __cplusplus
 }

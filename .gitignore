@@ -1,9 +1,4 @@
-# STM32CubeIDE 관련 설정 파일
-.vscode/
-.project
-.cproject
 *.launch
-
 # 전체 폴더 제외
 .settings/*
 

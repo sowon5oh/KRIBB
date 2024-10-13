@@ -62,6 +62,7 @@ static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val);
 static HAL_StatusTypeDef _meas_get_temperature_data(void);
 static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch);
 static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
+static void _heater_ctrl(void);
 
 /* Private variables ---------------------------------------------------------*/
 static measTaskContext_t meas_task_context = {
@@ -185,6 +186,7 @@ HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t meas_ch) {
     SYS_LOG_INFO("- LED ON LEVEL  : %d", meas_set_data.led_on_level[ch]);
     SYS_LOG_INFO("- ADC DELAY MS  : %d", meas_set_data.adc_delay_ms[ch]);
     SYS_LOG_INFO("- ADC ON LEVEL  : %d", meas_set_data.adc_sample_cnt[ch]);
+    SYS_LOG_INFO("- AUTO TEMP CTRL: %d", meas_set_data.temp_ctrl_on[ch]);
     _meas_op_start(ch);
 
     return HAL_OK;
@@ -333,6 +335,7 @@ static HAL_StatusTypeDef _meas_op_start(uint8_t ch) {
     }
     meas_task_context.meas_state = MEAS_STATE_LED_ON;
 
+    /* LED Control */
     SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
     SYS_VERIFY_SUCCESS(Hal_Led_Ctrl((HalLedCh_t )ch, meas_set_data.led_on_level[ch]));
     App_Timer_Start(APP_TIMER_TYPE_LED_ON_TIME, meas_set_data.led_on_time[ch], _meas_task_req_cb);
@@ -449,6 +452,24 @@ static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val) 
             meas_set_data.temp_ctrl_on[CH1_IDX] = val;
             meas_set_data.temp_ctrl_on[CH2_IDX] = val;
             meas_set_data.temp_ctrl_on[CH3_IDX] = val;
+            break;
+    }
+
+    /* Temperature Control */
+    switch (val) {
+        case TEMP_CTRL_OFF:
+            App_Timer_Stop(APP_TIMER_TYPE_HEATER_CTRL);
+            Hal_Heater_Ctrl(ch, HAL_HEATER_OFF);
+            break;
+
+        case TEMP_CTRL_AUTO_ON:
+            /* Auto Control */
+            App_Timer_Start(APP_TIMER_TYPE_HEATER_CTRL, FEATURE_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
+            break;
+
+        case TEMP_CTRL_FORCE_ON:
+            App_Timer_Stop(APP_TIMER_TYPE_HEATER_CTRL);
+            Hal_Heater_Ctrl(ch, HAL_HEATER_ON);
             break;
     }
 
@@ -678,4 +699,20 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
     }
     
     return HAL_OK;
+}
+
+static void _heater_ctrl(void) {
+    int16_t cur_temp = 0;
+    for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
+        if (meas_set_data.temp_ctrl_on[ch_idx]) {
+            //TODO adc to degree
+            if (cur_temp < FEATURE_STABLE_TEMPERATURE_DEGREE) {
+                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
+            }
+            else {
+                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
+            }
+        }
+    }
+    App_Timer_Start(APP_TIMER_TYPE_HEATER_CTRL, FEATURE_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
 }

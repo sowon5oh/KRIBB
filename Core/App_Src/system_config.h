@@ -36,8 +36,13 @@ extern "C" {
 #define SYS_HW_MINOR_VER 0
 #define MODEL_NAME      "KRIBB_FLURESCENCE_ANALYZER"
 
-/* config for system */
+/* config for system log*/
 #define SYS_LOG_ENABLE   0
+#if (SYS_LOG_ENABLE == 1)
+#define USER_SYS_LOG_LEVEL    SYS_LOG_LEVEL_DEBUG
+#else
+#define USER_SYS_LOG_LEVEL    SYS_LOG_LEVEL_NONE
+#endif
 
 /* config for features */
 #define FEATURE_STABLE_TEMPERATURE_DEGREE       30

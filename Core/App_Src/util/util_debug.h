@@ -21,6 +21,7 @@
 #define _UTIL_DEBUG_H_
 
 /* Includes ------------------------------------------------------------------*/
+#include "system_config.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define DBG_METADATA_ARGS __FUNCTION__, __LINE__
@@ -30,12 +31,6 @@
 #define SYS_LOG_LEVEL_INFO    2
 #define SYS_LOG_LEVEL_WARN    3
 #define SYS_LOG_LEVEL_ERR     4
-
-#if (SYS_LOG_ENABLE == 1)
-#define USER_SYS_LOG_LEVEL    SYS_LOG_LEVEL_DEBUG
-#else
-#define USER_SYS_LOG_LEVEL    SYS_LOG_LEVEL_NONE
-#endif
 
 /* Exported macro ------------------------------------------------------------*/
 void DEBUG_Printf(const char *format, ...);

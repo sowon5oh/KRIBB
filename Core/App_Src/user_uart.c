@@ -32,7 +32,6 @@
 
 /* Private function prototypes -----------------------------------------------*/
 static HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len);
-static HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len);
 static void _hex_to_string(uint8_t *hex_array, size_t hex_array_len, char *output_string);
 
 /* Private variables ---------------------------------------------------------*/
@@ -50,7 +49,7 @@ HAL_StatusTypeDef UART_Init(UART_HandleTypeDef *p_hdl) {
     uart_hdl = (UART_HandleTypeDef*) p_hdl;
 
     /* Read Start */
-    HAL_UART_Receive_IT(uart_hdl, rx_buffer, RX_MSG_MAX_LEN);
+    HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
 
     return HAL_OK;
 }
@@ -81,20 +80,16 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == uart_hdl->Instance) {
         Task_MMI_Decoder(&rx_buffer[0], 1);
-        //TODO
-//        HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
-//        SYS_VERIFY_SUCCESS_VOID(_uartReceiveData(rx_buffer, RX_MSG_MAX_LEN));
-        SYS_VERIFY_SUCCESS_VOID(_uartReceiveData(rx_buffer, 1));
+#if (MMI_MSG_DEBUG_LOG == 1)
+        SYS_LOG_DEBUG("Uart Message Receive: %c", rx_buffer[0]);
+#endif
+        HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
     }
 }
 
 /* Private user code ---------------------------------------------------------*/
 static HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len) {
     return HAL_UART_Transmit_IT(uart_hdl, p_data, len);
-}
-
-static HAL_StatusTypeDef _uartReceiveData(uint8_t *p_data, uint16_t len) {
-    return HAL_UART_Receive_IT(uart_hdl, p_data, len);
 }
 
 static void _hex_to_string(uint8_t *hex_array, size_t hex_array_len, char *output_string) {

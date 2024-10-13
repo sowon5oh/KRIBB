@@ -31,17 +31,22 @@ extern "C" {
 typedef enum {
     TASK_FSM_STATE_IDLE = 0,
     TASK_FSM_STATE_READY,
-    TASK_FSM_STATE_MEAS,
-    TASK_FSM_STATE_MAX
+    TASK_FSM_STATE_TEST,
+    TASK_FSM_STATE_NUM,
 } FsmState_t;
 
 typedef enum {
     TASK_FSM_EVENT_INIT_DONE = 0,
-    TASK_FSM_EVENT_MEAS_REQ,
-    TASK_FSM_EVENT_MEAS_DONE,
+    TASK_FSM_EVENT_TEST_REQ,
+    TASK_FSM_EVENT_TEST_DONE,
     TASK_FSM_EVENT_TIMEOUT,
-    TASK_FSM_EVENT_MAX
+    TASK_FSM_EVENT_MAX = TASK_FSM_EVENT_TIMEOUT,
 } FsmEvent_t;
+
+typedef enum {
+    FSM_TEST_MMI_DEVICE_CTRL_LED = 0,
+/* Add.. */
+} FsmTaskTestType_t;
 
 /* Exported macro ------------------------------------------------------------*/
 

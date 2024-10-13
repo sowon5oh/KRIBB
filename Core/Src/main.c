@@ -100,10 +100,12 @@ int __io_putchar(int ch) {
  * @param htim  TIM handle associated with the timer interrupt.
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-    /* 1 kHz LED timer (1 msec) */
+    /* 1 kHz LED/FSM timer (1 sec) */
     if (++led_timer_1sec_cnt >= 1000) {
         HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
         led_timer_1sec_cnt = 0;
+
+        Task_Fsm_Process();
     }
 
     /* 1 kHz APP Timer (1 msec) */

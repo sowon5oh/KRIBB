@@ -44,13 +44,13 @@ HAL_StatusTypeDef Hal_Led_Init(I2C_HandleTypeDef *p_hdl) {
     uint8_t test_data;
     DRV_DAC63204_CheckStatus(&test_data);
 
-    _led_ctrl(HAL_LED_CH_1, 0xA000);
-    _led_ctrl(HAL_LED_CH_2, 0xA000);
-    _led_ctrl(HAL_LED_CH_3, 0xA000);
+    _led_ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_TEST);
+    _led_ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_TEST);
+    _led_ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_TEST);
     HAL_Delay(5000);
-    _led_ctrl(HAL_LED_CH_1, 0x0000);
-    _led_ctrl(HAL_LED_CH_2, 0x0000);
-    _led_ctrl(HAL_LED_CH_3, 0x0000);
+    _led_ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
+    _led_ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
+    _led_ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
 #endif
 
     return HAL_OK;

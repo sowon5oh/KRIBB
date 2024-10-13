@@ -182,6 +182,10 @@
     ((count) > 0 ? (sum / (double)(count)) : 0);   \
 })
 
+#define DOUBLE_TO_UINT16(value) \
+    ((value) < 0.0 ? 0 : \
+    ((value) > UINT16_MAX ? UINT16_MAX : (uint16_t)(value)))
+
 /* Exported functions prototypes ---------------------------------------------*/
 
 #ifdef __cplusplus

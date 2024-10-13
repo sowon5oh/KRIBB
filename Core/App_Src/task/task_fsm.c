@@ -22,6 +22,7 @@
 #include "hal_drv_heater.h"
 #include "hal_drv_led.h"
 #include "hal_drv_pd.h"
+#include "hal_drv_temperature.h"
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct {
@@ -152,7 +153,7 @@ static void _fsm_hdl(FsmEvent_t event) {
             fsm_next_state = fsm_table[index].next_state;
             action_func = fsm_table[index].action_func;
 
-            SYS_LOG_INFO("FSM Event: %d", event);
+            SYS_LOG_INFO("[FSM] Event: %d", event);
             break;
         }
     }
@@ -192,8 +193,41 @@ static HAL_StatusTypeDef _fsm_proc_sleep(void) {
 
 static HAL_StatusTypeDef _fsm_proc_test(void) {
     switch (fsm_task_cur_test) {
-        case FSM_TEST_MMI_DEVICE_CTRL_LED:
-            //TODO
+        case FSM_TEST_DEVICE_LED_ONOFF:
+            SYS_LOG_TEST("LED CH 1 ON");
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_TEST));
+            HAL_Delay(1000);
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
+            SYS_LOG_TEST("LED CH 2 ON");
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_TEST));
+            HAL_Delay(1000);
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
+            SYS_LOG_TEST("LED CH 3 ON");
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_TEST));
+            HAL_Delay(1000);
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
+            break;
+
+        case FSM_TEST_DEVICE_HEATER_ONOFF:
+            SYS_VERIFY_SUCCESS(Hal_Heater_Ctrl(HAL_HEATER_CH_1, HAL_HEATER_ON));
+            SYS_VERIFY_SUCCESS(Hal_Heater_Ctrl(HAL_HEATER_CH_2, HAL_HEATER_ON));
+            HAL_Delay(5000);
+            SYS_VERIFY_SUCCESS(Hal_Heater_Ctrl(HAL_HEATER_CH_1, HAL_HEATER_OFF));
+            SYS_VERIFY_SUCCESS(Hal_Heater_Ctrl(HAL_HEATER_CH_2, HAL_HEATER_OFF));
+            break;
+
+        case FSM_TEST_DEVICE_READ_TEMP:
+            HalTempData_t temp;
+            SYS_VERIFY_SUCCESS(Hal_Temp_Start());
+            HAL_Delay(500);
+            SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp));
+            SYS_LOG_TEST("Temperature ADC: %d, Degree: %d", temp.adc, temp.degree);
+            break;
+
+        case FSM_TEST_DEVICE_READ_PD:
+//            uint16_t pd;
+            HAL_Delay(500);
+
             break;
 
         default:

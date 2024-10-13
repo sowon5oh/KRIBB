@@ -74,15 +74,15 @@ HAL_StatusTypeDef DRV_LMT86LP_Stop(void) {
 }
 
 HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data) {
-    uint16_t adc_val[HAL_TEMP_CH_NUM_MAX];
+    uint16_t adc_val[HAL_TEMP_CH_NUM];
 
-    adc_val[HAL_TEMP_CH_NUM_0] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
-    adc_val[HAL_TEMP_CH_NUM_1] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
-    adc_val[HAL_TEMP_CH_NUM_2] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
-    p_data->adc[HAL_TEMP_CH_NUM_0] = adc_val[HAL_TEMP_CH_NUM_0];
-    p_data->adc[HAL_TEMP_CH_NUM_1] = adc_val[HAL_TEMP_CH_NUM_1];
-    p_data->adc[HAL_TEMP_CH_NUM_2] = adc_val[HAL_TEMP_CH_NUM_2];
-    SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", p_data->adc[HAL_TEMP_CH_NUM_0], p_data->adc[HAL_TEMP_CH_NUM_1], p_data->adc[HAL_TEMP_CH_NUM_2]);
+    adc_val[HAL_TEMP_CH_0] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
+    adc_val[HAL_TEMP_CH_1] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
+    adc_val[HAL_TEMP_CH_2] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
+    p_data->adc[HAL_TEMP_CH_0] = adc_val[HAL_TEMP_CH_0];
+    p_data->adc[HAL_TEMP_CH_1] = adc_val[HAL_TEMP_CH_1];
+    p_data->adc[HAL_TEMP_CH_2] = adc_val[HAL_TEMP_CH_2];
+    SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", p_data->adc[HAL_TEMP_CH_0], p_data->adc[HAL_TEMP_CH_1], p_data->adc[HAL_TEMP_CH_NUM_0_2]);
 
 #ifdef FEATURE_TEMPERATURE_DATA_TYPE
 #if (FEATURE_TEMPERATURE_DATA_DEGREE == FEATURE_TEMPERATURE_DATA_TYPE)

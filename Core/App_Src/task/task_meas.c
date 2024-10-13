@@ -71,8 +71,8 @@ static measTaskContext_t meas_task_context = {
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
-static int16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
-static int16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static uint16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
+static uint16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
 static uint16_t temperature_adc_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
 static uint16_t sample_idx;
 
@@ -170,7 +170,7 @@ HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t meas_ch) {
 //                    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_ON));
 //                }
 //                else {
-//                    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_SET_OFF));
+//                    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_LEVEL_OFF));
 //                }
 //            }
             return HAL_ERROR;
@@ -357,9 +357,9 @@ static void _meas_task_req_cb(void) {
         case MEAS_STATE_LED_ON:
             SYS_LOG_INFO("[MEAS] LED Time Complete. Start ADC Delay");
             /* LED Off */
-            (void) Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_SET_OFF);
-            (void) Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_SET_OFF);
-            (void) Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_SET_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
 
             for (ch = 0; ch <= MEAS_SET_CH_3; ch++) {
                 if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch]) {
@@ -600,9 +600,9 @@ static HAL_StatusTypeDef _meas_get_temperature_data(void) {
     HalTempData_t temp_data_buff;
 
     SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp_data_buff));
-    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.temp[HAL_TEMP_CH_NUM_0];
-    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.temp[HAL_TEMP_CH_NUM_1];
-    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.temp[HAL_TEMP_CH_NUM_2];
+    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.degree[HAL_TEMP_CH_0];
+    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.degree[HAL_TEMP_CH_1];
+    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.degree[HAL_TEMP_CH_2];
 
     return HAL_OK;
 }

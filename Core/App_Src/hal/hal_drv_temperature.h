@@ -28,16 +28,16 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 typedef enum {
-    HAL_TEMP_CH_NUM_0 = 0,
-    HAL_TEMP_CH_NUM_1,
-    HAL_TEMP_CH_NUM_2,
-    HAL_TEMP_CH_NUM_ALL = 3,
-    HAL_TEMP_CH_NUM_MAX = HAL_TEMP_CH_NUM_ALL,
+    HAL_TEMP_CH_0 = 0,
+    HAL_TEMP_CH_1,
+    HAL_TEMP_CH_2,
+    HAL_TEMP_CH_ALL = 3,
+    HAL_TEMP_CH_NUM = HAL_TEMP_CH_ALL,
 } HalTempCh_t;
 
 typedef struct {
-    uint16_t adc[HAL_TEMP_CH_NUM_MAX];
-    float temp[HAL_TEMP_CH_NUM_MAX];
+    uint16_t adc[HAL_TEMP_CH_NUM];
+    float degree[HAL_TEMP_CH_NUM];
 } HalTempData_t;
 
 /* Exported macro ------------------------------------------------------------*/

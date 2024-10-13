@@ -34,7 +34,8 @@ typedef enum {
     HAL_LED_CH_NUM,
 } HalLedCh_t;
 
-#define HAL_LED_SET_OFF 0x0000
+#define HAL_LED_LEVEL_OFF  0x0000
+#define HAL_LED_LEVEL_TEST 0xA000
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/

@@ -28,10 +28,10 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 typedef enum {
-    HAL_HEATER_CH_NUM_1 = 0,
-    HAL_HEATER_CH_NUM_2,
-    HAL_HEATER_CH_NUM_3,
-    HAL_HEATER_CH_NUM_MAX,
+    HAL_HEATER_CH_1 = 0,
+    HAL_HEATER_CH_2,
+    HAL_HEATER_CH_3,
+    HAL_HEATER_CH_NUM,
 } HalHeaterCh_t;
 
 typedef enum {

@@ -44,7 +44,10 @@ typedef enum {
 } FsmEvent_t;
 
 typedef enum {
-    FSM_TEST_MMI_DEVICE_CTRL_LED = 0,
+    FSM_TEST_DEVICE_LED_ONOFF = 0,
+    FSM_TEST_DEVICE_HEATER_ONOFF,
+    FSM_TEST_DEVICE_READ_PD,
+    FSM_TEST_DEVICE_READ_TEMP,
 /* Add.. */
 } FsmTaskTestType_t;
 

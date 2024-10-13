@@ -34,15 +34,15 @@ static void _heater_ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl);
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef Hal_Heater_Init(void) {
-    _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_OFF);
-    _heater_ctrl(HAL_HEATER_CH_NUM_2, HAL_HEATER_OFF);
-    _heater_ctrl(HAL_HEATER_CH_NUM_3, HAL_HEATER_OFF);
+    _heater_ctrl(HAL_HEATER_CH_1, HAL_HEATER_OFF);
+    _heater_ctrl(HAL_HEATER_CH_2, HAL_HEATER_OFF);
+    _heater_ctrl(HAL_HEATER_CH_3, HAL_HEATER_OFF);
 
 #if FEATURE_HAL_HEATER_TEST
     SYS_LOG_TEST("HEATER 1 TEST");
-    _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_ON);
+    _heater_ctrl(HAL_HEATER_CH_1, HAL_HEATER_ON);
     HAL_Delay(10000);
-    _heater_ctrl(HAL_HEATER_CH_NUM_1, HAL_HEATER_OFF);
+    _heater_ctrl(HAL_HEATER_CH_1, HAL_HEATER_OFF);
 #endif
 
     return HAL_OK;
@@ -57,15 +57,15 @@ HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl) {
 /* Private user code ---------------------------------------------------------*/
 static void _heater_ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl) {
     switch (ch_num) {
-        case HAL_HEATER_CH_NUM_1:
+        case HAL_HEATER_CH_1:
             HAL_GPIO_WritePin(HEAT_CON1_GPIO_Port, HEAT_CON1_Pin, ctrl);
             break;
 
-        case HAL_HEATER_CH_NUM_2:
+        case HAL_HEATER_CH_2:
             HAL_GPIO_WritePin(HEAT_CON2_GPIO_Port, HEAT_CON2_Pin, ctrl);
             break;
 
-        case HAL_HEATER_CH_NUM_3:
+        case HAL_HEATER_CH_3:
             HAL_GPIO_WritePin(HEAT_CON3_GPIO_Port, HEAT_CON3_Pin, ctrl);
             break;
 

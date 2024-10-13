@@ -24,7 +24,7 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define FEATURE_HAL_TEMPERATURE_TEST 1
+#define FEATURE_HAL_TEMPERATURE_TEST 0
 
 /* Private macro -------------------------------------------------------------*/
 

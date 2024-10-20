@@ -25,10 +25,17 @@
 /* Exported constants --------------------------------------------------------*/
 #define DBG_METADATA_ARGS __FUNCTION__, __LINE__
 
-#if (SYS_LOG_ENABLE == 1)
+#ifdef SYS_LOG_ENABLE_CFG
+#if (SYS_LOG_ENABLE_CFG == 1)
+/* If SYS_LOG_ENABLE_CFG is 1, set the log level according to SYS_LOG_LEVEL_CFG */
 #define USER_SYS_LOG_LEVEL    SYS_LOG_LEVEL_CFG
 #else
+/* If SYS_LOG_ENABLE_CFG is not 1, disable logging */
 #define USER_SYS_LOG_LEVEL    SYS_LOG_LEVEL_NONE
+#endif
+#else
+/* Trigger an error if SYS_LOG_ENABLE_CFG is not defined */
+#error "Define SYS_LOG_ENABLE_CFG"
 #endif
 
 /* Exported macro ------------------------------------------------------------*/

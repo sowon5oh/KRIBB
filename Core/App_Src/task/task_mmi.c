@@ -61,8 +61,7 @@ void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
             _protocol_decoder(&one_line[0], ch_cnt);
             SYS_LOG_INFO("Decoder Start");
 #if (MMI_MSG_DEBUG_LOG == 1)
-            for(uint8_t hex_len = 0; hex_len < ch_cnt; hex_len++)
-            {
+            for (uint8_t hex_len = 0; hex_len < ch_cnt; hex_len++) {
                 SYS_LOG_DEBUG("%02X", one_line[hex_len]);
             }
 #endif
@@ -288,22 +287,22 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
         case MMI_CMD2_INFO_WHO_AM_I_AND_DEVICE_I_W_RESP:
             SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE == cmd3);
             device_info_data_len = MMI_CMD3_INFO_WHO_AM_I_AND_DEVICE_DATA_LEN;
-            device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 3) & 0xFF;
-            device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 2) & 0xFF;
-            device_info_data_val[2] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 1) & 0xFF;
+            device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 24) & 0xFF;
+            device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 16) & 0xFF;
+            device_info_data_val[2] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 8) & 0xFF;
             device_info_data_val[3] = MMI_PROTOCOL_WHO_AM_I_VAL & 0xFF;
             device_info_data_val[4] = SYS_FW_MAJOR_VER;
             device_info_data_val[5] = SYS_FW_MINOR_VER;
-            device_info_data_val[6] = (SYS_FW_PATCH_VER >> 1) & 0xFF;
+            device_info_data_val[6] = (SYS_FW_PATCH_VER >> 8) & 0xFF;
             device_info_data_val[7] = SYS_FW_PATCH_VER & 0xFF;
             break;
 
         case MMI_CMD2_INFO_WHO_AM_I_W_RESP:
             SYS_VERIFY_TRUE(MMI_CMD3_INFO_WHO_AM_I == cmd3);
             device_info_data_len = MMI_CMD3_INFO_WHO_AM_I_DATA_LEN;
-            device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 3) & 0xFF;
-            device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 2) & 0xFF;
-            device_info_data_val[2] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 1) & 0xFF;
+            device_info_data_val[0] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 24) & 0xFF;
+            device_info_data_val[1] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 16) & 0xFF;
+            device_info_data_val[2] = (MMI_PROTOCOL_WHO_AM_I_VAL >> 8) & 0xFF;
             device_info_data_val[3] = MMI_PROTOCOL_WHO_AM_I_VAL & 0xFF;
             break;
 
@@ -312,7 +311,7 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
             device_info_data_len = MMI_CMD3_INFO_DEVICE_DATA_LEN;
             device_info_data_val[0] = SYS_FW_MAJOR_VER;
             device_info_data_val[1] = SYS_FW_MINOR_VER;
-            device_info_data_val[2] = (SYS_FW_PATCH_VER >> 1) & 0xFF;
+            device_info_data_val[2] = (SYS_FW_PATCH_VER >> 8) & 0xFF;
             device_info_data_val[3] = SYS_FW_PATCH_VER & 0xFF;
             break;
 

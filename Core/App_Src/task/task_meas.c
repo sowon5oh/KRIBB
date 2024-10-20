@@ -620,9 +620,15 @@ static HAL_StatusTypeDef _meas_get_temperature_data(void) {
     HalTempData_t temp_data_buff;
 
     SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp_data_buff));
+#if(FEATURE_TEMPERATURE_DATA_ADC == FEATURE_TEMPERATURE_DATA_TYPE)
+    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.adc[HAL_TEMP_CH_0];
+    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.adc[HAL_TEMP_CH_1];
+    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.adc[HAL_TEMP_CH_2];
+#else
     meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.degree[HAL_TEMP_CH_0];
     meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.degree[HAL_TEMP_CH_1];
     meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.degree[HAL_TEMP_CH_2];
+#endif
 
     return HAL_OK;
 }
@@ -727,9 +733,7 @@ static void _heater_ctrl(void) {
     for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
         if (meas_set_data.temp_ctrl_on[ch_idx]) {
             SYS_VERIFY_SUCCESS_VOID(Hal_Temp_GetData(&temp_data));
-            if ((FEATURE_TEMPERATURE_MAX_VAL < temp_data.degree[ch_idx]) | (FEATURE_TEMPERATURE_MIN_VAL > temp_data.degree[ch_idx])) {
-                break;
-            }
+            SYS_VERIFY_TRUE_VOID((FEATURE_TEMPERATURE_MAX_VAL >= temp_data.degree[ch_idx]) && (FEATURE_TEMPERATURE_MIN_VAL <= temp_data.degree[ch_idx]));
 
             if (temp_data.degree[ch_idx] < FEATURE_STABLE_TEMPERATURE_DEGREE) {
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);

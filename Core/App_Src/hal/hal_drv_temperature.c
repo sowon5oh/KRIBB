@@ -48,7 +48,9 @@ HAL_StatusTypeDef Hal_Temp_Init(ADC_HandleTypeDef *p_hdl) {
 
 void Hal_Temp_AdcCb(void) {
     SYS_VERIFY_SUCCESS_VOID(DRV_LMT86LP_GetValue(&temp_data));
-    SYS_LOG_INFO("Temperature ADC Result: %d, %d, %d", temp_data.adc[HAL_TEMP_CH_0], temp_data.adc[HAL_TEMP_CH_1], temp_data.adc[HAL_TEMP_CH_2]);
+    SYS_LOG_DEBUG("Temperature Result");
+    SYS_LOG_DEBUG(" - ADC   : %d, %d, %d", temp_data.adc[HAL_TEMP_CH_0], temp_data.adc[HAL_TEMP_CH_1], temp_data.adc[HAL_TEMP_CH_2]);
+    SYS_LOG_DEBUG(" - Degree: %d, %d, %d", (int16_t )temp_data.degree[HAL_TEMP_CH_0], (int16_t )temp_data.degree[HAL_TEMP_CH_1], (int16_t )temp_data.degree[HAL_TEMP_CH_2]);
 }
 
 HAL_StatusTypeDef Hal_Temp_Start(void) {

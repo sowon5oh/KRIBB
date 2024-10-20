@@ -27,12 +27,8 @@
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-#ifdef FEATURE_TEMPERATURE_DATA_TYPE
-#if (FEATURE_TEMPERATURE_DATA_DEGREE == FEATURE_TEMPERATURE_DATA_TYPE)
 static float _interpolate(uint32_t vout, uint32_t vout1, float temp1, uint32_t vout2, float temp2);
 static float _temp_converter_from_vout(uint32_t vout);
-#endif
-#endif
 
 /* Private variables ---------------------------------------------------------*/
 #ifdef FEATURE_TEMPERATURE_DATA_TYPE
@@ -40,7 +36,6 @@ static float _temp_converter_from_vout(uint32_t vout);
 #error "Define FEATURE_TEMPERATURE_DATA_TYPE"
 #endif
 
-#if (FEATURE_TEMPERATURE_DATA_DEGREE == FEATURE_TEMPERATURE_DATA_TYPE)
 static uint32_t lmt86lp_vout_table[] = { 2616, 2607, 2598, 2589, 2580, 2571, 2562, 2553, 2543, 2533, 2522, 2512, 2501, 2491, 2481, 2470, 2460, 2449, 2439, 2429, 2418, 2408, 2397,
     2387, 2376, 2366, 2355, 2345, 2334, 2324, 2313, 2302, 2292, 2281, 2271, 2260, 2250, 2239, 2228, 2218, 2207, 2197, 2186, 2175, 2164, 2154, 2143, 2132, 2122, 2111, 2100, 2089,
     2079, 2068, 2057, 2047, 2036, 2025, 2014, 2004, 1993, 1982, 1971, 1961, 1950, 1939, 1928, 1918, 1907, 1896, 1885, 1874, 1864, 1853, 1842, 1831, 1820, 1810, 1799, 1788, 1777,
@@ -55,7 +50,6 @@ static float lmt86lp_temp_table[] = { -50, -49, -48, -47, -46, -45, -44, -43, -4
     107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141,
     142, 143, 144, 145, 146, 147, 148, 149, 150 };
 #define LMT86LP_TABLE_SIZE 201
-#endif
 
 ADC_HandleTypeDef *tempsensor_adc_hdl;
 
@@ -87,23 +81,15 @@ HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data) {
     p_data->adc[HAL_TEMP_CH_2] = adc_val[HAL_TEMP_CH_2];
     SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", p_data->adc[HAL_TEMP_CH_0], p_data->adc[HAL_TEMP_CH_1], p_data->adc[HAL_TEMP_CH_2]);
 
-#if (FEATURE_TEMPERATURE_DATA_DEGREE == FEATURE_TEMPERATURE_DATA_TYPE)
     p_data->degree[HAL_TEMP_CH_0] = _temp_converter_from_vout(adc_val[0]);
     p_data->degree[HAL_TEMP_CH_1] = _temp_converter_from_vout(adc_val[1]);
     p_data->degree[HAL_TEMP_CH_2] = _temp_converter_from_vout(adc_val[2]);
     SYS_LOG_DEBUG("Temperature Adc Degree: %d, %d, %d", (int16_t )p_data->degree[HAL_TEMP_CH_0], (int16_t ) p_data->degree[HAL_TEMP_CH_1], (int16_t ) p_data->degree[HAL_TEMP_CH_2]);
-#else
-    p_data->degree[HAL_TEMP_CH_0] = -9999.0f;
-    p_data->degree[HAL_TEMP_CH_1] = -9999.0f;
-    p_data->degree[HAL_TEMP_CH_2] = -9999.0f;
-#endif
 
     return HAL_OK;
 }
 
 /* Private user code ---------------------------------------------------------*/
-#ifdef FEATURE_TEMPERATURE_DATA_TYPE
-#if (FEATURE_TEMPERATURE_DATA_DEGREE == FEATURE_TEMPERATURE_DATA_TYPE)
 // Linear interpolation function
 static float _interpolate(uint32_t vout, uint32_t vout1, float temp1, uint32_t vout2, float temp2) {
     return temp1 + ((vout - vout1) * (temp2 - temp1) / (vout2 - vout1));
@@ -132,5 +118,3 @@ static float _temp_converter_from_vout(uint32_t vout) {
     // Default case (should not occur)
     return -1.0f;
 }
-#endif
-#endif

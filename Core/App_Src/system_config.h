@@ -39,10 +39,11 @@ extern "C" {
 /* config for system log*/
 #define SYS_LOG_ENABLE_CFG  1
 
-#define SYS_LOG_LEVEL_DEBUG 0
-#define SYS_LOG_LEVEL_INFO  1
-#define SYS_LOG_LEVEL_WARN  2
-#define SYS_LOG_LEVEL_ERR   3
+#define SYS_LOG_LEVEL_NONE  0
+#define SYS_LOG_LEVEL_DEBUG 1
+#define SYS_LOG_LEVEL_INFO  2
+#define SYS_LOG_LEVEL_WARN  3
+#define SYS_LOG_LEVEL_ERR   4
 #define SYS_LOG_LEVEL_CFG   SYS_LOG_LEVEL_DEBUG
 
 /* config for features */

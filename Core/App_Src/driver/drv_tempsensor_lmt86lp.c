@@ -85,13 +85,13 @@ HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data) {
     p_data->adc[HAL_TEMP_CH_0] = adc_val[HAL_TEMP_CH_0];
     p_data->adc[HAL_TEMP_CH_1] = adc_val[HAL_TEMP_CH_1];
     p_data->adc[HAL_TEMP_CH_2] = adc_val[HAL_TEMP_CH_2];
-    SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", p_data->adc[HAL_TEMP_CH_0], p_data->adc[HAL_TEMP_CH_1], p_data->adc[HAL_TEMP_CH_NUM_0_2]);
+    SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", p_data->adc[HAL_TEMP_CH_0], p_data->adc[HAL_TEMP_CH_1], p_data->adc[HAL_TEMP_CH_2]);
 
 #if (FEATURE_TEMPERATURE_DATA_DEGREE == FEATURE_TEMPERATURE_DATA_TYPE)
     p_data->degree[HAL_TEMP_CH_0] = _temp_converter_from_vout(adc_val[0]);
     p_data->degree[HAL_TEMP_CH_1] = _temp_converter_from_vout(adc_val[1]);
     p_data->degree[HAL_TEMP_CH_2] = _temp_converter_from_vout(adc_val[2]);
-    SYS_LOG_DEBUG("Temperature Adc Degree: %d, %d, %d", (int16_t )p_data->ch1_temp, (int16_t ) p_data->ch2_temp, (int16_t ) p_data->ch3_temp);
+    SYS_LOG_DEBUG("Temperature Adc Degree: %d, %d, %d", (int16_t )p_data->degree[HAL_TEMP_CH_0], (int16_t ) p_data->degree[HAL_TEMP_CH_1], (int16_t ) p_data->degree[HAL_TEMP_CH_2]);
 #else
     p_data->degree[HAL_TEMP_CH_0] = -9999.0f;
     p_data->degree[HAL_TEMP_CH_1] = -9999.0f;

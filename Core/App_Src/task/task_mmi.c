@@ -25,6 +25,8 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
+#define MMI_MSG_DEBUG_LOG 1
+
 #define PROTOCOL_BUFF_TX_LEN_MAX	MMI_PROTOCOL_TX_MSG_LEN_MAX
 #define PROTOCOL_BUFF_RX_LEN_MAX	MMI_PROTOCOL_RX_MSG_LEN_MAX
 
@@ -57,6 +59,13 @@ void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
 
         if (one_line[ch_cnt - 1] == MMI_PROTOCOL_ETX) {
             _protocol_decoder(&one_line[0], ch_cnt);
+            SYS_LOG_INFO("Decoder Start");
+#if (MMI_MSG_DEBUG_LOG == 1)
+            for(uint8_t hex_len = 0; hex_len < ch_cnt; hex_len++)
+            {
+                SYS_LOG_DEBUG("%02X", one_line[hex_len]);
+            }
+#endif
             ch_cnt = 0;
 
             memset(&one_line[0], 0, PROTOCOL_BUFF_RX_LEN_MAX);

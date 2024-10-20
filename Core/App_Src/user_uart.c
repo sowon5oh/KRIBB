@@ -28,7 +28,6 @@
 #define RX_MSG_MAX_LEN	MMI_PROTOCOL_RX_MSG_LEN_MAX
 #define RX_BUFFER_SIZE 	(RX_MSG_MAX_LEN * 2)
 /* Private macro -------------------------------------------------------------*/
-#define MMI_MSG_DEBUG_LOG 1
 
 /* Private function prototypes -----------------------------------------------*/
 static HAL_StatusTypeDef _uartSendData(uint8_t *p_data, uint16_t len);
@@ -80,9 +79,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == uart_hdl->Instance) {
         Task_MMI_Decoder(&rx_buffer[0], 1);
-#if (MMI_MSG_DEBUG_LOG == 1)
-        SYS_LOG_DEBUG("Uart Message Receive: %c", rx_buffer[0]);
-#endif
         HAL_UART_Receive_IT(uart_hdl, rx_buffer, 1);
     }
 }

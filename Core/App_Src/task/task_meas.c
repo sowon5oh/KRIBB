@@ -253,18 +253,22 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, uint8_t *p_set_val) {
     
     switch (ch) {
         case MEAS_SET_CH_1:
-            return Hal_Led_Ctrl(HAL_LED_CH_1, set_val);
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, set_val));
+            return HAL_OK;
 
         case MEAS_SET_CH_2:
-            return Hal_Led_Ctrl(HAL_LED_CH_2, set_val);
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, set_val));
+            return HAL_OK;
 
         case MEAS_SET_CH_3:
-            return Hal_Led_Ctrl(HAL_LED_CH_3, set_val);
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, set_val));
+            return HAL_OK;
 
         case MEAS_SET_CH_ALL:
-            return Hal_Led_Ctrl(HAL_LED_CH_1, set_val);
-            return Hal_Led_Ctrl(HAL_LED_CH_2, set_val);
-            return Hal_Led_Ctrl(HAL_LED_CH_3, set_val);
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, set_val));
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, set_val));
+            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, set_val));
+            return HAL_OK;
 
         default:
             return HAL_ERROR;

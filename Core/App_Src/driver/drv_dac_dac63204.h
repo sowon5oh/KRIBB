@@ -32,7 +32,7 @@ typedef enum {
     DRV_DAC63204_CH_1,
     DRV_DAC63204_CH_2,
     DRV_DAC63204_CH_3,
-    DRV_DAC63204_CH_ALL,
+    DRV_DAC63204_CH_NUM,
 } Dac63204_chSel_t;
 
 /* Exported macro ------------------------------------------------------------*/

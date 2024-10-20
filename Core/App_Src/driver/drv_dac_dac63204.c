@@ -134,56 +134,47 @@ HAL_StatusTypeDef DRV_DAC63204_Init(I2C_HandleTypeDef *p_hdl) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef DRV_DAC63204_SetData(Dac63204_chSel_t channel, uint16_t data) {
-    HAL_StatusTypeDef ret = HAL_OK;
+HAL_StatusTypeDef DRV_DAC63204_SetData(Dac63204_chSel_t ch, uint16_t data) {
     uint16_t write_data = 0;
 
-    if (data > 0xFF0) //FF0 = 4080
-    {
+    SYS_VERIFY_TRUE(DRV_DAC63204_CH_NUM > ch);
+
+    if (data > 0xFF0) {
+        //FF0 = 4080
         write_data = 0xFF0;
-        SYS_LOG_WARN("Invalid DAC Set value, Value changed. %04X ==> %04X", data, write_data);
+        SYS_LOG_WARN("DAC Set value too low, Value changed. %04X ==> %04X", data, write_data);
     }
     else {
-        write_data = (data << 4) & 0xFFF0; //FFF0 = 65520
+        //FFF0 = 65520
+        write_data = (data << 4) & 0xFFF0;
+        SYS_LOG_WARN("DAC Set value too high, Value changed. %04X ==> %04X", data, write_data);
     }
 
-    switch (channel) {
+    switch (ch) {
         case DRV_DAC63204_CH_0:
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_0_DATA, write_data);
+            SYS_VERIFY_SUCCESS(_dac63204Write(DAC_REG_ADDR_DAC_0_DATA, write_data));
             break;
 
         case DRV_DAC63204_CH_1:
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_1_DATA, write_data);
+            SYS_VERIFY_SUCCESS(_dac63204Write(DAC_REG_ADDR_DAC_1_DATA, write_data));
             break;
 
         case DRV_DAC63204_CH_2:
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_2_DATA, write_data);
+            SYS_VERIFY_SUCCESS(_dac63204Write(DAC_REG_ADDR_DAC_2_DATA, write_data));
             break;
 
         case DRV_DAC63204_CH_3:
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_3_DATA, write_data);
-            break;
-
-        case DRV_DAC63204_CH_ALL:
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_0_DATA, write_data);
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_1_DATA, write_data);
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_2_DATA, write_data);
-            ret = _dac63204Write(DAC_REG_ADDR_DAC_3_DATA, write_data);
+            SYS_VERIFY_SUCCESS(_dac63204Write(DAC_REG_ADDR_DAC_3_DATA, write_data));
             break;
 
         default:
+            SYS_LOG_ERR("Invalid DAC Ch");
             return HAL_ERROR;
-            break;
     }
 
-    if (HAL_OK == ret) {
-        SYS_LOG_DEBUG("DAC Set ch: %d, data: %04X", channel, data);
-    }
-    else {
-        SYS_LOG_ERR("DAC Set failed");
-    }
+    SYS_LOG_DEBUG("DAC Set ch: %d, data: %04X", ch, write_data);
 
-    return ret;
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef DRV_DAC63204_CheckStatus(uint8_t *p_read_data) {
@@ -204,8 +195,7 @@ HAL_StatusTypeDef DRV_DAC63204_CheckStatus(uint8_t *p_read_data) {
 
 /* Private user code ---------------------------------------------------------*/
 HAL_StatusTypeDef _dac63204Reset(void) {
-    uint8_t tx_data[2] = {
-        0, };
+    uint8_t tx_data[2] = { 0, };
 
     SYS_VERIFY_PARAM_NOT_NULL(dac63204_context.i2c_hdl);
 
@@ -219,8 +209,7 @@ HAL_StatusTypeDef _dac63204Reset(void) {
 }
 
 HAL_StatusTypeDef _dac63204Write(uint8_t reg, uint16_t data) {
-    uint8_t tx_data[3] = {
-        0, };
+    uint8_t tx_data[3] = { 0, };
 
     SYS_VERIFY_PARAM_NOT_NULL(dac63204_context.i2c_hdl);
 
@@ -236,8 +225,7 @@ HAL_StatusTypeDef _dac63204Write(uint8_t reg, uint16_t data) {
 
 HAL_StatusTypeDef _dac63204Read(uint8_t reg, uint8_t *p_data) {
     uint8_t tx_data = 0x00;
-    uint8_t rx_data[2] = {
-        0, };
+    uint8_t rx_data[2] = { 0, };
 
     SYS_VERIFY_PARAM_NOT_NULL(dac63204_context.i2c_hdl);
     SYS_VERIFY_PARAM_NOT_NULL(p_data);

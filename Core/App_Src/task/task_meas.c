@@ -276,13 +276,19 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, bool ctrl) {
         case MEAS_SET_CH_ALL:
             if (ctrl) {
                 SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, meas_set_data.led_on_level[CH1_IDX]));
+                HAL_Delay(500);
                 SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, meas_set_data.led_on_level[CH2_IDX]));
+                HAL_Delay(500);
                 SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, meas_set_data.led_on_level[CH3_IDX]));
+                HAL_Delay(500);
             }
             else {
                 SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
+                HAL_Delay(500);
                 SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
+                HAL_Delay(500);
                 SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
+                HAL_Delay(500);
             }
             return HAL_OK;
 

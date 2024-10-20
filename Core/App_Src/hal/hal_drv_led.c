@@ -29,7 +29,7 @@
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-static void _led_ctrl(HalLedCh_t ch_num, uint16_t set_data);
+static HAL_StatusTypeDef _led_ctrl(HalLedCh_t ch_num, uint16_t set_data);
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -59,28 +59,23 @@ HAL_StatusTypeDef Hal_Led_Init(I2C_HandleTypeDef *p_hdl) {
 HAL_StatusTypeDef Hal_Led_Ctrl(HalLedCh_t ch_num, uint16_t set_data) {
     SYS_VERIFY_TRUE(ch_num < HAL_LED_CH_NUM);
 
-    _led_ctrl(ch_num, set_data);
-
-    return HAL_OK;
+    return _led_ctrl(ch_num, set_data);
 }
 
 /* Private user code ---------------------------------------------------------*/
-static void _led_ctrl(HalLedCh_t ch_num, uint16_t set_data) {
+static HAL_StatusTypeDef _led_ctrl(HalLedCh_t ch_num, uint16_t set_data) {
     switch (ch_num) {
         case HAL_LED_CH_1:
-            DRV_DAC63204_SetData(DRV_DAC63204_CH_0, set_data);
-            break;
+            return DRV_DAC63204_SetData(DRV_DAC63204_CH_0, set_data);
 
         case HAL_LED_CH_2:
-            DRV_DAC63204_SetData(DRV_DAC63204_CH_1, set_data);
-            break;
+            return DRV_DAC63204_SetData(DRV_DAC63204_CH_1, set_data);
 
         case HAL_LED_CH_3:
-            DRV_DAC63204_SetData(DRV_DAC63204_CH_2, set_data);
-            break;
+            return DRV_DAC63204_SetData(DRV_DAC63204_CH_2, set_data);
 
         default:
             SYS_LOG_ERR("Invalid LED Ch");
-            break;
+            return HAL_ERROR;
     }
 }

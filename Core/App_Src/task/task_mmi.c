@@ -242,27 +242,27 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
 
     switch (cmd1) {
         case MMI_CMD1_INFO:
-            SYS_LOG_INFO("[Command 1-1: %0x0X] Get device information", cmd1);
+            SYS_LOG_INFO("[Command 1-1: 0x%02X] Get device information", cmd1);
             _process_get_device_info(cmd2, cmd3);
             break;
 
         case MMI_CMD1_MEAS_SET:
-            SYS_LOG_INFO("[Command 1-2: %0x0X] Set measure settings", cmd1);
+            SYS_LOG_INFO("[Command 1-2: 0x%02X] Set measure settings", cmd1);
             _process_set_meas(cmd2, cmd3, p_data, data_len);
             break;
 
         case MMI_CMD1_MEAS_REQ:
-            SYS_LOG_INFO("[Command 1-3: %0x0X] Request measure", cmd1);
+            SYS_LOG_INFO("[Command 1-3: 0x%02X] Request measure", cmd1);
             _process_req_meas(cmd2, cmd3);
             break;
 
         case MMI_CMD1_REQ_DEVICE_STATUS:
-            SYS_LOG_INFO("[Command 1-4: %0x0X] Request device status", cmd1);
+            SYS_LOG_INFO("[Command 1-4: 0x%02X] Request device status", cmd1);
             _process_get_device_status(cmd2, cmd3);
             break;
 
         case MMI_CMD1_CTRL_DEVICE:
-            SYS_LOG_INFO("[Command 1-5: %0x0X] control device", cmd1);
+            SYS_LOG_INFO("[Command 1-5: 0x%02X] control device", cmd1);
             _process_ctrl_device(cmd2, cmd3, p_data, data_len);
             break;
 

@@ -390,9 +390,6 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
 
     if (MMI_CMD2_MEAS_REQ_ALL_W_RESP == cmd2) {
         SYS_VERIFY_TRUE(MMI_CMD3_MEAS_REQ_ALL == cmd3);
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, MEAS_SET_CH_ALL, &result_data_val.temperature_data[0]));
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, MEAS_SET_CH_ALL, &result_data_val.recv_pd_data[0]));
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, MEAS_SET_CH_ALL, &result_data_val.monitor_pd_data[0]));
 
         uint8_t req_all_msg[MMI_CMD3_MEAS_REQ_ALL_DATA_LEN];
         uint8_t temp_data_len = sizeof(result_data_val.temperature_data);
@@ -400,9 +397,33 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
         uint8_t mon_pd_data_len = sizeof(result_data_val.monitor_pd_data);
         SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + mon_pd_data_len <= MMI_CMD3_MEAS_REQ_ALL_DATA_LEN);
 
+#if(FEATURE_TEST_REQ_FAKE_DATA_ENABLE == 0)
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, MEAS_SET_CH_ALL, &result_data_val.temperature_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, MEAS_SET_CH_ALL, &result_data_val.recv_pd_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, MEAS_SET_CH_ALL, &result_data_val.monitor_pd_data[0]));
+
         memcpy(&req_all_msg[0], &result_data_val.temperature_data[0], temp_data_len);
         memcpy(&req_all_msg[temp_data_len], &result_data_val.recv_pd_data[0], recv_pd_data_len);
         memcpy(&req_all_msg[temp_data_len + recv_pd_data_len], &result_data_val.monitor_pd_data[0], mon_pd_data_len);
+#else
+        static uint16_t test_num = 0;
+        uint16_t test_arr[3];
+
+        test_arr[0] = test_num;
+        test_arr[1] = test_num;
+        test_arr[2] = test_num;
+
+        memcpy(&req_all_msg[0], &test_arr, temp_data_len);
+        memcpy(&req_all_msg[temp_data_len], &test_arr, recv_pd_data_len);
+        memcpy(&req_all_msg[temp_data_len + recv_pd_data_len], &test_arr, mon_pd_data_len);
+
+        if (test_num >= UINT16_MAX) {
+            test_num = 0;
+        }
+        else {
+            test_num++;
+        }
+#endif
 
         return _mmi_send(MMI_CMD1_MEAS_REQ, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, req_all_msg);
     }

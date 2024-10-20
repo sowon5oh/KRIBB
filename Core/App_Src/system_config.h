@@ -56,6 +56,8 @@ extern "C" {
 #define FEATURE_TEMPERATURE_MIN_VAL     20
 #define FEATURE_TEMPERATURE_MAX_VAL     50
 
+#define FEATURE_TEST_REQ_FAKE_DATA_ENABLE 1
+
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/

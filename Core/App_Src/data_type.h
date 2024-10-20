@@ -90,6 +90,7 @@ extern "C" {
 
 /* RX Command Group 2: Set for Measuring */
 #define MMI_CMD1_MEAS_SET                 0x0A
+#define MMI_CMD1_MEAS_SET_RESP            0x1A
 #define MMI_CMD1_MEAS_SET_MAX_DATA_LEN    MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN
 
 #define MMI_CMD2_MEAS_SET_VAL_REQ_W_RESP    0x00

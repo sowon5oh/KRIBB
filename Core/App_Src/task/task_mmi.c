@@ -330,7 +330,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
         SYS_VERIFY_TRUE(MMI_CMD3_MEAS_SET_VAL_REQ == cmd3);
 
         Task_Meas_Get_Set(&set_data_buff.settings);
-        SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET, cmd2, cmd3, MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN, &set_data_buff.msg[0]));
+        SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET_RESP, cmd2, cmd3, MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN, &set_data_buff.msg[0]));
 
         return HAL_OK;
     }

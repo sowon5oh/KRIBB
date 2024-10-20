@@ -702,11 +702,16 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
 }
 
 static void _heater_ctrl(void) {
-    int16_t cur_temp = 0;
+    HalTempData_t temp_data;
+
     for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
         if (meas_set_data.temp_ctrl_on[ch_idx]) {
-            //TODO adc to degree
-            if (cur_temp < FEATURE_STABLE_TEMPERATURE_DEGREE) {
+            SYS_VERIFY_SUCCESS_VOID(Hal_Temp_GetData(&temp_data));
+            if ((FEATURE_TEMPERATURE_MAX_VAL < temp_data.degree[ch_idx]) | (FEATURE_TEMPERATURE_MIN_VAL > temp_data.degree[ch_idx])) {
+                break;
+            }
+
+            if (temp_data.degree[ch_idx] < FEATURE_STABLE_TEMPERATURE_DEGREE) {
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
             }
             else {

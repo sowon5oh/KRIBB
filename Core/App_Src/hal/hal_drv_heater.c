@@ -49,6 +49,8 @@ HAL_StatusTypeDef Hal_Heater_Init(void) {
 }
 
 HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl) {
+    SYS_VERIFY_TRUE(ch_num < HAL_HEATER_CH_NUM);
+
     _heater_ctrl(ch_num, ctrl);
 
     return HAL_OK;

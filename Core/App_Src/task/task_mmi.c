@@ -161,8 +161,7 @@ static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uin
 }
 
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
-    uint8_t bitsttf_line[512] = {
-        0, };
+    uint8_t bitsttf_line[512] = { 0, };
     uint8_t arr_idx = 0;
     uint8_t chg_cnt = 0;
 
@@ -279,8 +278,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
 }
 
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
-    uint8_t device_info_data_val[8] = {
-        0, };
+    uint8_t device_info_data_val[8] = { 0, };
     uint8_t device_info_data_len = 0;
     
     switch (cmd2) {
@@ -456,7 +454,12 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             /* FRAM Write */
             (void) FRAM_Write(FRAM_DEV_CTRL_LED_STATUS_ADDR, MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN, set_data_val);
 
-            Task_Meas_Ctrl_Led(ch_cfg, set_data_val);
+            if (set_data_val[0] > 0) {
+                Task_Meas_Ctrl_Led(ch_cfg, true);
+            }
+            else {
+                Task_Meas_Ctrl_Led(ch_cfg, false);
+            }
             break;
 
         case MMI_CMD2_CTRL_DEVICE_MONITOR:
@@ -465,7 +468,7 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             /* FRAM Write */
             (void) FRAM_Write(FRAM_DEV_CTRL_TARGET_CH_ADDR, MMI_CMD3_CTRL_DEVICE_MONITOR_LEN, set_data_val);
 
-            Task_Meas_Ctrl_Monitor(ch_cfg, set_data_val);
+            Task_Meas_Ctrl_Monitor(ch_cfg, &set_data_val[0]);
             break;
 
         default:

@@ -65,9 +65,7 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
 static void _heater_ctrl(void);
 
 /* Private variables ---------------------------------------------------------*/
-static measTaskContext_t meas_task_context = {
-    .task_init = false,
-    .meas_state = MEAS_STATE_STANDBY, };
+static measTaskContext_t meas_task_context = { .task_init = false, .meas_state = MEAS_STATE_STANDBY, };
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
@@ -244,30 +242,48 @@ HAL_StatusTypeDef Task_Meas_Get_Status(MeasReqStatus_t *p_status_val) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, uint8_t *p_set_val) {
-    uint8_t set_val;
-
+HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, bool ctrl) {
     SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
-    SYS_VERIFY_PARAM_NOT_NULL(p_set_val);
-    set_val = p_set_val[0];
     
     switch (ch) {
         case MEAS_SET_CH_1:
-            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, set_val));
+            if (ctrl) {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, meas_set_data.led_on_level[CH1_IDX]));
+            }
+            else {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
+            }
             return HAL_OK;
 
         case MEAS_SET_CH_2:
-            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, set_val));
+            if (ctrl) {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, meas_set_data.led_on_level[CH2_IDX]));
+            }
+            else {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
+            }
             return HAL_OK;
 
         case MEAS_SET_CH_3:
-            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, set_val));
+            if (ctrl) {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, meas_set_data.led_on_level[CH3_IDX]));
+            }
+            else {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
+            }
             return HAL_OK;
 
         case MEAS_SET_CH_ALL:
-            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, set_val));
-            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, set_val));
-            SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, set_val));
+            if (ctrl) {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, meas_set_data.led_on_level[CH1_IDX]));
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, meas_set_data.led_on_level[CH2_IDX]));
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, meas_set_data.led_on_level[CH3_IDX]));
+            }
+            else {
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
+                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
+            }
             return HAL_OK;
 
         default:

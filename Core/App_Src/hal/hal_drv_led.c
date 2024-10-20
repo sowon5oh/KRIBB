@@ -57,7 +57,7 @@ HAL_StatusTypeDef Hal_Led_Init(I2C_HandleTypeDef *p_hdl) {
 }
 
 HAL_StatusTypeDef Hal_Led_Ctrl(HalLedCh_t ch_num, uint16_t set_data) {
-    SYS_VERIFY_TRUE(ch_num <= HAL_LED_CH_NUM);
+    SYS_VERIFY_TRUE(ch_num < HAL_LED_CH_NUM);
 
     _led_ctrl(ch_num, set_data);
 

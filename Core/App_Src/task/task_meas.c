@@ -221,13 +221,19 @@ HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_
     
     switch (result_cat) {
         case MEAS_RESULT_CAT_TEMP_ADC:
-            return _meas_get_temperature_data();
+            SYS_VERIFY_SUCCESS(_meas_get_temperature_data());
+            memcpy(p_result_val, &meas_result_data.temperature_data, sizeof(uint16_t) * CH_NUM);
+            return HAL_OK;
 
         case MEAS_RESULT_CAT_RECV_PD_ADC:
-            return _meas_get_recv_pd_data(ch);
+            SYS_VERIFY_SUCCESS(_meas_get_recv_pd_data(ch));
+            memcpy(p_result_val, &meas_result_data.recv_pd_data, sizeof(uint16_t) * CH_NUM);
+            return HAL_OK;
 
         case MEAS_RESULT_CAT_MONITOR_PD_ADC:
-            return _meas_get_monitor_pd_data(ch);
+            SYS_VERIFY_SUCCESS(_meas_get_monitor_pd_data(ch));
+            memcpy(p_result_val, &meas_result_data.monitor_pd_data, sizeof(uint16_t) * CH_NUM);
+            return HAL_OK;
 
         default:
             return HAL_ERROR;

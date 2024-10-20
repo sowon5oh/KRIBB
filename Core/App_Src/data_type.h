@@ -273,20 +273,6 @@ typedef struct {
     uint16_t monitor_pd_data[CH_NUM];
 } MeasResultData_t;
 
-typedef struct {
-    union {
-        MeasResultData_t results;
-        uint8_t msg[MMI_CMD3_MEAS_REQ_START_DATA_LEN];
-    };
-} MeasResultDataMsg_t;
-
-typedef struct {
-    union {
-        MeasResultData_t results;
-        uint8_t msg[MMI_CMD3_MEAS_REQ_ALL];
-    };
-} MeasResultAllDataMsg_t;
-
 #define MEAS_TARGET_CH_DEACTIV 0
 #define MEAS_TARGET_CH_ACTIVE  1
 typedef struct {

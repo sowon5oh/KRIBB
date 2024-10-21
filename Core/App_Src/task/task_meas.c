@@ -25,6 +25,7 @@
 #include "hal_drv_led.h"
 #include "hal_drv_pd.h"
 #include "hal_drv_temperature.h"
+#include "hal_drv_fram.h"
 
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {
@@ -79,6 +80,7 @@ void Task_Meas_Init(void) {
     /* Sensor Init */
     SYS_VERIFY_SUCCESS_VOID(Hal_Heater_Init());
     SYS_VERIFY_SUCCESS_VOID(Hal_Led_Init(&hi2c2)); /* dac */
+    SYS_VERIFY_SUCCESS_VOID(Hal_Fram_Init(&hi2c1)); /* fram */
     SYS_VERIFY_SUCCESS_VOID(Hal_Temp_Init(&hadc1)); /* adc */
     SYS_VERIFY_SUCCESS_VOID(Hal_Pd_Init(&hspi1, _meas_task_req_cb)); /* adc */
 

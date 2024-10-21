@@ -17,8 +17,8 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _HAL_DRV_LED_DRIVER_H
-#define _HAL_DRV_LED_DRIVER_H
+#ifndef _HAL_DRV_LED_H
+#define _HAL_DRV_LED_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,4 +46,4 @@ HAL_StatusTypeDef Hal_Led_Ctrl(HalLedCh_t ch_num, uint16_t set_data);
 }
 #endif
 
-#endif /* _HAL_DRV_LED_DRIVER_H */
+#endif /* _HAL_DRV_LED_H */

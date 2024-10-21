@@ -66,6 +66,7 @@ typedef enum {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
 extern ADC_HandleTypeDef hadc1;
 extern SPI_HandleTypeDef hspi1;

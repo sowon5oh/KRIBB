@@ -23,6 +23,7 @@
 #include "hal_drv_led.h"
 #include "hal_drv_pd.h"
 #include "hal_drv_temperature.h"
+#include "hal_drv_fram.h"
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct {

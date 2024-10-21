@@ -18,9 +18,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "drv_fram_fm24cl64.h"
 #include "task_mmi.h"
 #include "task_meas.h"
+#include "hal_drv_fram.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -341,7 +341,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN);
 
                 /* FRAM Write */
-                (void) FRAM_Write(FRAM_TEMP_SETTING_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN), MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN, set_data_val);
+                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN), MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_TEMP_ON_OFF, ch_cfg, set_data_val);
 
@@ -349,7 +349,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN);
 
                 /* FRAM Write */
-                (void) FRAM_Write(FRAM_LED_ON_TIME_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN), MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN, set_data_val);
+                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_LED_ON_TIME_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN), MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_TIME, ch_cfg, set_data_val);
 
@@ -357,7 +357,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN);
 
                 /* FRAM Write */
-                (void) FRAM_Write(FRAM_LED_ON_LEVEL_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN), MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN, set_data_val);
+                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_LED_ON_LEVEL_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN), MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_LEVEL, ch_cfg, set_data_val);
 
@@ -365,7 +365,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN);
 
                 /* FRAM Write */
-                (void) FRAM_Write(FRAM_ADC_SAMPLE_CNT_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN), MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN, set_data_val);
+                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_ADC_SAMPLE_CNT_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN), MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_SAMPLE_CNT, ch_cfg, set_data_val);
 
@@ -373,7 +373,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN);
 
                 /* FRAM Write */
-                (void) FRAM_Write(FRAM_ADC_DELAY_MS_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN), MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN, set_data_val);
+                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_ADC_DELAY_MS_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN), MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_ON_DELAY, ch_cfg, set_data_val);
 
@@ -479,7 +479,7 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN);
 
             /* FRAM Write */
-            (void) FRAM_Write(FRAM_DEV_CTRL_LED_STATUS_ADDR, MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN, set_data_val);
+            SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_DEV_CTRL_LED_STATUS_ADDR, MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN, set_data_val));
 
             if (set_data_val[0] > 0) {
                 Task_Meas_Ctrl_Led(ch_cfg, true);
@@ -493,7 +493,7 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_MONITOR_LEN);
 
             /* FRAM Write */
-            (void) FRAM_Write(FRAM_DEV_CTRL_TARGET_CH_ADDR, MMI_CMD3_CTRL_DEVICE_MONITOR_LEN, set_data_val);
+            SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_DEV_CTRL_TARGET_CH_ADDR, MMI_CMD3_CTRL_DEVICE_MONITOR_LEN, set_data_val));
 
             Task_Meas_Ctrl_Monitor(ch_cfg, &set_data_val[0]);
             break;

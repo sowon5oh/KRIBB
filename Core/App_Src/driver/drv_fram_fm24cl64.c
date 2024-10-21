@@ -36,7 +36,7 @@ void _fram_w_protection(bool set);
 I2C_HandleTypeDef *fram_i2c_hdl;
 
 /* Public user code ----------------------------------------------------------*/
-HAL_StatusTypeDef FRAM_Init(I2C_HandleTypeDef *p_handle) {
+HAL_StatusTypeDef DRV_FM24CL64_Init(I2C_HandleTypeDef *p_handle) {
     SYS_VERIFY_PARAM_NOT_NULL(p_handle);
 
     /* I2C handle Registration */
@@ -53,8 +53,10 @@ HAL_StatusTypeDef FRAM_Init(I2C_HandleTypeDef *p_handle) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef FRAM_Write(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
+HAL_StatusTypeDef DRV_FM24CL64_Write(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
+    SYS_VERIFY_TRUE(mem_addr <= FM24CL64_MAX_ADDRESS);
+    SYS_VERIFY_TRUE(mem_addr + data_len <= FM24CL64_MAX_ADDRESS);
 
     _fram_w_protection(false);
     SYS_VERIFY_SUCCESS(_fram_write(mem_addr, p_data, data_len));
@@ -63,8 +65,10 @@ HAL_StatusTypeDef FRAM_Write(uint8_t mem_addr, uint16_t data_len, uint8_t *p_dat
     return HAL_OK;
 }
 
-HAL_StatusTypeDef FRAM_Read(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
+HAL_StatusTypeDef DRV_FM24CL64_Read(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
+    SYS_VERIFY_TRUE(mem_addr <= FM24CL64_MAX_ADDRESS);
+    SYS_VERIFY_TRUE(mem_addr + data_len <= FM24CL64_MAX_ADDRESS);
 
     _fram_w_protection(false);
     SYS_VERIFY_SUCCESS(_fram_read(mem_addr, p_data, data_len));

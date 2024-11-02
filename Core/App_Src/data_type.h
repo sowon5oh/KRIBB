@@ -132,6 +132,10 @@ extern "C" {
 #define MMI_CMD3_MEAS_SET_ADC_DELAY_MS_ALL    0x04
 #define MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN (2)
 
+#define MMI_CMD2_MEAS_SET_STABLE_TEMPERATURE                 0x06
+#define MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE          0x01
+#define MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_DATA_LEN (1)
+
 /* RX Command Group 3: Request Measuring */
 #define MMI_CMD1_MEAS_REQ                0x0B
 #define MMI_CMD1_MEAS_REQ_RESP           0x1B
@@ -189,13 +193,6 @@ extern "C" {
 #define MMI_CMD3_CTRL_DEVICE_LED_ALL      0x04
 #define MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN (1)
 
-#define MMI_CMD2_CTRL_DEVICE_MONITOR      0x02
-#define MMI_CMD3_CTRL_DEVICE_MONITOR_CH1  0x01
-#define MMI_CMD3_CTRL_DEVICE_MONITOR_CH2  0x02
-#define MMI_CMD3_CTRL_DEVICE_MONITOR_CH3  0x03
-#define MMI_CMD3_CTRL_DEVICE_MONITOR_ALL  0x04
-#define MMI_CMD3_CTRL_DEVICE_MONITOR_LEN  (1)
-
 typedef union {
     uint8_t bVal[4];
     float fVal;
@@ -207,7 +204,8 @@ typedef enum {
     MEAS_SET_CAT_LED_ON_LEVEL,
     MEAS_SET_CAT_ADC_SAMPLE_CNT,
     MEAS_SET_CAT_ADC_ON_DELAY,
-    MEAS_SET_CAT_MAX = MEAS_SET_CAT_ADC_ON_DELAY,
+    MEAS_SET_CAT_STABLE_TEMPERATURE,
+    MEAS_SET_CAT_MAX = MEAS_SET_CAT_STABLE_TEMPERATURE,
 } MeasSetCat_t;
 
 typedef enum {
@@ -254,12 +252,18 @@ typedef enum {
 #define MEAS_SET_MIN_ADC_DELAY_MS        0
 #define MEAS_SET_MAX_ADC_DELAY_MS        1000
 
+#define MEAS_SET_DEFAULT_STABLE_TEMPERATURE      30
+#define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE   20
+#define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE   45
+#define MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS 1000
+
 typedef struct {
     MeasSetTempCtrlVal_t temp_ctrl_on[CH_NUM]; /* Ch1 - CH3 */
     uint16_t led_on_time[CH_NUM];
     uint16_t led_on_level[CH_NUM];
     uint16_t adc_sample_cnt[CH_NUM];
     uint16_t adc_delay_ms[CH_NUM];
+    uint8_t stable_temperature;
 } MeasSetData_t;
 
 typedef struct {
@@ -295,11 +299,11 @@ typedef struct {
 #define FRAM_LED_ON_LEVEL_ADDR        0x09
 #define FRAM_ADC_SAMPLE_CNT_ADDR      0x0D
 #define FRAM_ADC_DELAY_MS_ADDR        0x16
-#define FRAM_TEMP_RESULT_ADDR         0x1B
-#define FRAM_RECV_PD_RESULT_ADDR      0x22
-#define FRAM_MONITOR_PD_RESULT_ADDR   0x28
-#define FRAM_DEV_CTRL_LED_STATUS_ADDR 0x2E
-#define FRAM_DEV_CTRL_TARGET_CH_ADDR  0x2F
+#define FRAM_TEMPERATURE_ADDR         0x1B
+#define FRAM_TEMP_RESULT_ADDR         0x1C
+#define FRAM_RECV_PD_RESULT_ADDR      0x23
+#define FRAM_MONITOR_PD_RESULT_ADDR   0x29
+#define FRAM_DEV_CTRL_LED_STATUS_ADDR 0x2F
 
 /* FRAM Write/Read Max Len */
 #define FRAM_DATA_MAX_LEN   10

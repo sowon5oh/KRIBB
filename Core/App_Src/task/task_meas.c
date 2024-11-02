@@ -60,6 +60,7 @@ static void _meas_set_led_on_time_ms(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_led_on_level(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_sample_cnt(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val);
+static void _meas_set_stable_temperature_degree(uint8_t val);
 static HAL_StatusTypeDef _meas_get_temperature_data(void);
 static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch);
 static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
@@ -127,6 +128,12 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
         case MEAS_SET_CAT_ADC_ON_DELAY: {
             uint16_t set_val = UINT8_2BYTE_ARRAY_TO_UINT16(p_set_val);
             _meas_set_adc_delay_ms(ch, set_val);
+            break;
+        }
+
+        case MEAS_SET_CAT_STABLE_TEMPERATURE: {
+            uint8_t set_val = p_set_val[0];
+            _meas_set_stable_temperature_degree(set_val);
             break;
         }
     }
@@ -492,7 +499,7 @@ static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val) 
 
         case TEMP_CTRL_AUTO_ON:
             /* Auto Control */
-            App_Timer_Start(APP_TIMER_TYPE_HEATER_CTRL, FEATURE_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
+            App_Timer_Start(APP_TIMER_TYPE_HEATER_CTRL, MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
             break;
 
         case TEMP_CTRL_FORCE_ON:
@@ -624,6 +631,25 @@ static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val) {
     SYS_LOG_DEBUG("ADC Delay time(ms) settings: %d, %d, %d", meas_set_data.adc_delay_ms[CH1_IDX], meas_set_data.adc_delay_ms[CH2_IDX], meas_set_data.adc_delay_ms[CH3_IDX]);
 }
 
+static void _meas_set_stable_temperature_degree(uint8_t val) {
+    if (val > MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE) {
+        SYS_LOG_WARN("stable temperature settings changed");
+        SYS_LOG_WARN("Original: [%d]====>", val);
+        val = MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE;
+        SYS_LOG_WARN("Changed : ====>[%d]", val);
+    }
+    else if (val < MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE) {
+        SYS_LOG_WARN("stable temperature settings changed");
+        SYS_LOG_WARN("Original: [%d]====>", val);
+        val = MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE;
+        SYS_LOG_WARN("Changed : ====>[%d]", val);
+    }
+
+    meas_set_data.stable_temperature = val;
+
+    SYS_LOG_DEBUG("Temperature setting: %d ('C)", meas_set_data.stable_temperature);
+}
+
 static HAL_StatusTypeDef _meas_get_temperature_data(void) {
     HalTempData_t temp_data_buff;
 
@@ -741,9 +767,9 @@ static void _heater_ctrl(void) {
     for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
         if (meas_set_data.temp_ctrl_on[ch_idx]) {
             SYS_VERIFY_SUCCESS_VOID(Hal_Temp_GetData(&temp_data));
-            SYS_VERIFY_TRUE_VOID((FEATURE_TEMPERATURE_MAX_VAL >= temp_data.degree[ch_idx]) && (FEATURE_TEMPERATURE_MIN_VAL <= temp_data.degree[ch_idx]));
+            SYS_VERIFY_TRUE_VOID((MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE >= temp_data.degree[ch_idx]) && (MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE <= temp_data.degree[ch_idx]));
 
-            if (temp_data.degree[ch_idx] < FEATURE_STABLE_TEMPERATURE_DEGREE) {
+            if (temp_data.degree[ch_idx] < MEAS_SET_DEFAULT_STABLE_TEMPERATURE) {
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
             }
             else {
@@ -751,5 +777,5 @@ static void _heater_ctrl(void) {
             }
         }
     }
-    App_Timer_Start(APP_TIMER_TYPE_HEATER_CTRL, FEATURE_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
+    App_Timer_Start(APP_TIMER_TYPE_HEATER_CTRL, MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
 }

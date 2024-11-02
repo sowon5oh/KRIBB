@@ -377,6 +377,14 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_ON_DELAY, ch_cfg, set_data_val);
 
+            case MMI_CMD2_MEAS_SET_STABLE_TEMPERATURE:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_DATA_LEN);
+
+                /* FRAM Write */
+                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_TEMPERATURE_ADDR, MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_DATA_LEN, set_data_val));
+
+                return Task_Meas_Apply_Set(MEAS_SET_CAT_STABLE_TEMPERATURE, ch_cfg, set_data_val);
+
             default:
                 SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
                 return HAL_ERROR;
@@ -486,15 +494,6 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             else {
                 Task_Meas_Ctrl_Led(ch_cfg, false);
             }
-            break;
-
-        case MMI_CMD2_CTRL_DEVICE_MONITOR:
-            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_MONITOR_LEN);
-
-            /* FRAM Write */
-            SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_DEV_CTRL_TARGET_CH_ADDR, MMI_CMD3_CTRL_DEVICE_MONITOR_LEN, set_data_val));
-
-            Task_Meas_Ctrl_Monitor(ch_cfg, &set_data_val[0]);
             break;
 
         default:

@@ -23,9 +23,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hal_drv_heater.h"
-#include "hal_drv_led.h"
-#include "hal_drv_pd.h"
 #include "hal_drv_temperature.h"
 
 /* USER CODE END Includes */
@@ -192,7 +189,7 @@ int main(void)
 #endif
 
     SYS_LOG_INFO("----------------------------------");
-    SYS_LOG_INFO("  [UNIOTECH] 3CH FL ANALYZER UOT   ");
+    SYS_LOG_INFO("  [UNIOTECH] 3CH FL ANALYZER UOT  ");
     SYS_LOG_INFO("* Build Time: %s %s", __DATE__, __TIME__);
     SYS_LOG_INFO("* FW Ver    : Ver. %d.%d.%2d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
     SYS_LOG_INFO("* HW Ver    : Ver. %d.%d", SYS_HW_MAJOR_VER, SYS_HW_MINOR_VER);

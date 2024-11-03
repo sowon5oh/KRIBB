@@ -93,6 +93,18 @@ HAL_StatusTypeDef Task_MMI_SendMeasResult(void) {
     return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP, result_ch, MMI_CMD3_MEAS_REQ_START_DATA_LEN, &temp_msg_buff[0]);
 }
 
+HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
+    uint16_t monitor_pd_data;
+    uint8_t data_buff[MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN];
+
+    SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &monitor_pd_data));
+
+    data_buff[0] = monitor_pd_data && 0xFF;
+    data_buff[1] = (monitor_pd_data >> 8) && 0xFF;
+
+    return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN, &data_buff[0]);
+}
+
 /* Private user code ---------------------------------------------------------*/
 static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data) {
     uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
@@ -353,7 +365,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_TIME, ch_cfg, set_data_val);
 
-            case MMI_CMD2_MEAS_SET_LED_LEVEL:
+            case MMI_CMD2_MEAS_SET_LED_LEVEL_W_RESP:
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN);
 
                 /* FRAM Write */

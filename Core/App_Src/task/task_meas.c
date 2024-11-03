@@ -116,6 +116,12 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
         case MEAS_SET_CAT_LED_ON_LEVEL: {
             uint16_t set_val = UINT8_2BYTE_ARRAY_TO_UINT16(p_set_val);
             _meas_set_led_on_level(ch, set_val);
+
+            /* Get Monitor Pd data */
+            _meas_get_monitor_pd_data(ch);
+
+            /* Response to mmi */
+            Task_MMI_SendMonitorPdResult(ch);
             break;
         }
 

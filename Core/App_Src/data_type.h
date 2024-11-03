@@ -308,7 +308,7 @@ typedef struct {
 #define FRAM_DEV_CTRL_LED_STATUS_ADDR 0x2F
 
 /* FRAM Write/Read Max Len */
-#define FRAM_DATA_MAX_LEN   10
+#define FRAM_DATA_MAX_LEN   (FRAM_DEV_CTRL_LED_STATUS_ADDR + 1)
 
 /* Exported macro ------------------------------------------------------------*/
 

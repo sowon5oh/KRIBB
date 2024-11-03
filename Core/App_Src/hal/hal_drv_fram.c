@@ -41,10 +41,10 @@ HAL_StatusTypeDef Hal_Fram_Init(I2C_HandleTypeDef *p_hdl) {
     SYS_VERIFY_SUCCESS(DRV_FM24CL64_Init(p_hdl));
 
 #if ( FEATURE_HAL_FRAM_TEST == 1 )
-    uint8_t test_data[5] = { 0x01, 0x02, 0x03, 0x04, 0x05 };
+    uint8_t test_data[8] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
-    SYS_LOG_INFO("[Test] Fram Write, Addr: 0, Len: 5, Data: 0x0102030405");
-    _fram_write(0, 5, test_data);
+    SYS_LOG_INFO("[Test] Fram Write, Addr: 0, Len: 8, Data: 0x01020304050608");
+    _fram_write(0, 8, test_data);
 #endif
     
     return HAL_OK;
@@ -66,7 +66,7 @@ HAL_StatusTypeDef Hal_Fram_Read(uint8_t mem_addr, uint16_t data_len, uint8_t *p_
 
 /* Private user code ---------------------------------------------------------*/
 static HAL_StatusTypeDef _fram_write(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
-    uint8_t temp_data[FRAM_DATA_MAX_LEN];
+    uint8_t temp_data[FRAM_DATA_MAX_LEN] = { 0, };
 
     SYS_VERIFY_SUCCESS(DRV_FM24CL64_Write(mem_addr, data_len, p_data));
 

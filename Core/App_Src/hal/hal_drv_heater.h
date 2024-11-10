@@ -31,7 +31,8 @@ typedef enum {
     HAL_HEATER_CH_1 = 0,
     HAL_HEATER_CH_2,
     HAL_HEATER_CH_3,
-    HAL_HEATER_CH_NUM,
+    HAL_HEATER_CH_ALL,
+    HAL_HEATER_CH_NUM = 3,
 } HalHeaterCh_t;
 
 typedef enum {

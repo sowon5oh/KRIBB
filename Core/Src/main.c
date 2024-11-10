@@ -101,8 +101,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (++led_timer_1sec_cnt >= 1000) {
         HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
         led_timer_1sec_cnt = 0;
-
-        Task_Fsm_Process();
     }
 
     /* 1 kHz APP Timer (1 msec) */
@@ -191,7 +189,7 @@ int main(void)
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("  [UNIOTECH] 3CH FL ANALYZER UOT  ");
     SYS_LOG_INFO("* Build Time: %s %s", __DATE__, __TIME__);
-    SYS_LOG_INFO("* FW Ver    : Ver. %d.%d.%2d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
+    SYS_LOG_INFO("* FW Ver    : Ver. %d.%d.%02d", SYS_FW_MAJOR_VER, SYS_FW_MINOR_VER, SYS_FW_PATCH_VER);
     SYS_LOG_INFO("* HW Ver    : Ver. %d.%d", SYS_HW_MAJOR_VER, SYS_HW_MINOR_VER);
     SYS_LOG_INFO("----------------------------------");
 
@@ -201,6 +199,9 @@ int main(void)
     Task_Fsm_Init();
     Task_Meas_Init();
     HAL_Delay(100);
+
+    //TEST
+    Task_Fsm_StartTest(FSM_TEST_MEAS_REQ_CH1);
   /* USER CODE END 2 */
 
   /* Infinite loop */

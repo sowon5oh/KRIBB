@@ -75,7 +75,7 @@ static fsmTable_t fsm_table[] = {
     {
         TASK_FSM_EVENT_TEST_REQ,
         TASK_FSM_STATE_READY,
-        NULL,
+        _fsm_proc_test,
         TASK_FSM_STATE_TEST },
     {
         TASK_FSM_EVENT_TEST_DONE,
@@ -226,7 +226,7 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             break;
 
         case FSM_TEST_MEAS_REQ_CH1:
-            Task_Meas_Request(CH1_IDX);
+            Task_Meas_Request(MEAS_SET_CH_1);
             break;
 
         default:

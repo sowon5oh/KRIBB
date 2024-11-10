@@ -194,12 +194,12 @@ HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t meas_ch) {
     }
 
     SYS_LOG_INFO("[MEASURE START]");
-    SYS_LOG_INFO("- CH            :%d", ch);
-    SYS_LOG_INFO("- LED ON TIME MS: %d", meas_set_data.led_on_time[ch]);
-    SYS_LOG_INFO("- LED ON LEVEL  : %d", meas_set_data.led_on_level[ch]);
-    SYS_LOG_INFO("- ADC DELAY MS  : %d", meas_set_data.adc_delay_ms[ch]);
-    SYS_LOG_INFO("- ADC ON LEVEL  : %d", meas_set_data.adc_sample_cnt[ch]);
-    SYS_LOG_INFO("- AUTO TEMP CTRL: %d", meas_set_data.temp_ctrl_on[ch]);
+    SYS_LOG_INFO("- CH                :%d", ch);
+    SYS_LOG_INFO("- LED ON TIME MS    : %d", meas_set_data.led_on_time[ch]);
+    SYS_LOG_INFO("- LED ON LEVEL      : %d", meas_set_data.led_on_level[ch]);
+    SYS_LOG_INFO("- ADC DELAY MS      : %d", meas_set_data.adc_delay_ms[ch]);
+    SYS_LOG_INFO("- ADC SAMPLE CNT    : %d", meas_set_data.adc_sample_cnt[ch]);
+    SYS_LOG_INFO("- STABLE TEMPERATURE: %d", meas_set_data.stable_temperature);
     _meas_op_start(ch);
 
     return HAL_OK;
@@ -388,7 +388,6 @@ static void _meas_set_init(void) {
             Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
             _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE);
             Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
-            SYS_LOG_INFO("TEST");
         }
         else {
             /* Set read data */
@@ -505,7 +504,7 @@ static void _meas_task_req_cb(void) {
 
         case MEAS_STATE_SEND_RESULT:
             /* Save result */
-            recv_pd = ARRAY_AVERAGE(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+            recv_pd = ARRAY_AVERAGE(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             monitor_pd = ARRAY_AVERAGE(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             temperature_tempdata = ARRAY_AVERAGE(temperature_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             meas_result_data.recv_pd_data[ch] = recv_pd;
@@ -529,23 +528,29 @@ static void _meas_task_req_cb(void) {
 }
 
 static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val) {
+    HalHeaterCh_t heater_ch;
+
     switch (ch) {
         case MEAS_SET_CH_1:
             meas_set_data.temp_ctrl_on[CH1_IDX] = val;
+            heater_ch = HAL_HEATER_CH_1;
             break;
 
         case MEAS_SET_CH_2:
             meas_set_data.temp_ctrl_on[CH2_IDX] = val;
+            heater_ch = HAL_HEATER_CH_2;
             break;
 
         case MEAS_SET_CH_3:
             meas_set_data.temp_ctrl_on[CH3_IDX] = val;
+            heater_ch = HAL_HEATER_CH_3;
             break;
 
         case MEAS_SET_CH_ALL:
             meas_set_data.temp_ctrl_on[CH1_IDX] = val;
             meas_set_data.temp_ctrl_on[CH2_IDX] = val;
             meas_set_data.temp_ctrl_on[CH3_IDX] = val;
+            heater_ch = HAL_HEATER_CH_ALL;
             break;
     }
 
@@ -553,7 +558,7 @@ static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val) 
     switch (val) {
         case TEMP_CTRL_OFF:
             App_Timer_Stop(APP_TIMER_TYPE_HEATER_CTRL);
-            Hal_Heater_Ctrl(ch, HAL_HEATER_OFF);
+            Hal_Heater_Ctrl(heater_ch, HAL_HEATER_OFF);
             break;
 
         case TEMP_CTRL_AUTO_ON:
@@ -563,7 +568,7 @@ static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val) 
 
         case TEMP_CTRL_FORCE_ON:
             App_Timer_Stop(APP_TIMER_TYPE_HEATER_CTRL);
-            Hal_Heater_Ctrl(ch, HAL_HEATER_ON);
+            Hal_Heater_Ctrl(heater_ch, HAL_HEATER_ON);
             break;
     }
 
@@ -836,7 +841,7 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
 static void _heater_ctrl(void) {
     HalTempData_t temp_data;
 
-    for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
+    for (HalHeaterCh_t ch_idx = 0; ch_idx < HAL_HEATER_CH_NUM; ch_idx++) {
         if (meas_set_data.temp_ctrl_on[ch_idx]) {
             SYS_VERIFY_SUCCESS_VOID(Hal_Temp_GetData(&temp_data));
             SYS_LOG_INFO("[CH %d] Current Temperature: %d", ch_idx + 1, (uint8_t )temp_data.degree[ch_idx]);

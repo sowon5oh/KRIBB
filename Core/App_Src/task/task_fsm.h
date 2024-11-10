@@ -56,6 +56,7 @@ typedef enum {
 /* Exported functions prototypes ---------------------------------------------*/
 void Task_Fsm_Init(void);
 void Task_Fsm_Process(void);
+void Task_Fsm_StartTest(FsmTaskTestType_t test);
 void Task_Fsm_SendEvent(FsmEvent_t event);
 
 #ifdef __cplusplus

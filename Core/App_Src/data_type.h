@@ -43,34 +43,34 @@ extern "C" {
  *  ETX   : End of Text
  *
  */
-#define MMI_PROTOCOL_STX            0xC0
-#define MMI_PROTOCOL_SPC            0xDB
-#define MMI_PROTOCOL_ETX            0xC2
-#define MMI_PROTOCOL_CHKSUM_INIT    0xC2
-#define MMI_PROTOCOL_WHO_AM_I_VAL   0x55AA5AA5
-#define MMI_PROTOCOL_WHO_AM_I_LEN   (4)
+#define MMI_PROTOCOL_STX            		0xC0
+#define MMI_PROTOCOL_SPC            		0xDB
+#define MMI_PROTOCOL_ETX            		0xC2
+#define MMI_PROTOCOL_CHKSUM_INIT    		0xC2
+#define MMI_PROTOCOL_WHO_AM_I_VAL   		0x55AA5AA5
+#define MMI_PROTOCOL_WHO_AM_I_LEN   		(4)
 
-#define MMI_PROTOCOL_IDX_STX        0 /* 1 Byte */
-#define MMI_PROTOCOL_IDX_LEN        1 /* 2 Byte */
-#define MMI_PROTOCOL_IDX_CMD1       3 /* 1 Byte */
-#define MMI_PROTOCOL_IDX_CMD2       4 /* 1 Byte */
-#define MMI_PROTOCOL_IDX_CMD3       5 /* 1 Byte */
-#define MMI_PROTOCOL_IDX_DATA       6 /* Max 12 Byte */
+#define MMI_PROTOCOL_IDX_STX        		0 /* 1 Byte */
+#define MMI_PROTOCOL_IDX_LEN        		1 /* 2 Byte */
+#define MMI_PROTOCOL_IDX_CMD1       		3 /* 1 Byte */
+#define MMI_PROTOCOL_IDX_CMD2       		4 /* 1 Byte */
+#define MMI_PROTOCOL_IDX_CMD3       		5 /* 1 Byte */
+#define MMI_PROTOCOL_IDX_DATA       		6 /* Max 12 Byte */
 
-#define MMI_PROTOCOL_HEADER_LEN_MAX 7
-#define MMI_PROTOCOL_TX_DATA_LEN_MAX 30
-#define MMI_PROTOCOL_RX_DATA_LEN_MAX 10
-#define MMI_PROTOCOL_FOOTER_LEN_MAX 2
-#define MMI_PROTOCOL_TX_MSG_LEN_MAX MMI_PROTOCOL_HEADER_LEN_MAX + MMI_PROTOCOL_TX_DATA_LEN_MAX + MMI_PROTOCOL_FOOTER_LEN_MAX
-#define MMI_PROTOCOL_RX_MSG_LEN_MAX MMI_PROTOCOL_HEADER_LEN_MAX + MMI_PROTOCOL_RX_DATA_LEN_MAX + MMI_PROTOCOL_FOOTER_LEN_MAX
+#define MMI_PROTOCOL_HEADER_LEN_MAX  		7
+#define MMI_PROTOCOL_TX_DATA_LEN_MAX 		30
+#define MMI_PROTOCOL_RX_DATA_LEN_MAX 		10
+#define MMI_PROTOCOL_FOOTER_LEN_MAX  		2
+#define MMI_PROTOCOL_TX_MSG_LEN_MAX  		MMI_PROTOCOL_HEADER_LEN_MAX + MMI_PROTOCOL_TX_DATA_LEN_MAX + MMI_PROTOCOL_FOOTER_LEN_MAX
+#define MMI_PROTOCOL_RX_MSG_LEN_MAX  		MMI_PROTOCOL_HEADER_LEN_MAX + MMI_PROTOCOL_RX_DATA_LEN_MAX + MMI_PROTOCOL_FOOTER_LEN_MAX
 
 #define MMI_PROTOCOL_BYTE_STUFF_PADDING     0xDB
 #define MMI_PROTOCOL_BYTE_STUFF_C0_REPLACE  0xDC
 #define MMI_PROTOCOL_BYTE_STUFF_DB_REPLACE  0xDD
 #define MMI_PROTOCOL_BYTE_STUFF_C2_REPLACE  0xDE
 
-#define MMI_PROTOCOL_CMD1_RX       0x00
-#define MMI_PROTOCOL_CMD1_TX       0x10
+#define MMI_PROTOCOL_CMD1_RX                0x00
+#define MMI_PROTOCOL_CMD1_TX              	0x10
 
 /* RX Command Group 1: Device Info */
 #define MMI_CMD1_INFO                              0x55
@@ -254,10 +254,10 @@ typedef enum {
 #define MEAS_SET_MAX_ADC_DELAY_MS        MEAS_SET_MAX_LED_ON_LEVEL / MEAS_SET_MIN_ADC_SAMPLE_CNT
 #define MEAS_SET_DEFAULT_ADC_DELAY_MS    MEAS_SET_MIN_ADC_DELAY_MS
 
-#define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE   20
-#define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE   45
-#define MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS 1000
-#define MEAS_SET_DEFAULT_STABLE_TEMPERATURE      30
+#define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100     2000
+#define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100     4500
+#define MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100 3000
+#define MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS        1000
 
 /* Channel index data for array */
 #define CH_NUM  3
@@ -271,7 +271,7 @@ typedef struct {
     uint16_t led_on_level[CH_NUM];
     uint16_t adc_sample_cnt[CH_NUM];
     uint16_t adc_delay_ms[CH_NUM];
-    uint8_t stable_temperature;
+    uint16_t stable_temperature;
     MeasSetLedForcedCtrlVal_t led_ctrl_on[CH_NUM]; /* Ch1 - CH3 */
 } MeasSetData_t;
 

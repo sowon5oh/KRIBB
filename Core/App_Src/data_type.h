@@ -252,7 +252,7 @@ typedef enum {
 
 #define MEAS_SET_MIN_ADC_DELAY_MS        MEAS_SET_MAX_LED_ON_TIME_MS / MEAS_SET_MAX_ADC_SAMPLE_CNT
 #define MEAS_SET_MAX_ADC_DELAY_MS        MEAS_SET_MAX_LED_ON_LEVEL / MEAS_SET_MIN_ADC_SAMPLE_CNT
-#define MEAS_SET_DEFAULT_ADC_DELAY_MS    MEAS_SET_MIN_ADC_DELAY_MS
+#define MEAS_SET_DEFAULT_ADC_DELAY_MS    MEAS_SET_DEFAULT_LED_ON_TIME_MS / MEAS_SET_DEFAULT_ADC_SAMPLE_CNT
 
 #define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100     2000
 #define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100     4500
@@ -284,8 +284,8 @@ typedef struct {
 
 typedef struct {
     uint16_t temperature_data[CH_NUM];
-    uint16_t recv_pd_data[CH_NUM];
-    uint16_t monitor_pd_data[CH_NUM];
+    int16_t recv_pd_data[CH_NUM];
+    int16_t monitor_pd_data[CH_NUM];
 } MeasResultData_t;
 
 #define MEAS_TARGET_CH_DEACTIV 0

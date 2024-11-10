@@ -352,48 +352,30 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
             case MMI_CMD2_MEAS_SET_TEMP:
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN);
 
-                /* FRAM Write */
-                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN), MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN, set_data_val));
-
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_TEMP_ON_OFF, ch_cfg, set_data_val);
 
             case MMI_CMD2_MEAS_SET_LED_ON_TIME:
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN);
-
-                /* FRAM Write */
-                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_LED_ON_TIME_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN), MMI_CMD3_MEAS_SET_LED_ON_TIME_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_TIME, ch_cfg, set_data_val);
 
             case MMI_CMD2_MEAS_SET_LED_LEVEL_W_RESP:
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN);
 
-                /* FRAM Write */
-                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_LED_ON_LEVEL_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN), MMI_CMD3_MEAS_SET_LED_LEVEL_DATA_LEN, set_data_val));
-
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_LED_ON_LEVEL, ch_cfg, set_data_val);
 
             case MMI_CMD2_MEAS_SET_ADC_SAMPLE_CNT:
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN);
-
-                /* FRAM Write */
-                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_ADC_SAMPLE_CNT_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN), MMI_CMD3_MEAS_SET_ADC_SAMPLE_CNT_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_SAMPLE_CNT, ch_cfg, set_data_val);
 
             case MMI_CMD2_MEAS_SET_ADC_DELAY_MS:
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN);
 
-                /* FRAM Write */
-                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_ADC_DELAY_MS_ADDR + (ch_cfg * MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN), MMI_CMD3_MEAS_SET_ADC_DELAY_DATA_LEN, set_data_val));
-
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_ADC_ON_DELAY, ch_cfg, set_data_val);
 
             case MMI_CMD2_MEAS_SET_STABLE_TEMPERATURE:
                 SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_DATA_LEN);
-
-                /* FRAM Write */
-                SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_TEMPERATURE_ADDR, MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_DATA_LEN, set_data_val));
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_STABLE_TEMPERATURE, ch_cfg, set_data_val);
 
@@ -497,14 +479,11 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
         case MMI_CMD2_CTRL_DEVICE_LED:
             SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN);
 
-            /* FRAM Write */
-            SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_DEV_CTRL_LED_STATUS_ADDR, MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN, set_data_val));
-
             if (set_data_val[0] > 0) {
-                Task_Meas_Ctrl_Led(ch_cfg, true);
+                Task_Meas_Ctrl_Led(ch_cfg, LED_CTRL_FORCE_ON);
             }
             else {
-                Task_Meas_Ctrl_Led(ch_cfg, false);
+                Task_Meas_Ctrl_Led(ch_cfg, LED_CTRL_FORCE_OFF);
             }
             break;
 

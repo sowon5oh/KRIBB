@@ -225,10 +225,8 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             SYS_LOG_TEST("Temperature ADC: %d, Degree: %d", temp.adc, temp.degree);
             break;
 
-        case FSM_TEST_DEVICE_READ_PD:
-//            uint16_t pd;
-            HAL_Delay(500);
-
+        case FSM_TEST_MEAS_REQ_CH1:
+            Task_Meas_Request(CH1_IDX);
             break;
 
         default:

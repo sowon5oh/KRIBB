@@ -46,7 +46,7 @@ typedef enum {
 typedef enum {
     FSM_TEST_DEVICE_LED_ONOFF = 0,
     FSM_TEST_DEVICE_HEATER_ONOFF,
-    FSM_TEST_DEVICE_READ_PD,
+    FSM_TEST_MEAS_REQ_CH1,
     FSM_TEST_DEVICE_READ_TEMP,
 /* Add.. */
 } FsmTaskTestType_t;

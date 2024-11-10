@@ -59,7 +59,7 @@ void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
             SYS_LOG_INFO("Decoder Start");
 #if (MMI_MSG_DEBUG_LOG == 1)
             for (uint8_t hex_len = 0; hex_len < ch_cnt; hex_len++) {
-                SYS_LOG_DEBUG("%02X", one_line[hex_len]);
+                SYS_LOG_INFO("%02X", one_line[hex_len]);
             }
 #endif
             ch_cnt = 0;

@@ -46,17 +46,25 @@ typedef enum {
 typedef enum {
     FSM_TEST_DEVICE_LED_ONOFF = 0,
     FSM_TEST_DEVICE_HEATER_ONOFF,
-    FSM_TEST_MEAS_REQ_CH1,
     FSM_TEST_DEVICE_READ_TEMP,
+    FSM_TEST_MEAS_REQ_CH1,
+    FSM_TEST_MEAS_REQ_CH2,
+    FSM_TEST_MEAS_REQ_CH3,
+    FSM_TEST_MAX = FSM_TEST_MEAS_REQ_CH1,
 /* Add.. */
 } FsmTaskTestType_t;
+
+typedef enum {
+    FSM_TEST_MODE_SINGLE = 0,
+    FSM_TEST_MODE_SEQUENCE,
+} FsmTaskTestMode_t;
 
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Task_Fsm_Init(void);
 void Task_Fsm_Process(void);
-void Task_Fsm_StartTest(FsmTaskTestType_t test);
+void Task_Fsm_StartTest(FsmTaskTestType_t test, FsmTaskTestMode_t mode);
 void Task_Fsm_SendEvent(FsmEvent_t event);
 
 #ifdef __cplusplus

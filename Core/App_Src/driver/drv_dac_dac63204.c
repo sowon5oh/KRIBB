@@ -143,6 +143,9 @@ HAL_StatusTypeDef DRV_DAC63204_SetData(Dac63204_chSel_t ch, uint16_t data) {
         write_data = 0xFFF;
         SYS_LOG_WARN("DAC Set value too high, Value changed. %04X ==> 0xFFF", data, write_data);
     }
+    else {
+        write_data = data;
+    }
 
     switch (ch) {
         case DRV_DAC63204_CH_0:

@@ -55,40 +55,14 @@ static HAL_StatusTypeDef _fsm_test_stop(void);
 /* Private variables ---------------------------------------------------------*/
 static uint16_t fsm_polling_sec;
 static FsmState_t fsm_cur_state;
-static FsmStateName_t fsm_state_info[TASK_FSM_STATE_NUM] = {
-    {
-        TASK_FSM_STATE_IDLE,
-        "IDLE" },
-    {
-        TASK_FSM_STATE_READY,
-        "READY" },
-    {
-        TASK_FSM_STATE_TEST,
-        "MEAS" } };
+static FsmStateName_t fsm_state_info[TASK_FSM_STATE_NUM] = { { TASK_FSM_STATE_IDLE, "IDLE" }, { TASK_FSM_STATE_READY, "READY" }, { TASK_FSM_STATE_TEST, "MEAS" } };
 static uint8_t fsm_evt_num_max;
-static fsmTable_t fsm_table[] = {
-    {
-        TASK_FSM_EVENT_INIT_DONE,
-        TASK_FSM_STATE_IDLE,
-        NULL,
-        TASK_FSM_STATE_READY },
-    {
-        TASK_FSM_EVENT_TEST_REQ,
-        TASK_FSM_STATE_READY,
-        _fsm_proc_test,
-        TASK_FSM_STATE_TEST },
-    {
-        TASK_FSM_EVENT_TEST_DONE,
-        TASK_FSM_STATE_TEST,
-        _fsm_test_stop,
-        TASK_FSM_STATE_READY },
-    {
-        TASK_FSM_EVENT_TIMEOUT,
-        TASK_FSM_STATE_READY,
-        NULL,
-        TASK_FSM_STATE_IDLE } };
+static fsmTable_t fsm_table[] = { { TASK_FSM_EVENT_INIT_DONE, TASK_FSM_STATE_IDLE,
+NULL, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TEST_REQ, TASK_FSM_STATE_READY, _fsm_proc_test, TASK_FSM_STATE_TEST }, { TASK_FSM_EVENT_TEST_DONE, TASK_FSM_STATE_TEST,
+    _fsm_test_stop, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TIMEOUT, TASK_FSM_STATE_READY,
+NULL, TASK_FSM_STATE_IDLE } };
 static FsmTaskTestType_t fsm_task_cur_test;
-bool fsm_task_test_result = false;
+static FsmTaskTestMode_t fsm_test_mode = FSM_TEST_MODE_SINGLE;
 
 /* Public user code ----------------------------------------------------------*/
 void Task_Fsm_Init(void) {
@@ -119,8 +93,10 @@ void Task_Fsm_SendEvent(FsmEvent_t event) {
 }
 
 /* For Test code */
-void Task_Fsm_StartTest(FsmTaskTestType_t test) {
+void Task_Fsm_StartTest(FsmTaskTestType_t test, FsmTaskTestMode_t mode) {
     fsm_task_cur_test = test;
+    fsm_test_mode = mode;
+
     SYS_LOG_TEST("%d Test Start", fsm_task_cur_test);
     _fsm_send_event(TASK_FSM_EVENT_TEST_REQ);
 }
@@ -229,12 +205,30 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             Task_Meas_Request(MEAS_SET_CH_1);
             break;
 
+        case FSM_TEST_MEAS_REQ_CH2:
+            Task_Meas_Request(MEAS_SET_CH_2);
+            break;
+
+        case FSM_TEST_MEAS_REQ_CH3:
+            Task_Meas_Request(MEAS_SET_CH_3);
+            break;
+
         default:
             SYS_LOG_ERR("Please Define the test");
             break;
     }
 
-    _fsm_test_stop();
+    if (FSM_TEST_MODE_SINGLE == fsm_test_mode) {
+        _fsm_test_stop();
+    }
+    else {
+        if (++fsm_task_cur_test <= FSM_TEST_MAX) {
+            _fsm_proc_test();
+        }
+        else {
+            _fsm_test_stop();
+        }
+    }
 
     return HAL_OK;
 }
@@ -242,6 +236,6 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
 static HAL_StatusTypeDef _fsm_test_stop(void) {
     _fsm_send_event(TASK_FSM_EVENT_TEST_DONE);
 
-    SYS_LOG_TEST("%d Test Stop. Result: %s", ((fsm_task_test_result)? "SUCCESS":"FAIL"));
+    SYS_LOG_TEST("%d Test Stop. Result: %s", ((fsm_task_test_result) ? "SUCCESS" : "FAIL"));
     return HAL_OK;
 }

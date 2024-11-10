@@ -178,14 +178,6 @@ HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t meas_ch) {
 
         case MEAS_SET_CH_ALL:
             SYS_LOG_ERR("All Ch Measure is TBD");
-//            for (uint8_t ch_idx = 0; ch_idx <= MEAS_SET_CH_3; ch_idx++) {
-//                if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch_idx]) {
-//                    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_ON));
-//                }
-//                else {
-//                    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(ch_idx, HAL_LED_LEVEL_OFF));
-//                }
-//            }
             return HAL_ERROR;
 
         default:
@@ -194,7 +186,7 @@ HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t meas_ch) {
     }
 
     SYS_LOG_INFO("[MEASURE START]");
-    SYS_LOG_INFO("- CH                :%d", ch);
+    SYS_LOG_INFO("- CH                : %d", meas_ch);
     SYS_LOG_INFO("- LED ON TIME MS    : %d", meas_set_data.led_on_time[ch]);
     SYS_LOG_INFO("- LED ON LEVEL      : %d", meas_set_data.led_on_level[ch]);
     SYS_LOG_INFO("- ADC DELAY MS      : %d", meas_set_data.adc_delay_ms[ch]);

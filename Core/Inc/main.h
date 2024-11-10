@@ -49,8 +49,8 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 typedef struct {
-    uint32_t timeout_ms; // Timer interval in milliseconds
-    uint32_t remaining_ms; // Remaining time in milliseconds
+    uint32_t timeout_0_1_ms; // Timer interval in 0.1 milliseconds
+    uint32_t remaining_0_1_ms; // Remaining time in 0.1 milliseconds
     void (*timer_cb)(void); // Callback function to call when the timer expires
     uint8_t active; // Timer activation status
 } AppTimer_t;

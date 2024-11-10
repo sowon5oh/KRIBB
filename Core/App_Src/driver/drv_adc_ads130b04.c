@@ -273,7 +273,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
     
     /* Pin Reset */
     HAL_GPIO_WritePin(ADC_RST__GPIO_Port, ADC_RST__Pin, GPIO_PIN_RESET);
-    HAL_Delay(1000);
+    HAL_Delay(100);
     HAL_GPIO_WritePin(ADC_RST__GPIO_Port, ADC_RST__Pin, GPIO_PIN_SET);
     
     /* General Config */

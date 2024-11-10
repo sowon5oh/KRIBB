@@ -183,7 +183,9 @@ int main(void) {
     char Tx_str_data[] = "UNIOTECH CORP.\r\n";
     HAL_UART_Transmit(&huart1, (uint8_t*) Tx_str_data, sizeof(Tx_str_data) - 1, 1000);
 #endif
-
+    /***********************************************************************
+     * System Init
+     ***********************************************************************/
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("  [UNIOTECH] 3CH FL ANALYZER UOT  ");
     SYS_LOG_INFO("* Build Time: %s %s", __DATE__, __TIME__);
@@ -197,6 +199,23 @@ int main(void) {
     Task_Fsm_Init();
     Task_Meas_Init();
     HAL_Delay(100);
+
+    /***********************************************************************
+     * Test Sequence
+     ***********************************************************************/
+//    Task_Fsm_StartTest(FSM_TEST_MMI_SET_TEMP_ONOFF, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_SET_LED_ON_TIME, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_SET_LED_ON_LEVEL, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_SET_ADC_SAMPLE_CNT, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_SET_ADC_DELAY_MS, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_SET_STABLE_TEMPERATURE, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_SET_REQ_ALL_SETTINGS, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_REQ_TEMPERATURE, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_REQ_RECV_PD, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_REQ_MONITOR_PD, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_REQ_MEASURE, FSM_TEST_MODE_SINGLE);
+    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_CTRL_LED_ONOFF, FSM_TEST_MODE_SEQUENCE);
+//    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_STATUS_REQ, FSM_TEST_MODE_SINGLE);
 
     /* USER CODE END 2 */
 

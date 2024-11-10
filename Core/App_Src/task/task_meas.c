@@ -65,6 +65,7 @@ static HAL_StatusTypeDef _meas_get_temperature_data(void);
 static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch);
 static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
 static void _heater_ctrl(void);
+static void _led_ctrl(HalLedCh_t ch, uint16_t set_data);
 
 /* Private variables ---------------------------------------------------------*/
 static measTaskContext_t meas_task_context = { .task_init = false, .meas_state = MEAS_STATE_STANDBY, };
@@ -227,7 +228,7 @@ HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_
     SYS_VERIFY_PARAM_NOT_NULL(p_result_val);
     
     switch (result_cat) {
-        case MEAS_RESULT_CAT_TEMP_ADC:
+        case MEAS_RESULT_CAT_TEMPERATURE:
             SYS_VERIFY_SUCCESS(_meas_get_temperature_data());
             memcpy(p_result_val, &meas_result_data.temperature_data, sizeof(uint16_t) * CH_NUM);
             return HAL_OK;
@@ -261,44 +262,44 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasSetLedForcedCtrlVal_
     switch (ch) {
         case MEAS_SET_CH_1:
             if (LED_CTRL_FORCE_ON == ctrl) {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, meas_set_data.led_on_level[CH1_IDX]));
+                _led_ctrl(HAL_LED_CH_1, meas_set_data.led_on_level[CH1_IDX]);
             }
             else {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
+                _led_ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
             }
             meas_set_data.led_ctrl_on[CH1_IDX] = ctrl;
             break;
 
         case MEAS_SET_CH_2:
             if (LED_CTRL_FORCE_ON == ctrl) {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, meas_set_data.led_on_level[CH2_IDX]));
+                _led_ctrl(HAL_LED_CH_2, meas_set_data.led_on_level[CH2_IDX]);
             }
             else {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
+                _led_ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
             }
             meas_set_data.led_ctrl_on[CH2_IDX] = ctrl;
             break;
 
         case MEAS_SET_CH_3:
             if (LED_CTRL_FORCE_ON == ctrl) {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, meas_set_data.led_on_level[CH3_IDX]));
+                _led_ctrl(HAL_LED_CH_3, meas_set_data.led_on_level[CH3_IDX]);
             }
             else {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
+                _led_ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
             }
             meas_set_data.led_ctrl_on[CH3_IDX] = ctrl;
             break;
 
         case MEAS_SET_CH_ALL:
             if (LED_CTRL_FORCE_ON == ctrl) {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, meas_set_data.led_on_level[CH1_IDX]));
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, meas_set_data.led_on_level[CH2_IDX]));
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, meas_set_data.led_on_level[CH3_IDX]));
+                _led_ctrl(HAL_LED_CH_1, meas_set_data.led_on_level[CH1_IDX]);
+                _led_ctrl(HAL_LED_CH_2, meas_set_data.led_on_level[CH2_IDX]);
+                _led_ctrl(HAL_LED_CH_3, meas_set_data.led_on_level[CH3_IDX]);
             }
             else {
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
-                SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
+                _led_ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
+                _led_ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
+                _led_ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
             }
             meas_set_data.led_ctrl_on[CH1_IDX] = ctrl;
             meas_set_data.led_ctrl_on[CH2_IDX] = ctrl;
@@ -415,7 +416,7 @@ static HAL_StatusTypeDef _meas_op_start(uint8_t ch) {
 
     /* LED Control */
     SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
-    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl((HalLedCh_t )ch, meas_set_data.led_on_level[ch]));
+    _led_ctrl((HalLedCh_t) ch, meas_set_data.led_on_level[ch]);
     App_Timer_Start(APP_TIMER_TYPE_LED_ON_TIME, meas_set_data.led_on_time[ch], _meas_task_req_cb);
     
     return HAL_OK;
@@ -435,9 +436,9 @@ static void _meas_task_req_cb(void) {
         case MEAS_STATE_LED_ON:
             SYS_LOG_INFO("[MEAS] LED Time Complete. Start ADC Delay");
             /* LED Off */
-            (void) Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
-            (void) Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
-            (void) Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
+            _led_ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
+            _led_ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
+            _led_ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
 
             for (ch = 0; ch <= MEAS_SET_CH_3; ch++) {
                 if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch]) {
@@ -853,4 +854,11 @@ static void _heater_ctrl(void) {
         }
     }
     App_Timer_Start(APP_TIMER_TYPE_HEATER_CTRL, MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
+}
+
+void _led_ctrl(HalLedCh_t ch, uint16_t set_data) {
+    bool led_status = (set_data > 0) ? true : false;
+
+    meas_req_status_data.ch_onoff_status[ch] = led_status;
+    SYS_VERIFY_SUCCESS_VOID(Hal_Led_Ctrl(ch, set_data));
 }

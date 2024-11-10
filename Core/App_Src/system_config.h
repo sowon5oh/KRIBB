@@ -51,7 +51,7 @@ extern "C" {
 #define FEATURE_TEMPERATURE_DATA_DEGREE 1
 #define FEATURE_TEMPERATURE_DATA_TYPE   FEATURE_TEMPERATURE_DATA_DEGREE
 
-#define FEATURE_TEST_REQ_FAKE_DATA_ENABLE 1
+#define FEATURE_TEST_REQ_FAKE_DATA_ENABLE 0
 
 /* Exported macro ------------------------------------------------------------*/
 

@@ -76,7 +76,7 @@ HAL_StatusTypeDef UART_SendMMI(uint8_t *p_data, uint16_t len) {
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == uart_hdl->Instance) {
 #if (UART_TX_DEBUG_LOG == 1)
-        SYS_LOG_DEBUG("Uart Message Send Done: %s", tx_str_buffer);
+        SYS_LOG_INFO("Uart Message Send Done: %s", tx_str_buffer);
         memset(tx_str_buffer, 0, sizeof(tx_str_buffer));
 #endif
         memset(tx_buffer, 0, sizeof(tx_buffer));

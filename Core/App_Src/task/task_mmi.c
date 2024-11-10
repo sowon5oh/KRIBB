@@ -35,7 +35,7 @@
 /* Private function prototypes -----------------------------------------------*/
 static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data);
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len);
-static bool _protocol_chksum_check(uint8_t *arr, int cnt);
+static bool _protocol_chksum_check(uint8_t *arr, uint8_t cnt);
 static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t len);
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
@@ -59,7 +59,7 @@ void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
             SYS_LOG_INFO("Decoder Start");
 #if (MMI_MSG_DEBUG_LOG == 1)
             for (uint8_t hex_len = 0; hex_len < ch_cnt; hex_len++) {
-                SYS_LOG_INFO("%02X", one_line[hex_len]);
+                SYS_LOG_DEBUG("%02X", one_line[hex_len]);
             }
 #endif
             ch_cnt = 0;
@@ -169,11 +169,11 @@ static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uin
 }
 
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
-    uint8_t bitsttf_line[512] = { 0, };
+    uint8_t bitsttf_line[MMI_PROTOCOL_RX_MSG_LEN_MAX * 2] = { 0, };
     uint8_t arr_idx = 0;
     uint8_t chg_cnt = 0;
 
-    for (uint8_t arr_idx = 0; arr_idx < arr_len; arr_idx++) {
+    for (arr_idx = 0; arr_idx < arr_len; arr_idx++) {
         switch (p_org_line_arr[arr_idx + chg_cnt]) {
             case MMI_PROTOCOL_STX:
                 bitsttf_line[arr_idx] = p_org_line_arr[arr_idx + chg_cnt];
@@ -193,17 +193,22 @@ static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
                     case 0xDE:
                         bitsttf_line[arr_idx] = 0xC2;
                         break;
+
+                    default:
+                        SYS_LOG_WARN("Unexpected SPC code: %02X", p_org_line_arr[arr_idx + chg_cnt]);
+                        break;
                 }
                 break;
 
             case MMI_PROTOCOL_ETX:
+                bitsttf_line[arr_idx] = p_org_line_arr[arr_idx + chg_cnt];
                 if (_protocol_chksum_check(bitsttf_line, arr_idx)) {
                     _process_command(bitsttf_line, arr_idx);
                     break;
                 }
                 else {
                     SYS_LOG_ERR("Checksum failed");
-                    return;
+                    break;
                 }
 
             default:
@@ -223,7 +228,7 @@ static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
     }
 }
 
-static bool _protocol_chksum_check(uint8_t *arr, int cnt) {
+static bool _protocol_chksum_check(uint8_t *arr, uint8_t cnt) {
     uint32_t chksum_32 = MMI_PROTOCOL_CHKSUM_INIT;
     uint8_t chksum_8 = 0;
 
@@ -275,7 +280,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
             break;
 
         default:
-            SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
+            SYS_LOG_ERR("Invalid cmd1 value: 0X%02X", cmd1);
             return HAL_ERROR;
     }
 
@@ -382,7 +387,6 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
             default:
                 SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
                 return HAL_ERROR;
-
         }
     }
 }
@@ -399,7 +403,8 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
         SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len <= MMI_CMD3_MEAS_REQ_ALL_DATA_LEN);
 
 #if(FEATURE_TEST_REQ_FAKE_DATA_ENABLE == 0)
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, MEAS_SET_CH_ALL, &result_data_val.temperature_data[0]));
+        //TODO
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, MEAS_SET_CH_ALL, &result_data_val.temperature_data[0]));
         SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, MEAS_SET_CH_ALL, &result_data_val.recv_pd_data[0]));
 
         memcpy(&req_all_msg[0], &result_data_val.temperature_data[0], temp_data_len);
@@ -438,8 +443,8 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
         uint8_t result_data_len = (MEAS_SET_CH_ALL == ch_cfg) ? MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN : MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN;
 
         switch (cmd2) {
-            case MMI_CMD2_MEAS_REQ_TEMP_ADC_W_RESP:
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMP_ADC, ch_cfg, &result_data_val.temperature_data[0]));
+            case MMI_CMD2_MEAS_REQ_TEMPERATURE_W_RESP:
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, ch_cfg, &result_data_val.temperature_data[0]));
                 return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.temperature_data[0]);
 
             case MMI_CMD2_MEAS_REQ_RESP_ADC_W_RESP:
@@ -465,7 +470,7 @@ static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3) 
     
     SYS_VERIFY_SUCCESS(Task_Meas_Get_Status(&status_data_buff.status));
     
-    return _mmi_send(MMI_CMD1_REQ_DEVICE_STATUS_RESP, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, &status_data_buff.msg[0]);
+    return _mmi_send(MMI_CMD1_REQ_DEVICE_STATUS_RESP, cmd2, cmd3, MMI_CMD3_REQ_DEVICE_STATUS_DATA_LEN, &status_data_buff.msg[0]);
 }
 
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {

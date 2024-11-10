@@ -51,6 +51,8 @@ static void _fsm_hdl(FsmEvent_t event);
 static HAL_StatusTypeDef _fsm_proc_test(void);
 static HAL_StatusTypeDef _fsm_proc_sleep(void);
 static HAL_StatusTypeDef _fsm_test_stop(void);
+static void _perform_mmi_test(const char *test_str);
+static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex_array_len);
 
 /* Private variables ---------------------------------------------------------*/
 static uint16_t fsm_polling_sec;
@@ -170,6 +172,9 @@ static HAL_StatusTypeDef _fsm_proc_sleep(void) {
 
 static HAL_StatusTypeDef _fsm_proc_test(void) {
     switch (fsm_task_cur_test) {
+        /***********************************************************************
+         * Device Test
+         ***********************************************************************/
         case FSM_TEST_DEVICE_LED_ONOFF:
             SYS_LOG_TEST("LED CH 1 ON");
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_TEST));
@@ -201,6 +206,9 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             SYS_LOG_TEST("Temperature ADC: %d, Degree: %d", temp.adc, temp.degree);
             break;
 
+            /***********************************************************************
+             * Measure Test
+             ***********************************************************************/
         case FSM_TEST_MEAS_REQ_CH1:
             Task_Meas_Request(MEAS_SET_CH_1);
             break;
@@ -213,11 +221,78 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             Task_Meas_Request(MEAS_SET_CH_3);
             break;
 
+            /***********************************************************************
+             * MMI Message Test
+             ***********************************************************************/
+        case FSM_TEST_MMI_WHO_AM_I_DEV_INFO:
+            _perform_mmi_test(MMI_TEST_STR_WHO_AM_I_DEV_INFO);
+            break;
+
+        case FSM_TEST_MMI_WHO_AM_I:
+            _perform_mmi_test(MMI_TEST_STR_WHO_AM_I);
+            break;
+
+        case FSM_TEST_MMI_DEV_INFO:
+            _perform_mmi_test(MMI_TEST_STR_DEV_INFO);
+            break;
+
+        case FSM_TEST_MMI_SET_TEMP_ONOFF:
+            _perform_mmi_test(MMI_TEST_STR_SET_TEMP_ONOFF);
+            break;
+
+        case FSM_TEST_MMI_SET_LED_ON_TIME:
+            _perform_mmi_test(MMI_TEST_STR_SET_LED_ON_TIME);
+            break;
+
+        case FSM_TEST_MMI_SET_LED_ON_LEVEL:
+            _perform_mmi_test(MMI_TEST_STR_SET_LED_ON_LEVEL);
+            break;
+
+        case FSM_TEST_MMI_SET_ADC_SAMPLE_CNT:
+            _perform_mmi_test(MMI_TEST_STR_SET_ADC_SAMPLE_CNT);
+            break;
+
+        case FSM_TEST_MMI_SET_ADC_DELAY_MS:
+            _perform_mmi_test(MMI_TEST_STR_SET_ADC_DELAY_MS);
+            break;
+
+        case FSM_TEST_MMI_SET_STABLE_TEMPERATURE:
+            _perform_mmi_test(MMI_TEST_STR_SET_STABLE_TEMPERATURE);
+            break;
+            
+        case FSM_TEST_MMI_SET_REQ_ALL_SETTINGS:
+            _perform_mmi_test(MMI_TEST_STR_SET_REQ_ALL_SETTINGS);
+            break;
+
+        case FSM_TEST_MMI_REQ_TEMPERATURE:
+            _perform_mmi_test(MMI_TEST_STR_REQ_TEMPERATURE);
+            break;
+            
+        case FSM_TEST_MMI_REQ_RECV_PD:
+            _perform_mmi_test(MMI_TEST_STR_REQ_RECV_PD);
+            break;
+            
+        case FSM_TEST_MMI_REQ_MONITOR_PD:
+            _perform_mmi_test(MMI_TEST_STR_REQ_MONITOR_PD);
+            break;
+            
+        case FSM_TEST_MMI_REQ_MEASURE:
+            _perform_mmi_test(MMI_TEST_STR_REQ_MEASURE);
+            break;
+            
+        case FSM_TEST_MMI_DEV_STATUS_REQ:
+            _perform_mmi_test(MMI_TEST_STR_DEV_STATUS_REQ);
+            break;
+
+        case FSM_TEST_MMI_DEV_CTRL_LED_ONOFF:
+            _perform_mmi_test(MMI_TEST_STR_DEV_CTRL_LED_ONOFF);
+            break;
+            
         default:
             SYS_LOG_ERR("Please Define the test");
             break;
     }
-
+    
     if (FSM_TEST_MODE_SINGLE == fsm_test_mode) {
         _fsm_test_stop();
     }
@@ -229,13 +304,44 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             _fsm_test_stop();
         }
     }
-
+    
     return HAL_OK;
 }
 
 static HAL_StatusTypeDef _fsm_test_stop(void) {
     _fsm_send_event(TASK_FSM_EVENT_TEST_DONE);
-
+    
     SYS_LOG_TEST("%d Test Stop. Result: %s", ((fsm_task_test_result) ? "SUCCESS" : "FAIL"));
     return HAL_OK;
+}
+
+static void _perform_mmi_test(const char *test_str) {
+    uint8_t mmi_hex_arr[50] = { 0, };
+    uint8_t mmi_hex_data_len;
+    
+    _string_to_hex_array(test_str, mmi_hex_arr, strlen(test_str));
+    mmi_hex_data_len = strlen(test_str) / 2;
+    Task_MMI_Decoder(mmi_hex_arr, mmi_hex_data_len);
+}
+
+static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex_array_len) {
+    size_t str_len = strlen(str);
+    
+    /* Check if the input string length is valid (should be even) */
+    if (str_len % 2 != 0) {
+        printf("Error: The input string length should be even.\n");
+        return;
+    }
+    
+    /* Check if the hex array can accommodate the converted values */
+    if (hex_array_len < str_len / 2) {
+        printf("Error: hex_array is too small to store the converted values.\n");
+        return;
+    }
+    
+    /* Read 2 characters at a time and convert */
+    for (size_t i = 0; i < str_len; i += 2) {
+        char byte_string[3] = { str[i], str[i + 1], '\0' }; /* 2 characters + NULL terminator */
+        hex_array[i / 2] = (uint8_t) strtol(byte_string, NULL, 16);
+    }
 }

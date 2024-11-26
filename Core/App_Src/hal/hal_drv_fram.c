@@ -25,6 +25,7 @@
 
 /* Private define ------------------------------------------------------------*/
 #define FEATURE_HAL_FRAM_TEST 0
+#define FEATURE_HAL_FRAM_ACTIVE  0
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -38,6 +39,8 @@ static HAL_StatusTypeDef _fram_read(uint8_t mem_addr, uint16_t data_len, uint8_t
 HAL_StatusTypeDef Hal_Fram_Init(I2C_HandleTypeDef *p_hdl) {
     /* init Fram driver */
     SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
+
+#if(FEATURE_HAL_FRAM_ACTIVE == 1)
     SYS_VERIFY_SUCCESS(DRV_FM24CL64_Init(p_hdl));
 
 #if ( FEATURE_HAL_FRAM_TEST == 1 )
@@ -47,21 +50,30 @@ HAL_StatusTypeDef Hal_Fram_Init(I2C_HandleTypeDef *p_hdl) {
     _fram_write(0, 8, test_data);
 #endif
     
+#endif
     return HAL_OK;
 }
 
 HAL_StatusTypeDef Hal_Fram_Write(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
-    SYS_VERIFY_TRUE(0 != data_len);
 
+#if(FEATURE_HAL_FRAM_ACTIVE == 1)
+    SYS_VERIFY_TRUE(0 != data_len);
     return _fram_write(mem_addr, data_len, p_data);
+#else
+    return HAL_OK;
+#endif
 }
 
 HAL_StatusTypeDef Hal_Fram_Read(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
-    SYS_VERIFY_TRUE(0 != data_len);
 
+#if(FEATURE_HAL_FRAM_ACTIVE == 1)
+    SYS_VERIFY_TRUE(0 != data_len);
     return _fram_read(mem_addr, data_len, p_data);
+#else
+    return HAL_OK;
+#endif
 }
 
 /* Private user code ---------------------------------------------------------*/

@@ -24,6 +24,7 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
+#define FEATURE_HAL_PD_TEST 0
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -37,6 +38,11 @@ HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t cb_fn)
     SYS_VERIFY_PARAM_NOT_NULL(p_hdl);
     SYS_VERIFY_PARAM_NOT_NULL(cb_fn);
     SYS_VERIFY_SUCCESS(DRV_ADS130B04_Init(p_hdl, cb_fn));
+
+#if FEATURE_HAL_PD_TEST
+    SYS_LOG_TEST("PD TEST");
+    Hal_Pd_Start();
+#endif
 
     return HAL_OK;
 }

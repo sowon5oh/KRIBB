@@ -53,6 +53,7 @@ static void _meas_set_init(void);
 static void _meas_result_init(void);
 
 static HAL_StatusTypeDef _meas_op_start(MeasSetChVal_t ch);
+static void _meas_task_led_timeout_cb(void);
 static void _meas_task_req_cb(void);
 
 static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val);
@@ -66,6 +67,7 @@ static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch);
 static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
 static void _heater_ctrl(void);
 static void _led_ctrl(HalLedCh_t ch, uint16_t set_data);
+int16_t _calc_pd_avr(int16_t *p_buff, uint16_t sample_cnt);
 
 /* Private variables ---------------------------------------------------------*/
 static measTaskContext_t meas_task_context = { .task_init = false, .meas_state = MEAS_STATE_STANDBY, };
@@ -412,14 +414,23 @@ static HAL_StatusTypeDef _meas_op_start(uint8_t ch) {
     for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
         meas_req_status_data.target_ch[ch_idx] = (ch == ch_idx) ? MEAS_TARGET_CH_ACTIVE : MEAS_TARGET_CH_DEACTIV;
     }
-    meas_task_context.meas_state = MEAS_STATE_LED_ON;
 
     /* LED Control */
     SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
-    _led_ctrl((HalLedCh_t) ch, meas_set_data.led_on_level[ch]);
-    App_Timer_Start(APP_TIMER_TYPE_LED_ON_TIME, meas_set_data.led_on_time[ch], _meas_task_req_cb);
+    SYS_VERIFY_SUCCESS(Hal_Led_Ctrl((HalLedCh_t )ch, meas_set_data.led_on_level[ch]));
+//    App_Timer_Start(APP_TIMER_TYPE_LED_ON_TIME, meas_set_data.led_on_time[ch], _meas_task_led_timeout_cb);
     
+    /* Start Measure Sequence */
+    meas_task_context.meas_state = MEAS_STATE_LED_ON;
+    _meas_task_req_cb();
+
     return HAL_OK;
+}
+
+static void _meas_task_led_timeout_cb(void) {
+    /* Stop Measure Sequence */
+    meas_task_context.meas_state = MEAS_STATE_SEND_RESULT;
+    _meas_task_req_cb();
 }
 
 static void _meas_task_req_cb(void) {
@@ -434,12 +445,6 @@ static void _meas_task_req_cb(void) {
             break;
 
         case MEAS_STATE_LED_ON:
-            SYS_LOG_INFO("[MEAS] LED Time Complete. Start ADC Delay");
-            /* LED Off */
-            _led_ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
-            _led_ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
-            _led_ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
-
             for (ch = 0; ch <= MEAS_SET_CH_3; ch++) {
                 if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch]) {
                     SYS_LOG_DEBUG("[MEAS] CH %d Selected", ch);
@@ -465,6 +470,8 @@ static void _meas_task_req_cb(void) {
             }
             else {
                 meas_task_context.meas_state = MEAS_STATE_ERROR;
+
+                /* Continue Measure Sequence */
                 _meas_task_req_cb();
             }
             break;
@@ -486,6 +493,7 @@ static void _meas_task_req_cb(void) {
 
             /* Time count */
             if (++sample_idx >= meas_set_data.adc_sample_cnt[ch]) {
+                /* Next Sequence */
                 meas_task_context.meas_state = MEAS_STATE_SEND_RESULT;
                 _meas_task_req_cb();
             }
@@ -496,9 +504,15 @@ static void _meas_task_req_cb(void) {
             break;
 
         case MEAS_STATE_SEND_RESULT:
+            SYS_LOG_INFO("[MEAS] LED Time Complete.");
+            /* LED Off */
+            (void) Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
+            (void) Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
+
             /* Save result */
-            recv_pd = ARRAY_AVERAGE(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
-            monitor_pd = ARRAY_AVERAGE(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+            recv_pd = _calc_pd_avr(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+            monitor_pd = _calc_pd_avr(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             temperature_tempdata = ARRAY_AVERAGE(temperature_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             meas_result_data.recv_pd_data[ch] = recv_pd;
             meas_result_data.monitor_pd_data[ch] = monitor_pd;
@@ -759,7 +773,7 @@ static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch) {
                     }
                 }
             }
-            meas_result_data.recv_pd_data[ch_idx] = ARRAY_AVERAGE(recv_pd_buff[ch_idx], meas_set_data.adc_sample_cnt[ch_idx]);
+            meas_result_data.recv_pd_data[ch_idx] = _calc_pd_avr(recv_pd_buff[ch_idx], meas_set_data.adc_sample_cnt[ch_idx]);
         }
     }
     else {
@@ -778,7 +792,7 @@ static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch) {
                 }
             }
         }
-        meas_result_data.recv_pd_data[ch] = ARRAY_AVERAGE(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+        meas_result_data.recv_pd_data[ch] = _calc_pd_avr(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
     }
 
     return HAL_OK;
@@ -806,7 +820,7 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
                     }
                 }
             }
-            meas_result_data.monitor_pd_data[ch_idx] = ARRAY_AVERAGE(monitor_pd_buff[ch_idx], meas_set_data.adc_sample_cnt[ch_idx]);
+            meas_result_data.monitor_pd_data[ch_idx] = _calc_pd_avr(monitor_pd_buff[ch_idx], meas_set_data.adc_sample_cnt[ch_idx]);
         }
     }
     else {
@@ -825,7 +839,7 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
                 }
             }
         }
-        meas_result_data.monitor_pd_data[ch] = ARRAY_AVERAGE(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+        meas_result_data.monitor_pd_data[ch] = _calc_pd_avr(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
     }
     
     return HAL_OK;
@@ -861,4 +875,20 @@ void _led_ctrl(HalLedCh_t ch, uint16_t set_data) {
 
     meas_req_status_data.ch_onoff_status[ch] = led_status;
     SYS_VERIFY_SUCCESS_VOID(Hal_Led_Ctrl(ch, set_data));
+}
+
+int16_t _calc_pd_avr(int16_t *p_buff, uint16_t sample_cnt) {
+    int32_t sum = 0;
+    int16_t result = 0;
+    
+    if (sample_cnt > 0) {
+        for (uint16_t idx = 0; idx < sample_cnt; idx++) {
+            sum += p_buff[idx];
+        }
+        result = (int16_t) (sum / sample_cnt);
+        return result;
+    }
+    else {
+        return 0;
+    }
 }

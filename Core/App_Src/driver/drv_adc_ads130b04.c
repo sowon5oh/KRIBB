@@ -305,20 +305,20 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
     
     /* Clock Config */
     ads130b04_clock_sel = ADS130B04_CLOCK_INTERNAL_OSC;
-    ads130b04_osr_mode = ADS130B04_OSR_MODE_4096;
+    ads130b04_osr_mode = ADS130B04_OSR_MODE_128;
     ads130b04_pwr_mode = ADS130B04_PWR_MODE_HIGH_RESOLUTION;
     /* Ch0 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_0].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_0].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_0].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
     /* Ch1 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_1].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_1].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_1].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
     /* Ch2 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_2].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_2].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_2].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
     /* Ch3 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_3].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_3].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_3].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
     
     /* Gain Config */
     ads130b04_gain_mode = ADS130B04_CH_GAIN_MODE_64;
@@ -429,9 +429,9 @@ HAL_StatusTypeDef DRV_ADS130B04_Read(void) {
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == ADC_DRDY__Pin) {
-        if (ads130b04_context.data_update) {
-            _read_data();
-        }
+//        if (ads130b04_context.data_update) {
+        _read_data();
+//        }
     }
 }
 
@@ -822,7 +822,7 @@ static HAL_StatusTypeDef _comm_tx_rx(uint16_t *p_tx_data, uint8_t tx_len, int16_
     ADS130B04_SPI_Select();
     
 #if USE_SPI_TXRX_FUNC == 1
-		ret = HAL_SPI_TransmitReceive(ads130b04_context.spi_handle, &tx_buff[0], &rx_buff[0], word_size * len, 500);
+    SYS_VERIFY_SUCCESS(HAL_SPI_TransmitReceive(ads130b04_context.spi_handle, &tx_buff[0], &rx_buff[0], word_size * tx_len, 500));
 #else
     SYS_VERIFY_SUCCESS(HAL_SPI_Transmit(ads130b04_context.spi_handle, &tx_buff[0], word_size * tx_len, 500));
     ADS130B04_SPI_Deselect();
@@ -889,7 +889,7 @@ static void _make_word_packet(uint16_t *p_data, uint8_t len, uint8_t *p_result) 
 
 static void _parse_word_packet(uint8_t *p_data, uint8_t len, int16_t *p_result) {
     uint8_t word_size = ads130b04_word_size.byte_num;
-    
+
     for (uint8_t idx = 0; idx < len; idx++) {
         p_result[idx] = (((p_data[word_size * idx] << 8) & 0xFF00) | (p_data[word_size * idx + 1] & 0xFF));
     }

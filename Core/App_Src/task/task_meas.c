@@ -417,30 +417,41 @@ static void _meas_op_start(uint8_t start_ch) {
 
     /* LED Control */
     SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[start_ch]);
-    SYS_VERIFY_SUCCESS_VOID(Hal_Led_Ctrl((HalLedCh_t )start_ch, meas_set_data.led_on_level[start_ch]));
-//    App_Timer_Start(APP_TIMER_TYPE_LED_ON_TIME, meas_set_data.led_on_time[ch], _meas_task_led_timeout_cb);
 
     /* Start Measure Sequence */
     meas_task_context.meas_state = MEAS_STATE_LED_ON;
-    _meas_task_req_cb();
+
+    App_Timer_Start(APP_TIMER_TYPE_MEASURE, 1, _meas_task_req_cb);
 }
 
 static void _meas_op_stop(void) {
     /* Stop Measure Sequence */
     meas_task_context.meas_stop_flag = true;
-    _meas_task_req_cb();
+    return _meas_task_req_cb();
+}
+
+static void _meas_continue(void) {
+//    /* Next Step */
+//    if (++meas_task_context.meas_state > MEAS_STATE_SEND_RESULT)
+//        meas_task_context.meas_state = MEAS_STATE_STANDBY;
+
+    App_Timer_Start(APP_TIMER_TYPE_MEASURE, 1, _meas_task_req_cb);
 }
 
 static void _meas_task_led_timeout_cb(void) {
     /* Stop Measure Sequence */
     meas_task_context.meas_state = MEAS_STATE_SEND_RESULT;
-    _meas_task_req_cb();
+    return _meas_task_req_cb();
 }
 
 static void _meas_task_req_cb(void) {
     static MeasSetChVal_t ch;
     HalTempData_t temperature;
     int16_t monitor_pd, recv_pd, temperature_tempdata;
+
+    if (meas_task_context.meas_stop_flag) {
+        meas_task_context.meas_state = MEAS_STATE_STANDBY;
+    }
 
     switch (meas_task_context.meas_state) {
         case MEAS_STATE_STANDBY:
@@ -452,14 +463,9 @@ static void _meas_task_req_cb(void) {
                 ch = 0;
 
             /* Next Step */
-            meas_task_context.meas_state = MEAS_STATE_STANDBY;
-
-            if (meas_task_context.meas_stop_flag) {
-                /* Pause */
-            }
-            else {
-                /* Next Step */
-                _meas_task_req_cb();
+            if (!meas_task_context.meas_stop_flag) {
+                meas_task_context.meas_state = MEAS_STATE_LED_ON;
+                _meas_continue();
             }
             break;
 
@@ -471,12 +477,12 @@ static void _meas_task_req_cb(void) {
             if (HAL_OK == Hal_Pd_Start()) {
                 sample_idx = 0;
                 meas_task_context.meas_state = MEAS_STATE_ADC_REQ;
+                /* Wait for adc driver response.. */
             }
             else {
                 meas_task_context.meas_state = MEAS_STATE_ERROR;
+                _meas_continue();
             }
-
-            /* Wait for adc driver response.. */
             break;
 
         case MEAS_STATE_ADC_REQ:
@@ -485,10 +491,8 @@ static void _meas_task_req_cb(void) {
             }
             else {
                 meas_task_context.meas_state = MEAS_STATE_ERROR;
-
-                /* Continue Measure Sequence */
-                _meas_task_req_cb();
             }
+            _meas_continue();
             break;
 
         case MEAS_STATE_ADC_DONE:
@@ -515,7 +519,7 @@ static void _meas_task_req_cb(void) {
             if (++sample_idx >= meas_set_data.adc_sample_cnt[ch]) {
                 /* Next Sequence */
                 meas_task_context.meas_state = MEAS_STATE_SEND_RESULT;
-                _meas_task_req_cb();
+                _meas_continue();
             }
             else {
                 meas_task_context.meas_state = MEAS_STATE_ADC_REQ;
@@ -553,6 +557,7 @@ static void _meas_task_req_cb(void) {
 
             /* Return to standby state */
             meas_task_context.meas_state = MEAS_STATE_STANDBY;
+            _meas_continue();
             break;
 
         case MEAS_STATE_ERROR:

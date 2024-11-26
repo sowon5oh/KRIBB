@@ -403,10 +403,10 @@ static void _meas_result_init(void) {
     memset(&meas_result_data, 0, sizeof(MeasResultData_t));
 }
 
-static void _meas_op_start(uint8_t start_ch) {
+static void _meas_op_start(uint8_t ch) {
 #if 0
     for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
-        meas_req_status_data.target_ch[ch_idx] = (start_ch == ch_idx) ? MEAS_TARGET_CH_ACTIVE : MEAS_TARGET_CH_DEACTIV;
+        meas_req_status_data.target_ch[ch_idx] = (ch == ch_idx) ? MEAS_TARGET_CH_ACTIVE : MEAS_TARGET_CH_DEACTIV;
     }
 #else
     /* All Ch Activated */
@@ -415,8 +415,8 @@ static void _meas_op_start(uint8_t start_ch) {
     meas_req_status_data.target_ch[CH3_IDX] = MEAS_TARGET_CH_ACTIVE;
 #endif
 
-    /* LED Control */
-    SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[start_ch]);
+//    /* LED Control */
+//    SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
 
     /* Start Measure Sequence */
     meas_task_context.meas_state = MEAS_STATE_LED_ON;
@@ -451,6 +451,8 @@ static void _meas_task_req_cb(void) {
 
     if (meas_task_context.meas_stop_flag) {
         meas_task_context.meas_state = MEAS_STATE_STANDBY;
+        ch = CH1_IDX;
+        return;
     }
 
     switch (meas_task_context.meas_state) {
@@ -463,10 +465,8 @@ static void _meas_task_req_cb(void) {
                 ch = 0;
 
             /* Next Step */
-            if (!meas_task_context.meas_stop_flag) {
-                meas_task_context.meas_state = MEAS_STATE_LED_ON;
-                _meas_continue();
-            }
+            meas_task_context.meas_state = MEAS_STATE_LED_ON;
+            _meas_continue();
             break;
 
         case MEAS_STATE_LED_ON:
@@ -550,10 +550,6 @@ static void _meas_task_req_cb(void) {
             SYS_LOG_INFO("- receive pd : %d", meas_result_data.recv_pd_data[ch]);
             SYS_LOG_INFO("- monitor pd : %d", meas_result_data.monitor_pd_data[ch]);
             SYS_LOG_INFO("- temperature: %d", meas_result_data.temperature_data[ch]);
-
-            /* Send Packet */
-            SYS_LOG_INFO("[MEAS] ADC Read Complete. Send MMI Message");
-            Task_MMI_SendMeasResult();
 
             /* Return to standby state */
             meas_task_context.meas_state = MEAS_STATE_STANDBY;

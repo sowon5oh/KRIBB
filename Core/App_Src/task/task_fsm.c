@@ -210,15 +210,9 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
              * Measure Test
              ***********************************************************************/
         case FSM_TEST_MEAS_REQ_CH1:
-            Task_Meas_Request(MEAS_SET_CH_1);
-            break;
-
         case FSM_TEST_MEAS_REQ_CH2:
-            Task_Meas_Request(MEAS_SET_CH_2);
-            break;
-
         case FSM_TEST_MEAS_REQ_CH3:
-            Task_Meas_Request(MEAS_SET_CH_3);
+            /* TODO */
             break;
 
             /***********************************************************************

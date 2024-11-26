@@ -196,9 +196,17 @@ int main(void) {
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("Finite State Machine Start");
     SYS_LOG_INFO("----------------------------------");
+
+    /* Init Fsm Task */
     Task_Fsm_Init();
+
+    /* Init Meas Task & Read settings from FRAM */
+    HAL_Delay(10);
     Task_Meas_Init();
-    HAL_Delay(100);
+
+    /* Measurement Start */
+    HAL_Delay(10);
+    Task_Meas_Start();
 
     /***********************************************************************
      * Test Sequence

@@ -35,7 +35,8 @@ extern "C" {
 void Task_Meas_Init(void);
 HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, uint8_t *p_set_val);
 HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val);
-HAL_StatusTypeDef Task_Meas_Request(MeasSetChVal_t ch);
+HAL_StatusTypeDef Task_Meas_Start(void);
+HAL_StatusTypeDef Task_Meas_Stop(void);
 void Task_Meas_RequestCb(void);
 HAL_StatusTypeDef Task_Meas_Response(void);
 HAL_StatusTypeDef Task_Meas_RequestResult(MeasSetChVal_t *p_ch, MeasResultData_t *p_data);

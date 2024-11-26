@@ -436,8 +436,11 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
         return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, req_all_msg);
     }
     else if (MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP == cmd2) {
-        MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
-        return Task_Meas_Request(ch_cfg);
+        /*
+         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; // cmd3: ch select
+         */
+        SYS_LOG_WARN("Not developed");
+        return HAL_OK;
     }
     else {
         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */

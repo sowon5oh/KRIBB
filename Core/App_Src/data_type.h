@@ -174,7 +174,7 @@ extern "C" {
 #define MMI_CMD3_MEAS_REQ_START_CH1      0x01
 #define MMI_CMD3_MEAS_REQ_START_CH2      0x02
 #define MMI_CMD3_MEAS_REQ_START_CH3      0x03
-#define MMI_CMD3_MEAS_REQ_START_DATA_LEN (7)
+#define MMI_CMD3_MEAS_REQ_START_DATA_LEN (18)
 
 /* RX Command Group 4: Request Device Status */
 #define MMI_CMD1_REQ_DEVICE_STATUS          0x0C

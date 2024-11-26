@@ -486,9 +486,9 @@ static void _meas_task_req_cb(void) {
             temperature_buff[CH2_IDX][sample_idx] = temperature.adc[CH2_IDX];
             temperature_buff[CH3_IDX][sample_idx] = temperature.adc[CH3_IDX];
 #else
-            temperature_buff[CH1_IDX][sample_idx] = (uint16_t) (temperature.degree[CH1_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
-            temperature_buff[CH2_IDX][sample_idx] = (uint16_t) (temperature.degree[CH2_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
-            temperature_buff[CH3_IDX][sample_idx] = (uint16_t) (temperature.degree[CH3_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
+            temperature_buff[CH1_IDX][sample_idx] = (int16_t) (temperature.degree[CH1_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
+            temperature_buff[CH2_IDX][sample_idx] = (int16_t) (temperature.degree[CH2_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
+            temperature_buff[CH3_IDX][sample_idx] = (int16_t) (temperature.degree[CH3_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
 #endif
 
             /* Time count */
@@ -511,9 +511,14 @@ static void _meas_task_req_cb(void) {
             (void) Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
 
             /* Save result */
+#if 1
+            recv_pd = recv_pd_buff[ch][0];
+            monitor_pd = monitor_pd_buff[ch][0];
+#else
             recv_pd = _calc_pd_avr(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             monitor_pd = _calc_pd_avr(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
-            temperature_tempdata = ARRAY_AVERAGE(temperature_buff[ch], meas_set_data.adc_sample_cnt[ch]);
+#endif
+            temperature_tempdata = _calc_pd_avr(temperature_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             meas_result_data.recv_pd_data[ch] = recv_pd;
             meas_result_data.monitor_pd_data[ch] = monitor_pd;
             meas_result_data.temperature_data[ch] = temperature_tempdata;
@@ -743,9 +748,9 @@ static HAL_StatusTypeDef _meas_get_temperature_data(void) {
     meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.adc[HAL_TEMP_CH_1];
     meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.adc[HAL_TEMP_CH_2];
 #else
-    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.degree[HAL_TEMP_CH_0];
-    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.degree[HAL_TEMP_CH_1];
-    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.degree[HAL_TEMP_CH_2];
+    meas_result_data.temperature_data[CH1_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_0];
+    meas_result_data.temperature_data[CH2_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_1];
+    meas_result_data.temperature_data[CH3_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_2];
 #endif
 
     return HAL_OK;
@@ -885,7 +890,7 @@ int16_t _calc_pd_avr(int16_t *p_buff, uint16_t sample_cnt) {
         for (uint16_t idx = 0; idx < sample_cnt; idx++) {
             sum += p_buff[idx];
         }
-        result = (int16_t) (sum / sample_cnt);
+        result = (int16_t) ((double) sum / sample_cnt); // 정밀도 손실 방지
         return result;
     }
     else {

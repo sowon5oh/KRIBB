@@ -145,7 +145,7 @@ extern "C" {
 
 #define MMI_CMD2_MEAS_REQ_ALL_W_RESP     0x00
 #define MMI_CMD3_MEAS_REQ_ALL            0x00
-#define MMI_CMD3_MEAS_REQ_ALL_DATA_LEN   (12)
+#define MMI_CMD3_MEAS_REQ_ALL_DATA_LEN   (18)
 
 #define MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN (2)
 #define MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN (6)
@@ -283,7 +283,7 @@ typedef struct {
 } MeasSetDataMsg_t;
 
 typedef struct {
-    uint16_t temperature_data[CH_NUM];
+    int16_t temperature_data[CH_NUM];
     int16_t recv_pd_data[CH_NUM];
     int16_t monitor_pd_data[CH_NUM];
 } MeasResultData_t;

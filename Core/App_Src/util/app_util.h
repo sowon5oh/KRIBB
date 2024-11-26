@@ -174,8 +174,9 @@
 #define UINT8_2BYTE_ARRAY_TO_UINT16(arr) \
     ((uint16_t)((arr)[0] << 8) | (uint16_t)(arr)[1])
 
+//    __typeof__(*arr) sum = 0;
 #define ARRAY_AVERAGE(arr, count) ({               \
-    __typeof__(*arr) sum = 0;                      \
+    double sum = 0;                      \
     for (size_t i = 0; i < (count); i++) {         \
         sum += (arr)[i];                           \
     }                                              \

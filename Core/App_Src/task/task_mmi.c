@@ -400,14 +400,17 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
         uint8_t req_all_msg[MMI_CMD3_MEAS_REQ_ALL_DATA_LEN];
         uint8_t temp_data_len = sizeof(result_data_val.temperature_data);
         uint8_t recv_pd_data_len = sizeof(result_data_val.recv_pd_data);
-        SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len <= MMI_CMD3_MEAS_REQ_ALL_DATA_LEN);
+        uint8_t monitor_pd_data_len = sizeof(result_data_val.monitor_pd_data);
+        SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_ALL_DATA_LEN);
 
 #if(FEATURE_TEST_REQ_FAKE_DATA_ENABLE == 0)
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, MEAS_SET_CH_ALL, &result_data_val.temperature_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, MEAS_SET_CH_ALL, (uint16_t* )&result_data_val.temperature_data[0]));
         SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, MEAS_SET_CH_ALL, (uint16_t* )&result_data_val.recv_pd_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, MEAS_SET_CH_ALL, (uint16_t* )&result_data_val.monitor_pd_data[0]));
 
         memcpy(&req_all_msg[0], &result_data_val.temperature_data[0], temp_data_len);
         memcpy(&req_all_msg[temp_data_len], &result_data_val.recv_pd_data[0], recv_pd_data_len);
+        memcpy(&req_all_msg[temp_data_len + recv_pd_data_len], &result_data_val.monitor_pd_data[0], monitor_pd_data_len);
 #else
         static uint16_t test_num = 0;
         uint16_t test_arr[2][CH_NUM];
@@ -443,7 +446,7 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
 
         switch (cmd2) {
             case MMI_CMD2_MEAS_REQ_TEMPERATURE_W_RESP:
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, ch_cfg, &result_data_val.temperature_data[0]));
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, ch_cfg, (uint16_t* )&result_data_val.temperature_data[0]));
                 return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.temperature_data[0]);
 
             case MMI_CMD2_MEAS_REQ_RESP_ADC_W_RESP:

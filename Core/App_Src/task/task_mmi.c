@@ -80,17 +80,15 @@ HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void) {
 }
 
 HAL_StatusTypeDef Task_MMI_SendMeasResult(void) {
-    MeasSetChVal_t result_ch;
     MeasResultData_t result_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_START_DATA_LEN];
-    Task_Meas_RequestResult(&result_ch, &result_data_buff);
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_ALL_DATA_LEN];
+    Task_Meas_Get_AllResult(&result_data_buff);
 
-    temp_msg_buff[0] = result_ch;
-    memcpy(&temp_msg_buff[1], &result_data_buff.temperature_data[result_ch], 2);
-    memcpy(&temp_msg_buff[3], &result_data_buff.recv_pd_data[result_ch], 2);
-    memcpy(&temp_msg_buff[5], &result_data_buff.monitor_pd_data[result_ch], 2);
+    memcpy(&temp_msg_buff[0], &result_data_buff.temperature_data, sizeof(result_data_buff.temperature_data));
+    memcpy(&temp_msg_buff[6], &result_data_buff.recv_pd_data, sizeof(result_data_buff.recv_pd_data));
+    memcpy(&temp_msg_buff[12], &result_data_buff.monitor_pd_data, sizeof(result_data_buff.monitor_pd_data));
 
-    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP, result_ch, MMI_CMD3_MEAS_REQ_START_DATA_LEN, &temp_msg_buff[0]);
+    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_ALL_W_RESP, MMI_CMD3_MEAS_REQ_ALL, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, &temp_msg_buff[0]);
 }
 
 HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
@@ -434,13 +432,6 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
 #endif
 
         return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, req_all_msg);
-    }
-    else if (MMI_CMD2_MEAS_REQ_START_W_DELAYED_RESP == cmd2) {
-        /*
-         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; // cmd3: ch select
-         */
-        SYS_LOG_WARN("Not developed");
-        return HAL_OK;
     }
     else {
         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */

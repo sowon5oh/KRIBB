@@ -194,7 +194,7 @@ int main(void) {
     SYS_LOG_INFO("----------------------------------");
 
     SYS_LOG_INFO("----------------------------------");
-    SYS_LOG_INFO("Finite State Machine Start");
+    SYS_LOG_INFO("            Devie Start           ");
     SYS_LOG_INFO("----------------------------------");
 
     /* Init Fsm Task */
@@ -204,10 +204,13 @@ int main(void) {
     HAL_Delay(10);
     Task_Meas_Init();
 
-    /* Measurement Start */
+#if (SYS_TEST_MODE_ENABLE != 1)
+    /***********************************************************************
+     * Test Sequence
+     ***********************************************************************/
     HAL_Delay(10);
     Task_Meas_Start();
-
+#else
     /***********************************************************************
      * Test Sequence
      ***********************************************************************/
@@ -229,6 +232,7 @@ int main(void) {
 //    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_CTRL_LED_ONOFF, FSM_TEST_MODE_SEQUENCE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_STATUS_REQ, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_REQ_MEASURE, FSM_TEST_MODE_SINGLE);
+#endif
 
     /* USER CODE END 2 */
 

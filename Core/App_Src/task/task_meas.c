@@ -54,6 +54,7 @@ static void _meas_result_init(void);
 
 static void _meas_op_start(MeasSetChVal_t ch);
 static void _meas_op_stop(void);
+static void _meas_task_led_ctrl(HalLedCh_t ch, bool on);
 static void _meas_task_led_timeout_cb(void);
 static void _meas_task_req_cb(void);
 
@@ -192,29 +193,12 @@ HAL_StatusTypeDef Task_Meas_Stop(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_RequestResult(MeasSetChVal_t *p_ch, MeasResultData_t *p_data) {
-    SYS_VERIFY_PARAM_NOT_NULL(p_ch);
+HAL_StatusTypeDef Task_Meas_Get_AllResult(MeasResultData_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
 
-    /* unused */
-    bool checked = false;
+    memcpy(p_data, &meas_result_data, sizeof(MeasResultData_t));
 
-    for (uint8_t ch_idx = 0; ch_idx <= MEAS_SET_CH_3; ch_idx++) {
-        if (MEAS_TARGET_CH_ACTIVE == meas_req_status_data.target_ch[ch_idx]) {
-            checked = true;
-            break;
-        }
-    }
-    if (checked) {
-        p_ch = meas_req_status_data.target_ch;
-        memcpy(p_data, &meas_result_data, sizeof(MeasResultData_t));
-
-        return HAL_OK;
-    }
-    else {
-        SYS_LOG_ERR("Selected nothing");
-        return HAL_ERROR;
-    }
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val) {
@@ -431,17 +415,23 @@ static void _meas_op_stop(void) {
 }
 
 static void _meas_continue(void) {
-//    /* Next Step */
-//    if (++meas_task_context.meas_state > MEAS_STATE_SEND_RESULT)
-//        meas_task_context.meas_state = MEAS_STATE_STANDBY;
+    App_Timer_Start(APP_TIMER_TYPE_MEASURE, 0, _meas_task_req_cb);
+}
 
-    App_Timer_Start(APP_TIMER_TYPE_MEASURE, 1, _meas_task_req_cb);
+static void _meas_task_led_ctrl(HalLedCh_t ch, bool on) {
+    if (on) {
+        _led_ctrl(ch, meas_set_data.led_on_level[ch]);
+        App_Timer_Start(APP_TIMER_TYPE_MEASURE, meas_set_data.led_on_time[ch], _meas_task_led_timeout_cb);
+    }
+    else {
+        _led_ctrl(ch, 0);
+    }
 }
 
 static void _meas_task_led_timeout_cb(void) {
-    /* Stop Measure Sequence */
-    meas_task_context.meas_state = MEAS_STATE_SEND_RESULT;
-    return _meas_task_req_cb();
+    _led_ctrl(HAL_LED_CH_1, 0);
+    _led_ctrl(HAL_LED_CH_2, 0);
+    _led_ctrl(HAL_LED_CH_3, 0);
 }
 
 static void _meas_task_req_cb(void) {
@@ -471,7 +461,7 @@ static void _meas_task_req_cb(void) {
 
         case MEAS_STATE_LED_ON:
             /* LED On */
-            (void) Hal_Led_Ctrl(ch, meas_set_data.led_on_level[ch]);
+            _meas_task_led_ctrl(ch, true);
 
             /* Read ADC */
             if (HAL_OK == Hal_Pd_Start()) {
@@ -529,10 +519,6 @@ static void _meas_task_req_cb(void) {
 
         case MEAS_STATE_SEND_RESULT:
             SYS_LOG_INFO("[MEAS] LED Time Complete.");
-            /* LED Off */
-            (void) Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF);
-            (void) Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF);
-            (void) Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF);
 
             /* Save result */
 #if 1

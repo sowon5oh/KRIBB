@@ -57,7 +57,7 @@ static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex
 /* Private variables ---------------------------------------------------------*/
 static uint16_t fsm_polling_sec;
 static FsmState_t fsm_cur_state;
-static FsmStateName_t fsm_state_info[TASK_FSM_STATE_NUM] = { { TASK_FSM_STATE_IDLE, "IDLE" }, { TASK_FSM_STATE_READY, "READY" }, { TASK_FSM_STATE_TEST, "MEAS" } };
+static FsmStateName_t fsm_state_info[TASK_FSM_STATE_NUM] = { { TASK_FSM_STATE_IDLE, "IDLE" }, { TASK_FSM_STATE_READY, "READY" }, { TASK_FSM_STATE_TEST, "TEST" } };
 static uint8_t fsm_evt_num_max;
 static fsmTable_t fsm_table[] = { { TASK_FSM_EVENT_INIT_DONE, TASK_FSM_STATE_IDLE,
 NULL, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TEST_REQ, TASK_FSM_STATE_READY, _fsm_proc_test, TASK_FSM_STATE_TEST }, { TASK_FSM_EVENT_TEST_DONE, TASK_FSM_STATE_TEST,
@@ -209,11 +209,6 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             /***********************************************************************
              * Measure Test
              ***********************************************************************/
-        case FSM_TEST_MEAS_REQ_CH1:
-        case FSM_TEST_MEAS_REQ_CH2:
-        case FSM_TEST_MEAS_REQ_CH3:
-            /* TODO */
-            break;
 
             /***********************************************************************
              * MMI Message Test
@@ -258,6 +253,10 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             _perform_mmi_test(MMI_TEST_STR_SET_REQ_ALL_SETTINGS);
             break;
 
+        case FSM_TEST_MMI_REQ_MEASURE:
+            _perform_mmi_test(MMI_TEST_STR_REQ_ALL_DATA);
+            break;
+
         case FSM_TEST_MMI_REQ_TEMPERATURE:
             _perform_mmi_test(MMI_TEST_STR_REQ_TEMPERATURE);
             break;
@@ -268,10 +267,6 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             
         case FSM_TEST_MMI_REQ_MONITOR_PD:
             _perform_mmi_test(MMI_TEST_STR_REQ_MONITOR_PD);
-            break;
-            
-        case FSM_TEST_MMI_REQ_MEASURE:
-            _perform_mmi_test(MMI_TEST_STR_REQ_MEASURE);
             break;
             
         case FSM_TEST_MMI_DEV_STATUS_REQ:
@@ -305,7 +300,7 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
 static HAL_StatusTypeDef _fsm_test_stop(void) {
     _fsm_send_event(TASK_FSM_EVENT_TEST_DONE);
     
-    SYS_LOG_TEST("%d Test Stop. Result: %s", ((fsm_task_test_result) ? "SUCCESS" : "FAIL"));
+    SYS_LOG_TEST("%d Test Stop");
     return HAL_OK;
 }
 

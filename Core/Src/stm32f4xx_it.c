@@ -87,7 +87,6 @@ void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
     uint32_t cfsr = SCB->CFSR; // Configurable Fault Status Register
-    uint32_t hfsr = SCB->HFSR; // Hard Fault Status Register
     uint32_t mmar = 0; // Memory Management Fault Address Register
     uint32_t bfar = 0; // Bus Fault Address Register
 

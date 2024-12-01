@@ -36,6 +36,9 @@ extern "C" {
 #define SYS_HW_MINOR_VER 0
 #define MODEL_NAME       "KRIBB_FLURESCENCE_ANALYZER"
 
+/* config for test mode */
+#define SYS_TEST_MODE_ENABLE 0
+
 /* config for system log*/
 #define SYS_LOG_ENABLE_CFG  1
 

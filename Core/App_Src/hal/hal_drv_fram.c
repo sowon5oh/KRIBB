@@ -24,8 +24,8 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define FEATURE_HAL_FRAM_TEST 0
-#define FEATURE_HAL_FRAM_ACTIVE  0
+#define FEATURE_HAL_FRAM_TEST    0
+#define FEATURE_HAL_FRAM_ACTIVE  1
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -99,7 +99,10 @@ static HAL_StatusTypeDef _fram_write(uint8_t mem_addr, uint16_t data_len, uint8_
 }
 
 static HAL_StatusTypeDef _fram_read(uint8_t mem_addr, uint16_t data_len, uint8_t *p_data) {
-    SYS_VERIFY_SUCCESS(DRV_FM24CL64_Read(mem_addr, data_len, p_data));
+    uint8_t temp_data[FRAM_DATA_MAX_LEN] = { 0, };
+
+    SYS_VERIFY_SUCCESS(DRV_FM24CL64_Read(mem_addr, data_len, temp_data));
+    memcpy(p_data, temp_data, data_len);
 
     return HAL_OK;
 }

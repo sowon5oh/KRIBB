@@ -84,14 +84,12 @@ HAL_StatusTypeDef _fram_write(uint16_t mem_addr, uint8_t *p_data, uint16_t data_
 
     SYS_VERIFY_PARAM_NOT_NULL(fram_i2c_hdl);
 
-    write_data[0] = (mem_addr >> 8) && 0xFF;
-    write_data[1] = mem_addr && 0xFF;
+    write_data[0] = (mem_addr >> 8) & 0xFF;
+    write_data[1] = mem_addr & 0xFF;
     memcpy(&write_data[2], p_data, data_len);
 
     _fram_w_protection(false);
-
     SYS_VERIFY_SUCCESS(HAL_I2C_Master_Transmit(fram_i2c_hdl, FM24CL64_I2C_ADDR, write_data, data_len + 2, 50));
-
     _fram_w_protection(true);
 
     return HAL_OK;
@@ -103,15 +101,15 @@ HAL_StatusTypeDef _fram_read(uint16_t mem_addr, uint8_t *p_data, uint16_t data_l
 
     SYS_VERIFY_PARAM_NOT_NULL(fram_i2c_hdl);
 
-    write_data[0] = (mem_addr >> 8) && 0xFF;
-    write_data[1] = mem_addr && 0xFF;
+    write_data[0] = (mem_addr >> 8) & 0xFF;
+    write_data[1] = mem_addr & 0xFF;
 
     _fram_w_protection(false);
-
     SYS_VERIFY_SUCCESS(HAL_I2C_Master_Transmit(fram_i2c_hdl, FM24CL64_I2C_ADDR, &write_data[0], 2, 50));
+    _fram_w_protection(true);
+
     SYS_VERIFY_SUCCESS(HAL_I2C_Master_Receive(fram_i2c_hdl, FM24CL64_I2C_ADDR, &read_data[0], data_len, 50));
 
-    _fram_w_protection(true);
 
     memcpy(p_data, &read_data[0], data_len);
 

@@ -345,42 +345,39 @@ static void _meas_task_init(void) {
 static void _meas_set_init(void) {
     uint8_t read_data[FRAM_DATA_MAX_LEN] = { 0, };
 
-    if (HAL_OK == Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data)) {
-        if (read_data[FRAM_STABLE_TEMPERATURE_ADDR] == 0) {
-            /* Set default */
-            _meas_set_temp_ctrl_on(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_TEMP_CTRL_ON);
-            Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
-            _meas_set_led_on_time_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_TIME_MS);
-            Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
-            _meas_set_led_on_level(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_LEVEL);
-            Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
-            _meas_set_adc_sample_cnt(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_SAMPLE_CNT);
-            Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
-            _meas_set_adc_delay_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_DELAY_MS);
-            Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
-            _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100);
-            Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
-        }
-        else {
-            /* Set read data */
-            _meas_set_temp_ctrl_on(MEAS_SET_CH_1, read_data[FRAM_TEMP_SETTING_ADDR]);
-            _meas_set_temp_ctrl_on(MEAS_SET_CH_2, read_data[FRAM_TEMP_SETTING_ADDR + FRAM_TEMP_SETTING_SINGLE_DATA_LEN]);
-            _meas_set_temp_ctrl_on(MEAS_SET_CH_3, read_data[FRAM_TEMP_SETTING_ADDR + FRAM_TEMP_SETTING_SINGLE_DATA_LEN * 2]);
-            _meas_set_led_on_time_ms(MEAS_SET_CH_1, read_data[FRAM_LED_ON_TIME_ADDR]);
-            _meas_set_led_on_time_ms(MEAS_SET_CH_2, read_data[FRAM_LED_ON_TIME_ADDR + FRAM_LED_ON_TIME_SINGLE_DATA_LEN]);
-            _meas_set_led_on_time_ms(MEAS_SET_CH_3, read_data[FRAM_LED_ON_TIME_ADDR + FRAM_LED_ON_TIME_SINGLE_DATA_LEN * 2]);
-            _meas_set_led_on_level(MEAS_SET_CH_1, read_data[FRAM_LED_ON_LEVEL_ADDR]);
-            _meas_set_led_on_level(MEAS_SET_CH_2, read_data[FRAM_LED_ON_LEVEL_ADDR + FRAM_LED_ON_LEVEL_SINGLE_DATA_LEN]);
-            _meas_set_led_on_level(MEAS_SET_CH_3, read_data[FRAM_LED_ON_LEVEL_ADDR + FRAM_LED_ON_LEVEL_SINGLE_DATA_LEN * 2]);
-            _meas_set_adc_sample_cnt(MEAS_SET_CH_1, read_data[FRAM_ADC_SAMPLE_CNT_ADDR]);
-            _meas_set_adc_sample_cnt(MEAS_SET_CH_2, read_data[FRAM_ADC_SAMPLE_CNT_ADDR + FRAM_ADC_SAMPLE_CNT_SINGLE_DATA_LEN]);
-            _meas_set_adc_sample_cnt(MEAS_SET_CH_3, read_data[FRAM_ADC_SAMPLE_CNT_ADDR + FRAM_ADC_SAMPLE_CNT_SINGLE_DATA_LEN * 2]);
-            _meas_set_adc_delay_ms(MEAS_SET_CH_1, read_data[FRAM_ADC_DELAY_MS_ADDR]);
-            _meas_set_adc_delay_ms(MEAS_SET_CH_2, read_data[FRAM_ADC_DELAY_MS_ADDR + FRAM_ADC_DELAY_MS_SINGLE_DATA_LEN]);
-            _meas_set_adc_delay_ms(MEAS_SET_CH_3, read_data[FRAM_ADC_DELAY_MS_ADDR + FRAM_ADC_DELAY_MS_SINGLE_DATA_LEN * 2]);
-            _meas_set_stable_temperature_degree(read_data[FRAM_STABLE_TEMPERATURE_SINGLE_DATA_LEN]);
-        }
-    }
+#if(FEATURE_SETTINGS_DEFAULT == 1)
+    /* Set default */
+    _meas_set_temp_ctrl_on(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_TEMP_CTRL_ON);
+    _meas_set_led_on_time_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_TIME_MS);
+    _meas_set_led_on_level(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_LEVEL);
+    _meas_set_adc_sample_cnt(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_SAMPLE_CNT);
+    _meas_set_adc_delay_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_DELAY_MS);
+    _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100);
+
+    //Check
+    Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
+#else
+    /* Set read data */
+    _meas_set_temp_ctrl_on(MEAS_SET_CH_1, read_data[FRAM_TEMP_SETTING_ADDR]);
+    _meas_set_temp_ctrl_on(MEAS_SET_CH_2, read_data[FRAM_TEMP_SETTING_ADDR + FRAM_TEMP_SETTING_SINGLE_DATA_LEN]);
+    _meas_set_temp_ctrl_on(MEAS_SET_CH_3, read_data[FRAM_TEMP_SETTING_ADDR + FRAM_TEMP_SETTING_SINGLE_DATA_LEN * 2]);
+    _meas_set_led_on_time_ms(MEAS_SET_CH_1, read_data[FRAM_LED_ON_TIME_ADDR]);
+    _meas_set_led_on_time_ms(MEAS_SET_CH_2, read_data[FRAM_LED_ON_TIME_ADDR + FRAM_LED_ON_TIME_SINGLE_DATA_LEN]);
+    _meas_set_led_on_time_ms(MEAS_SET_CH_3, read_data[FRAM_LED_ON_TIME_ADDR + FRAM_LED_ON_TIME_SINGLE_DATA_LEN * 2]);
+    _meas_set_led_on_level(MEAS_SET_CH_1, read_data[FRAM_LED_ON_LEVEL_ADDR]);
+    _meas_set_led_on_level(MEAS_SET_CH_2, read_data[FRAM_LED_ON_LEVEL_ADDR + FRAM_LED_ON_LEVEL_SINGLE_DATA_LEN]);
+    _meas_set_led_on_level(MEAS_SET_CH_3, read_data[FRAM_LED_ON_LEVEL_ADDR + FRAM_LED_ON_LEVEL_SINGLE_DATA_LEN * 2]);
+    _meas_set_adc_sample_cnt(MEAS_SET_CH_1, read_data[FRAM_ADC_SAMPLE_CNT_ADDR]);
+    _meas_set_adc_sample_cnt(MEAS_SET_CH_2, read_data[FRAM_ADC_SAMPLE_CNT_ADDR + FRAM_ADC_SAMPLE_CNT_SINGLE_DATA_LEN]);
+    _meas_set_adc_sample_cnt(MEAS_SET_CH_3, read_data[FRAM_ADC_SAMPLE_CNT_ADDR + FRAM_ADC_SAMPLE_CNT_SINGLE_DATA_LEN * 2]);
+    _meas_set_adc_delay_ms(MEAS_SET_CH_1, read_data[FRAM_ADC_DELAY_MS_ADDR]);
+    _meas_set_adc_delay_ms(MEAS_SET_CH_2, read_data[FRAM_ADC_DELAY_MS_ADDR + FRAM_ADC_DELAY_MS_SINGLE_DATA_LEN]);
+    _meas_set_adc_delay_ms(MEAS_SET_CH_3, read_data[FRAM_ADC_DELAY_MS_ADDR + FRAM_ADC_DELAY_MS_SINGLE_DATA_LEN * 2]);
+    _meas_set_stable_temperature_degree(read_data[FRAM_STABLE_TEMPERATURE_SINGLE_DATA_LEN]);
+
+#endif
+
+    SYS_LOG_INFO("Settings Done");
 }
 
 static void _meas_result_init(void) {
@@ -817,7 +814,7 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
     uint8_t ch_idx;
     uint8_t data_idx;
     uint8_t fail_cnt;
-    
+
     if (MEAS_SET_CH_ALL == ch) {
         for (ch_idx = 0; ch_idx < MEAS_SET_CH_MAX; ch_idx++) {
             if (meas_set_data.adc_sample_cnt[ch_idx] == 0) {
@@ -856,7 +853,7 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
         }
         meas_result_data.monitor_pd_data[ch] = _calc_pd_avr(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
     }
-    
+
     return HAL_OK;
 }
 
@@ -895,7 +892,7 @@ void _led_ctrl(HalLedCh_t ch, uint16_t set_data) {
 int16_t _calc_pd_avr(int16_t *p_buff, uint16_t sample_cnt) {
     int32_t sum = 0;
     int16_t result = 0;
-    
+
     if (sample_cnt > 0) {
         for (uint16_t idx = 0; idx < sample_cnt; idx++) {
             sum += p_buff[idx];

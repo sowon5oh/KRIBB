@@ -160,6 +160,9 @@
         (arr)[1] = (uint8_t)((val) & 0xFF); /* Store the least significant byte in arr[1] */ \
     } while (0)
 
+
+
+
 /**
  * @brief Convert a 2-byte uint8_t array into a uint16_t value
  *
@@ -171,8 +174,8 @@
  *
  * @return The combined 16-bit value as a uint16_t.
  */
-#define UINT8_2BYTE_ARRAY_TO_UINT16(arr) \
-    ((uint16_t)((arr)[0] << 8) | (uint16_t)(arr)[1])
+#define UINT8_2BYTE_ARRAY_TO_UINT16(arr) ((uint16_t)((arr)[0] << 8) | (uint16_t)(arr)[1])
+#define UINT8_ARRAY_TO_UINT16(arr, index) (((uint16_t)(arr)[(index)] << 8) | (uint16_t)(arr)[(index) + 1])
 
 //    __typeof__(*arr) sum = 0;
 #define ARRAY_AVERAGE(arr, count) ({               \

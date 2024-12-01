@@ -21,6 +21,7 @@
 #include "drv_tempsensor_lmt86lp.h"
 
 /* Private typedef -----------------------------------------------------------*/
+#define ADC_MODE_DMA_ENABLE 1
 
 /* Private define ------------------------------------------------------------*/
 
@@ -47,6 +48,9 @@ static float lmt86lp_temp_table[201] = { -50, -49, -48, -47, -46, -45, -44, -43,
     142, 143, 144, 145, 146, 147, 148, 149, 150 };
 
 ADC_HandleTypeDef *tempsensor_adc_hdl;
+uint32_t adc_read_data[HAL_TEMP_CH_NUM] = {
+    0, };
+HalTempData_t temperature_data;
 
 /* Public user code ----------------------------------------------------------*/
 HAL_StatusTypeDef DRV_LMT86LP_Init(ADC_HandleTypeDef *p_hdl) {
@@ -58,28 +62,57 @@ HAL_StatusTypeDef DRV_LMT86LP_Init(ADC_HandleTypeDef *p_hdl) {
 }
 
 HAL_StatusTypeDef DRV_LMT86LP_Start(void) {
+#if(ADC_MODE_DMA_ENABLE == 1)
+    return HAL_ADC_Start_DMA(tempsensor_adc_hdl, adc_read_data, 3);
+#else
     return HAL_ADC_Start_IT(tempsensor_adc_hdl);
+#endif
 }
 
 HAL_StatusTypeDef DRV_LMT86LP_Stop(void) {
+#if(ADC_MODE_DMA_ENABLE == 1)
+    return HAL_ADC_Stop_DMA(tempsensor_adc_hdl);
+#else
     return HAL_ADC_Stop_IT(tempsensor_adc_hdl);
+#endif
 }
 
-HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data) {
-    uint16_t adc_val[HAL_TEMP_CH_NUM];
+HAL_StatusTypeDef DRV_LMT86LP_SaveValue(void) {
+    static uint16_t adc_val[HAL_TEMP_CH_NUM];
+#if(ADC_MODE_DMA_ENABLE == 1)
+    if (adc_read_data[0] > 0) {
+        adc_val[HAL_TEMP_CH_0] = adc_read_data[0];
+        temperature_data.adc[HAL_TEMP_CH_0] = adc_val[HAL_TEMP_CH_0];
+    }
+    if (adc_read_data[1] > 0) {
+        adc_val[HAL_TEMP_CH_1] = adc_read_data[1];
+        temperature_data.adc[HAL_TEMP_CH_1] = adc_val[HAL_TEMP_CH_1];
+    }
+    if (adc_read_data[2] > 0) {
+        adc_val[HAL_TEMP_CH_2] = adc_read_data[2];
+        temperature_data.adc[HAL_TEMP_CH_2] = adc_val[HAL_TEMP_CH_2];
+    }
+#else
 
     adc_val[HAL_TEMP_CH_0] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
     adc_val[HAL_TEMP_CH_1] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
     adc_val[HAL_TEMP_CH_2] = (uint16_t) HAL_ADC_GetValue(tempsensor_adc_hdl);
-    p_data->adc[HAL_TEMP_CH_0] = adc_val[HAL_TEMP_CH_0];
-    p_data->adc[HAL_TEMP_CH_1] = adc_val[HAL_TEMP_CH_1];
-    p_data->adc[HAL_TEMP_CH_2] = adc_val[HAL_TEMP_CH_2];
-    SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", p_data->adc[HAL_TEMP_CH_0], p_data->adc[HAL_TEMP_CH_1], p_data->adc[HAL_TEMP_CH_2]);
+#endif
 
-    p_data->degree[HAL_TEMP_CH_0] = _temp_converter_from_vout(adc_val[0]);
-    p_data->degree[HAL_TEMP_CH_1] = _temp_converter_from_vout(adc_val[1]);
-    p_data->degree[HAL_TEMP_CH_2] = _temp_converter_from_vout(adc_val[2]);
-    SYS_LOG_DEBUG("Temperature Adc Degree: %d, %d, %d", (int16_t )p_data->degree[HAL_TEMP_CH_0], (int16_t ) p_data->degree[HAL_TEMP_CH_1], (int16_t ) p_data->degree[HAL_TEMP_CH_2]);
+    SYS_LOG_DEBUG("Temperature Adc Raw: %d, %d, %d", temperature_data.adc[HAL_TEMP_CH_0], temperature_data.adc[HAL_TEMP_CH_1], temperature_data.adc[HAL_TEMP_CH_2]);
+
+    temperature_data.degree[HAL_TEMP_CH_0] = _temp_converter_from_vout(adc_val[0]);
+    temperature_data.degree[HAL_TEMP_CH_1] = _temp_converter_from_vout(adc_val[1]);
+    temperature_data.degree[HAL_TEMP_CH_2] = _temp_converter_from_vout(adc_val[2]);
+    SYS_LOG_DEBUG("Temperature Adc Degree: %d, %d, %d", (int16_t )temperature_data.degree[HAL_TEMP_CH_0], (int16_t ) temperature_data.degree[HAL_TEMP_CH_1], (int16_t ) temperature_data.degree[HAL_TEMP_CH_2]);
+    
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data) {
+    SYS_VERIFY_PARAM_NOT_NULL(p_data);
+
+    memcpy(p_data, &temperature_data, sizeof(HalTempData_t));
 
     return HAL_OK;
 }
@@ -113,3 +146,4 @@ static float _temp_converter_from_vout(uint32_t vout) {
     /* Default case (should not occur) */
     return -1.0f;
 }
+

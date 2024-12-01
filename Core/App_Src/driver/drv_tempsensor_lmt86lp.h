@@ -35,6 +35,7 @@ extern "C" {
 HAL_StatusTypeDef DRV_LMT86LP_Init(ADC_HandleTypeDef *p_hdl);
 HAL_StatusTypeDef DRV_LMT86LP_Start(void);
 HAL_StatusTypeDef DRV_LMT86LP_Stop(void);
+HAL_StatusTypeDef DRV_LMT86LP_SaveValue(void);
 HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data);
 
 #ifdef __cplusplus

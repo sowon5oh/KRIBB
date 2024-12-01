@@ -99,7 +99,7 @@ void Task_Fsm_StartTest(FsmTaskTestType_t test, FsmTaskTestMode_t mode) {
     fsm_task_cur_test = test;
     fsm_test_mode = mode;
 
-    SYS_LOG_TEST("%d Test Start", fsm_task_cur_test);
+    SYS_LOG_INFO("%d Test Start", fsm_task_cur_test);
     _fsm_send_event(TASK_FSM_EVENT_TEST_REQ);
 }
 
@@ -176,15 +176,15 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
          * Device Test
          ***********************************************************************/
         case FSM_TEST_DEVICE_LED_ONOFF:
-            SYS_LOG_TEST("LED CH 1 ON");
+            SYS_LOG_INFO("LED CH 1 ON");
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_TEST));
             HAL_Delay(1000);
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
-            SYS_LOG_TEST("LED CH 2 ON");
+            SYS_LOG_INFO("LED CH 2 ON");
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_TEST));
             HAL_Delay(1000);
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
-            SYS_LOG_TEST("LED CH 3 ON");
+            SYS_LOG_INFO("LED CH 3 ON");
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_TEST));
             HAL_Delay(1000);
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
@@ -199,11 +199,17 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             break;
 
         case FSM_TEST_DEVICE_READ_TEMP:
-            HalTempData_t temp;
             SYS_VERIFY_SUCCESS(Hal_Temp_Start());
             HAL_Delay(500);
-            SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp));
-            SYS_LOG_TEST("Temperature ADC: %d, Degree: %d", temp.adc, temp.degree);
+//            HalTempData_t temp;
+//            SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp));
+//            SYS_LOG_INFO("Temperature Read:");
+//            SYS_LOG_INFO("[CH 0] ADC: %d, Degree: %d.%d", temp.adc[HAL_TEMP_CH_0], (int8_t )temp.degree[HAL_TEMP_CH_0], abs((int8_t )(temp.degree[HAL_TEMP_CH_0] * 100) % 100));
+//            SYS_LOG_INFO("[CH 1] ADC: %d, Degree: %d.%d", temp.adc[HAL_TEMP_CH_1], (int8_t )temp.degree[HAL_TEMP_CH_1], abs((int8_t )(temp.degree[HAL_TEMP_CH_1] * 100) % 100));
+//            SYS_LOG_INFO("[CH 2] ADC: %d, Degree: %d.%d", temp.adc[HAL_TEMP_CH_2], (int8_t )temp.degree[HAL_TEMP_CH_2], abs((int8_t )(temp.degree[HAL_TEMP_CH_2] * 100) % 100));
+
+            uint16_t temp_data[3];
+            Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, MEAS_SET_CH_ALL, temp_data);
             break;
 
             /***********************************************************************
@@ -300,7 +306,7 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
 static HAL_StatusTypeDef _fsm_test_stop(void) {
     _fsm_send_event(TASK_FSM_EVENT_TEST_DONE);
     
-    SYS_LOG_TEST("%d Test Stop");
+    SYS_LOG_INFO("%d Test Stop");
     return HAL_OK;
 }
 

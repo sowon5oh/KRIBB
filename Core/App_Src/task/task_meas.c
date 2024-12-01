@@ -80,7 +80,6 @@ static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
 static int16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
 static int16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
-static int16_t temperature_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT];
 static uint16_t sample_idx;
 
 #if(FEATURE_SETTINGS_DEFAULT == 1)
@@ -426,9 +425,6 @@ static void _meas_op_start(uint8_t ch) {
     meas_req_status_data.target_ch[CH3_IDX] = MEAS_TARGET_CH_ACTIVE;
 #endif
 
-//    /* LED Control */
-//    SYS_LOG_INFO("[MEAS] Start led delay: %d msec", meas_set_data.adc_delay_ms[ch]);
-
     /* Start Measure Sequence */
     meas_task_context.meas_state = MEAS_STATE_LED_ON;
 
@@ -459,12 +455,13 @@ static void _meas_task_led_timeout_cb(void) {
     _led_ctrl(HAL_LED_CH_1, 0);
     _led_ctrl(HAL_LED_CH_2, 0);
     _led_ctrl(HAL_LED_CH_3, 0);
+
+    _meas_continue();
 }
 
 static void _meas_task_req_cb(void) {
     static MeasSetChVal_t ch;
-    HalTempData_t temperature;
-    int16_t monitor_pd, recv_pd, temperature_tempdata;
+    int16_t monitor_pd, recv_pd;
 
     if (meas_task_context.meas_stop_flag) {
         meas_task_context.meas_state = MEAS_STATE_STANDBY;
@@ -490,10 +487,10 @@ static void _meas_task_req_cb(void) {
             /* LED On */
             _meas_task_led_ctrl(ch, true);
 
-            /* Read ADC */
+            /* ADC Start */
             if (HAL_OK == Hal_Pd_Start()) {
                 sample_idx = 0;
-                meas_task_context.meas_state = MEAS_STATE_ADC_REQ;
+                meas_task_context.meas_state = MEAS_STATE_ADC_DONE;
                 /* Wait for adc driver response.. */
             }
             else {
@@ -502,35 +499,15 @@ static void _meas_task_req_cb(void) {
             }
             break;
 
-        case MEAS_STATE_ADC_REQ:
-            if (HAL_OK == Hal_Pd_Read()) {
-                meas_task_context.meas_state = MEAS_STATE_ADC_DONE;
-            }
-            else {
-                meas_task_context.meas_state = MEAS_STATE_ERROR;
-            }
-            _meas_continue();
-            break;
-
         case MEAS_STATE_ADC_DONE:
             /* Data Init */
             memset(recv_pd_buff[0], 0, sizeof(recv_pd_buff));
             memset(monitor_pd_buff[0], 0, sizeof(monitor_pd_buff));
-            memset(&temperature, 0, sizeof(HalTempData_t));
 
             /* Calculate Average */
             Hal_Pd_GetRecvData(ch, &recv_pd_buff[ch][sample_idx]);
             Hal_Pd_GetMonitorData(ch, &monitor_pd_buff[ch][sample_idx]);
-            Hal_Temp_GetData(&temperature);
-#if(FEATURE_TEMPERATURE_DATA_ADC == FEATURE_TEMPERATURE_DATA_TYPE)
-            temperature_buff[CH1_IDX][sample_idx] = temperature.adc[CH1_IDX];
-            temperature_buff[CH2_IDX][sample_idx] = temperature.adc[CH2_IDX];
-            temperature_buff[CH3_IDX][sample_idx] = temperature.adc[CH3_IDX];
-#else
-            temperature_buff[CH1_IDX][sample_idx] = (int16_t) (temperature.degree[CH1_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
-            temperature_buff[CH2_IDX][sample_idx] = (int16_t) (temperature.degree[CH2_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
-            temperature_buff[CH3_IDX][sample_idx] = (int16_t) (temperature.degree[CH3_IDX] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE);
-#endif
+
 
             /* Time count */
             if (++sample_idx >= meas_set_data.adc_sample_cnt[ch]) {
@@ -548,17 +525,10 @@ static void _meas_task_req_cb(void) {
             SYS_LOG_INFO("[MEAS] LED Time Complete.");
 
             /* Save result */
-#if 1
             recv_pd = recv_pd_buff[ch][0];
             monitor_pd = monitor_pd_buff[ch][0];
-#else
-            recv_pd = _calc_pd_avr(recv_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
-            monitor_pd = _calc_pd_avr(monitor_pd_buff[ch], meas_set_data.adc_sample_cnt[ch]);
-#endif
-            temperature_tempdata = _calc_pd_avr(temperature_buff[ch], meas_set_data.adc_sample_cnt[ch]);
             meas_result_data.recv_pd_data[ch] = recv_pd;
             meas_result_data.monitor_pd_data[ch] = monitor_pd;
-            meas_result_data.temperature_data[ch] = temperature_tempdata;
             SYS_LOG_INFO("[MEAS] ADC Result");
             SYS_LOG_INFO("- receive pd : %d", meas_result_data.recv_pd_data[ch]);
             SYS_LOG_INFO("- monitor pd : %d", meas_result_data.monitor_pd_data[ch]);
@@ -774,11 +744,20 @@ static HAL_StatusTypeDef _meas_get_temperature_data(void) {
     meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.adc[HAL_TEMP_CH_1];
     meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.adc[HAL_TEMP_CH_2];
 #else
-    meas_result_data.temperature_data[CH1_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_0];
-    meas_result_data.temperature_data[CH2_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_1];
-    meas_result_data.temperature_data[CH3_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_2];
+#ifdef FEATURE_TEMPERATURE_DEGREE_OFFSET
+    meas_result_data.temperature_data[CH1_IDX] = (int16_t) (temp_data_buff.degree[HAL_TEMP_CH_0] * MEAS_SET_TEMPERATURE_DEGREE_SCALE) + FEATURE_TEMPERATURE_DEGREE_OFFSET;
+    meas_result_data.temperature_data[CH2_IDX] = (int16_t) (temp_data_buff.degree[HAL_TEMP_CH_1] * MEAS_SET_TEMPERATURE_DEGREE_SCALE) + FEATURE_TEMPERATURE_DEGREE_OFFSET;
+    meas_result_data.temperature_data[CH3_IDX] = (int16_t) (temp_data_buff.degree[HAL_TEMP_CH_2] * MEAS_SET_TEMPERATURE_DEGREE_SCALE) + FEATURE_TEMPERATURE_DEGREE_OFFSET;
+#else
+    meas_result_data.temperature_data[CH1_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_0] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+    meas_result_data.temperature_data[CH2_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_1] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+    meas_result_data.temperature_data[CH3_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_2] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+#endif
 #endif
 
+    SYS_LOG_INFO("[CH 1] Temperature: %d.%02d", (meas_result_data.temperature_data[CH1_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE), (meas_result_data.temperature_data[CH1_IDX] % MEAS_SET_TEMPERATURE_DEGREE_SCALE));
+    SYS_LOG_INFO("[CH 2] Temperature: %d.%02d", (meas_result_data.temperature_data[CH2_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE), (meas_result_data.temperature_data[CH2_IDX] % MEAS_SET_TEMPERATURE_DEGREE_SCALE));
+    SYS_LOG_INFO("[CH 3] Temperature: %d.%02d", (meas_result_data.temperature_data[CH3_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE), (meas_result_data.temperature_data[CH3_IDX] % MEAS_SET_TEMPERATURE_DEGREE_SCALE));
     return HAL_OK;
 }
 
@@ -877,24 +856,30 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
 }
 
 static void _heater_ctrl(void) {
-    HalTempData_t temp_data;
+    _meas_get_temperature_data();
 
     for (HalHeaterCh_t ch_idx = HAL_HEATER_CH_1; ch_idx < HAL_HEATER_CH_NUM; ch_idx++) {
         if (meas_set_data.temp_ctrl_on[ch_idx]) {
-            SYS_VERIFY_SUCCESS_VOID(Hal_Temp_GetData(&temp_data));
-            SYS_LOG_INFO("[CH %d] Current Temperature: %d", ch_idx + 1, (uint8_t )temp_data.degree[ch_idx]);
+            SYS_LOG_INFO("[CH %d] Current Temperature: %d", ch_idx + 1, meas_result_data.temperature_data[ch_idx]);
 
-            if ((MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100 >= temp_data.degree[ch_idx]) && (MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100 <= temp_data.degree[ch_idx])) {
-                if (temp_data.degree[ch_idx] * MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_SCALE < MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100) {
+            if (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100 < meas_result_data.temperature_data[ch_idx]) {
+                SYS_LOG_ERR("Temperature Over MAX Limit, %d.%d", (meas_result_data.temperature_data[ch_idx] / 100), (meas_result_data.temperature_data[ch_idx] % 100));
+                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
+            }
+            else if ( MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100 >= meas_result_data.temperature_data[ch_idx]) {
+                SYS_LOG_ERR("Temperature Below MIN Limit, %d.%d", (meas_result_data.temperature_data[ch_idx] / 100), (meas_result_data.temperature_data[ch_idx] % 100));
+                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
+            }
+            else {
+                SYS_LOG_ERR("Current Temp, %d.%d", (meas_result_data.temperature_data[ch_idx] / 100), (meas_result_data.temperature_data[ch_idx] % 100));
+                if (meas_result_data.temperature_data[ch_idx] < MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100) {
                     Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
+                    SYS_LOG_DEBUG("Heater ON");
                 }
                 else {
                     Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
+                    SYS_LOG_DEBUG("Heater OFF");
                 }
-            }
-            else {
-                SYS_LOG_ERR("Invalid Temperature");
-                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
             }
         }
     }

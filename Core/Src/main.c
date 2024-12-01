@@ -215,9 +215,7 @@ int main(void) {
      * Test Sequence
      ***********************************************************************/
     /* Add Test Sequence for user tests */
-//    Task_Fsm_StartTest(FSM_TEST_MEAS_REQ_CH1, FSM_TEST_MODE_SINGLE);
-//    Task_Fsm_StartTest(FSM_TEST_MEAS_REQ_CH2, FSM_TEST_MODE_SINGLE);
-//    Task_Fsm_StartTest(FSM_TEST_MEAS_REQ_CH3, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_DEVICE_HEATER_ONOFF, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_SET_TEMP_ONOFF, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_SET_LED_ON_TIME, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_SET_LED_ON_LEVEL, FSM_TEST_MODE_SINGLE);

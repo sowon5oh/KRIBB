@@ -482,6 +482,7 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
 
             if (set_data_val[0] > 0) {
                 Task_Meas_Ctrl_Led(ch_cfg, LED_CTRL_FORCE_ON);
+
             }
             else {
                 Task_Meas_Ctrl_Led(ch_cfg, LED_CTRL_FORCE_OFF);
@@ -492,6 +493,9 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             return HAL_ERROR;
             break;
     }
+
+    /* FRAM Write */
+    SYS_VERIFY_SUCCESS(Hal_Fram_Write(FRAM_DEV_CTRL_LED_STATUS_ADDR + (ch_cfg-1), FRAM_DEV_CTRL_LED_STATUS_DATA_LEN, p_data));
     
     return HAL_OK;
 }

@@ -190,6 +190,14 @@ typedef union {
     float fVal;
 } FtoB;
 
+/* Channel index data for measure */
+typedef enum {
+    CH1_IDX = 0,
+    CH2_IDX,
+    CH3_IDX,
+    CH_NUM,
+} MeasCh_t;
+
 typedef enum {
     MEAS_SET_CAT_TEMP_ON_OFF = 0,
     MEAS_SET_CAT_LED_ON_TIME,
@@ -251,12 +259,6 @@ typedef enum {
 #define MEAS_SET_TEMPERATURE_DEGREE_SCALE               100
 #define MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS        1000
 
-/* Channel index data for array */
-#define CH_NUM  3
-#define CH1_IDX 0
-#define CH2_IDX 1
-#define CH3_IDX 2
-
 #pragma pack(push, 1)
 typedef struct {
     MeasSetTempCtrlVal_t temp_ctrl_on[CH_NUM]; /* Ch1 - CH3 */
@@ -284,19 +286,19 @@ typedef struct {
 
 #define MEAS_TARGET_CH_DEACTIV 0
 #define MEAS_TARGET_CH_ACTIVE  1
+#pragma pack(push, 1)
 typedef struct {
-    bool ch_onoff_status[CH_NUM];
+    bool led_on_status[CH_NUM];
     uint8_t target_ch[CH_NUM];
 } MeasReqStatus_t;
+#pragma pack(pop)
 
-#pragma pack(push, 1)
 typedef struct {
     union {
         MeasReqStatus_t status;
         uint8_t msg[MMI_CMD3_REQ_DEVICE_STATUS_DATA_LEN];
     };
 } MeasReqStatusMsg_t;
-#pragma pack(pop)
 
 /* FRAM Address */
 #define FRAM_TEMP_SETTING_SINGLE_DATA_LEN        MMI_CMD3_MEAS_SET_TEMP_ONOFF_DATA_LEN

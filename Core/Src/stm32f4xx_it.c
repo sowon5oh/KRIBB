@@ -86,24 +86,25 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-    uint32_t cfsr = SCB->CFSR; // Configurable Fault Status Register
-    uint32_t mmar = 0; // Memory Management Fault Address Register
-    uint32_t bfar = 0; // Bus Fault Address Register
-
-    /* The MMAR and BFAR registers are accessible only if determined by the CFSR. */
-    if (cfsr & (1 << 7)) {
-        mmar = SCB->MMFAR;
-    }
-    else {
-        /* MMAR not valid */
-    }
-
-    if (cfsr & (1 << 15)) {
-        bfar = SCB->BFAR;
-    }
-    else {
-        /* BFAR not valid */
-    }
+    /* For Debugging */
+//    uint32_t cfsr = SCB->CFSR; // Configurable Fault Status Register
+//    uint32_t mmar = 0; // Memory Management Fault Address Register
+//    uint32_t bfar = 0; // Bus Fault Address Register
+//
+//    /* The MMAR and BFAR registers are accessible only if determined by the CFSR. */
+//    if (cfsr & (1 << 7)) {
+//        mmar = SCB->MMFAR;
+//    }
+//    else {
+//        /* MMAR not valid */
+//    }
+//
+//    if (cfsr & (1 << 15)) {
+//        bfar = SCB->BFAR;
+//    }
+//    else {
+//        /* BFAR not valid */
+//    }
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {

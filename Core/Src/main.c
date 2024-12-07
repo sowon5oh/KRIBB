@@ -58,7 +58,8 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 static uint16_t led_timer_1sec_cnt;
-static AppTimer_t app_timers[APP_TIMER_TYPE_MAX];
+static AppTimer_t app_timers[APP_TIMER_ID_MAX];
+static AppTask_t app_tasks[APP_TASK_ID_MAX];
 
 #define	UART_DEBUG_MSG 	1
 /* USER CODE END PV */
@@ -111,13 +112,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     /* 10 kHz Timer (0.1 msec) */
     if (htim->Instance == TIM10) {
         /* app timer */
-        for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_TYPE_MAX; timer_idx++) {
+        for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_ID_MAX; timer_idx++) {
             /* Check if the timer is active and if there is remaining time */
             if (app_timers[timer_idx].active && app_timers[timer_idx].remaining_0_1_ms > 0) {
                 app_timers[timer_idx].remaining_0_1_ms--; /* Decrease the remaining time by 1 ms */
                 if (app_timers[timer_idx].remaining_0_1_ms == 0) {
                     if (NULL != app_timers[timer_idx].timer_cb) {
                         app_timers[timer_idx].timer_cb(); /* Call the timer callback function */
+                    }
+                }
+            }
+        }
+
+        for (uint8_t task_idx = 0; task_idx < APP_TASK_ID_MAX; task_idx++) {
+            /* Check if the task is active and if there is remaining time */
+            if (app_tasks[task_idx].active && app_tasks[task_idx].remaining_0_1_ms > 0) {
+                app_tasks[task_idx].remaining_0_1_ms--; /* Decrease the remaining time by 1 ms */
+                if (app_tasks[task_idx].remaining_0_1_ms == 0) {
+                    if (NULL != app_tasks[task_idx].task_cb) {
+                        app_tasks[task_idx].task_cb(); /* Call the task callback function */
+                        app_tasks[task_idx].remaining_0_1_ms = app_tasks[task_idx].task_duty_0_1_ms; /* task keep going */
                     }
                 }
             }
@@ -702,8 +716,8 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void App_Timer_Start(AppTimerType_t timer_id, uint32_t timeout_ms, void (*timer_cb)(void)) {
-    if (timer_id < APP_TIMER_TYPE_MAX) {
+void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, void (*timer_cb)(void)) {
+    if (timer_id < APP_TIMER_ID_MAX) {
         app_timers[timer_id].timeout_0_1_ms = timeout_ms * 10;
         app_timers[timer_id].remaining_0_1_ms = timeout_ms * 10;
         app_timers[timer_id].timer_cb = timer_cb;
@@ -711,12 +725,26 @@ void App_Timer_Start(AppTimerType_t timer_id, uint32_t timeout_ms, void (*timer_
     }
 }
 
-void App_Timer_Stop(AppTimerType_t timer_id) {
-    if (timer_id < APP_TIMER_TYPE_MAX) {
+void App_Timer_Stop(AppTimerId_t timer_id) {
+    if (timer_id < APP_TIMER_ID_MAX) {
         app_timers[timer_id].active = 0;
     }
 }
 
+void App_Task_Start(AppTaskId_t task_id, uint32_t task_duty_ms, void (*task_cb)(void)) {
+    if (task_id < APP_TASK_ID_MAX) {
+        app_tasks[task_id].task_duty_0_1_ms = task_duty_ms * 10;
+        app_tasks[task_id].remaining_0_1_ms = task_duty_ms * 10;
+        app_tasks[task_id].task_cb = task_cb;
+        app_tasks[task_id].active = 1;
+    }
+}
+
+void App_Task_Stop(AppTaskId_t task_id) {
+    if (task_id < APP_TASK_ID_MAX) {
+        app_tasks[task_id].active = 1;
+    }
+}
 /* USER CODE END 4 */
 
 /**

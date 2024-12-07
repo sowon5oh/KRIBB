@@ -57,7 +57,6 @@ static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex
 /* Private variables ---------------------------------------------------------*/
 static uint16_t fsm_polling_sec;
 static FsmState_t fsm_cur_state;
-static FsmStateName_t fsm_state_info[TASK_FSM_STATE_NUM] = { { TASK_FSM_STATE_IDLE, "IDLE" }, { TASK_FSM_STATE_READY, "READY" }, { TASK_FSM_STATE_TEST, "TEST" } };
 static uint8_t fsm_evt_num_max;
 static fsmTable_t fsm_table[] = { { TASK_FSM_EVENT_INIT_DONE, TASK_FSM_STATE_IDLE,
 NULL, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TEST_REQ, TASK_FSM_STATE_READY, _fsm_proc_test, TASK_FSM_STATE_TEST }, { TASK_FSM_EVENT_TEST_DONE, TASK_FSM_STATE_TEST,

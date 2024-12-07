@@ -43,12 +43,15 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 /* Private variables ---------------------------------------------------------*/
-uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = { 0, };
-uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
+uint8_t rx_msg_buff[PROTOCOL_BUFF_RX_LEN_MAX] = {
+    0, };
+uint8_t tx_msg_buff[PROTOCOL_BUFF_TX_LEN_MAX] = {
+    0, };
 
 /* Public user code ----------------------------------------------------------*/
 void Task_MMI_Decoder(uint8_t *p_ch, uint16_t len) {
-    static uint8_t one_line[PROTOCOL_BUFF_RX_LEN_MAX] = { 0, };
+    static uint8_t one_line[PROTOCOL_BUFF_RX_LEN_MAX] = {
+        0, };
     static uint8_t ch_cnt = 0;
 
     for (uint8_t idx = 0; idx < len; idx++) {
@@ -105,7 +108,8 @@ HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
 
 /* Private user code ---------------------------------------------------------*/
 static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uint8_t data_len, uint8_t *p_data) {
-    uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = { 0, };
+    uint8_t orig_arr[PROTOCOL_BUFF_TX_LEN_MAX] = {
+        0, };
     uint8_t chksum = MMI_PROTOCOL_CHKSUM_INIT;
     uint8_t chg_cnt = 0;
     uint8_t arr_idx = 1;
@@ -167,7 +171,8 @@ static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uin
 }
 
 static void _protocol_decoder(uint8_t *p_org_line_arr, uint16_t arr_len) {
-    uint8_t bitsttf_line[MMI_PROTOCOL_RX_MSG_LEN_MAX * 2] = { 0, };
+    uint8_t bitsttf_line[MMI_PROTOCOL_RX_MSG_LEN_MAX * 2] = {
+        0, };
     uint8_t arr_idx = 0;
     uint8_t chg_cnt = 0;
 
@@ -289,7 +294,8 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
 }
 
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
-    uint8_t device_info_data_val[8] = { 0, };
+    uint8_t device_info_data_val[8] = {
+        0, };
     uint8_t device_info_data_len = 0;
     
     switch (cmd2) {

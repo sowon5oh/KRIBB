@@ -232,7 +232,7 @@ HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_
     
     switch (result_cat) {
         case MEAS_RESULT_CAT_TEMPERATURE:
-            SYS_VERIFY_SUCCESS(_meas_get_temperature_data());
+            _meas_get_temperature_data();
             memcpy(p_result_val, &meas_result_data.temperature_data, sizeof(uint16_t) * CH_NUM);
             return HAL_OK;
 

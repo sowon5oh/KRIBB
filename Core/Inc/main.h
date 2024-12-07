@@ -44,6 +44,7 @@ extern "C" {
 #include "task_mmi.h"
 #include "task_fsm.h"
 #include "task_meas.h"
+#include "task_temp_ctrl.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

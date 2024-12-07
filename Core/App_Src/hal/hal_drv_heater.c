@@ -60,6 +60,8 @@ HAL_StatusTypeDef Hal_Heater_Ctrl(HalHeaterCh_t ch_num, HalHeaterCtrl_t ctrl) {
         _heater_ctrl(ch_num, ctrl);
     }
 
+    SYS_LOG_DEBUG("Heater CH %d %s", ch_num + 1, ctrl? "ON" : "OFF" );
+
     return HAL_OK;
 }
 

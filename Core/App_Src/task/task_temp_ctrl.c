@@ -34,7 +34,7 @@ typedef struct {
 } tempCtrlTaskContext_t;
 
 /* Private define ------------------------------------------------------------*/
-#define TEMP_CTRL_TASK_DUTY_MS 1000
+#define TEMP_CTRL_TASK_DUTY_MS 3000
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -56,8 +56,7 @@ static tempCtrlTaskContext_t temp_ctrl_task_context = {
     .cur_temp[CH3_IDX] = 0.0f,
     .temp_ctrl_type[CH1_IDX] = TEMP_CTRL_OFF,
     .temp_ctrl_type[CH2_IDX] = TEMP_CTRL_OFF,
-    .temp_ctrl_type[CH3_IDX] = TEMP_CTRL_OFF,
-};
+    .temp_ctrl_type[CH3_IDX] = TEMP_CTRL_OFF, };
 
 /* Public user code ----------------------------------------------------------*/
 void Task_TempCtrl_Init(void) {
@@ -108,7 +107,10 @@ static void _temp_ctrl_task_init(void) {
     MeasSetData_t temp_set_data;
 
     Task_Meas_Get_Set(&temp_set_data);
-    temp_ctrl_task_context.stable_temperature = (float) temp_set_data.stable_temperature / MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+    _set_stable_temp((float) temp_set_data.stable_temperature / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+    _set_temp_ctrl_type(CH1_IDX, temp_set_data.temp_ctrl_type[CH1_IDX]);
+    _set_temp_ctrl_type(CH2_IDX, temp_set_data.temp_ctrl_type[CH2_IDX]);
+    _set_temp_ctrl_type(CH3_IDX, temp_set_data.temp_ctrl_type[CH3_IDX]);
 }
 
 static void _temp_ctrl_task_enable(bool enable) {
@@ -130,25 +132,23 @@ static void _temp_ctrl_task_cb(void) {
     _fetch_temperature();
     
     for (uint8_t ch_idx = CH1_IDX; ch_idx < CH_NUM; ch_idx++) {
-        SYS_LOG_INFO("[CH %d] Current Temperature: %d", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
+        SYS_LOG_DEBUG("[CH %d] Current Temperature: %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
 
         if (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE < temp_ctrl_task_context.cur_temp[ch_idx]) {
-            SYS_LOG_ERR("Temperature Over MAX Limit, %d.%d", (temp_ctrl_task_context.cur_temp[ch_idx] / 100), (temp_ctrl_task_context.cur_temp[ch_idx] % 100));
+            SYS_LOG_DEBUG("[CH %d] Temperature Over MAX Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
             Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
         }
         else if (MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE >= temp_ctrl_task_context.cur_temp[ch_idx]) {
-            SYS_LOG_ERR("Temperature Below MIN Limit, %d.%d", (temp_ctrl_task_context.cur_temp[ch_idx] / 100), (temp_ctrl_task_context.cur_temp[ch_idx] % 100));
+            SYS_LOG_DEBUG("[CH %d] Temperature Below MIN Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
             Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
         }
         else {
-            SYS_LOG_INFO("Current Temp, %f", (temp_ctrl_task_context.cur_temp[ch_idx]), (temp_ctrl_task_context.cur_temp[ch_idx]));
-            if (temp_ctrl_task_context.cur_temp[ch_idx] < MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE) {
+            SYS_LOG_DEBUG("[CH %d] Current Temp, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx], temp_ctrl_task_context.cur_temp[ch_idx]);
+            if (temp_ctrl_task_context.cur_temp[ch_idx] < temp_ctrl_task_context.stable_temperature) {
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
-                SYS_LOG_INFO("Heater ON");
             }
             else {
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
-                SYS_LOG_INFO("Heater OFF");
             }
         }
     }
@@ -172,19 +172,19 @@ static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlTypeVal_t temp_ctrl_
 
 static void _set_stable_temp(float stable_temp) {
     if (stable_temp > MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE) {
-        SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%f]====>", stable_temp);
+        SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%.2f]====>", stable_temp);
         stable_temp = MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE;
-        SYS_LOG_WARN("Changed : ====>[%f]", stable_temp);
+        SYS_LOG_WARN("Changed : ====>[%.2f]", stable_temp);
     }
     else if (stable_temp < MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE) {
-        SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%f]====>", stable_temp);
+        SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%.2f]====>", stable_temp);
         stable_temp = MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE;
-        SYS_LOG_WARN("Changed : ====>[%f]", stable_temp);
+        SYS_LOG_WARN("Changed : ====>[%.2f]", stable_temp);
     }
 
     temp_ctrl_task_context.stable_temperature = stable_temp;
 
-    SYS_LOG_INFO("Stable Temperature setting: %f ('C)", temp_ctrl_task_context.stable_temperature);
+    SYS_LOG_INFO("Stable Temperature setting: %.2f ('C)", temp_ctrl_task_context.stable_temperature);
 }
 
 static HAL_StatusTypeDef _fetch_temperature(void) {
@@ -208,7 +208,7 @@ static HAL_StatusTypeDef _fetch_temperature(void) {
 #endif
 #endif
 
-    SYS_LOG_INFO("Temperature: [CH 1] %f, [CH 2] %f, [CH 3] %f", temp_ctrl_task_context.cur_temp[CH1_IDX], temp_ctrl_task_context.cur_temp[CH2_IDX], temp_ctrl_task_context.cur_temp[CH3_IDX]);
+    SYS_LOG_INFO("Temperature: [CH 1] %.2f, [CH 2] %.2f, [CH 3] %.2f", temp_ctrl_task_context.cur_temp[CH1_IDX], temp_ctrl_task_context.cur_temp[CH2_IDX], temp_ctrl_task_context.cur_temp[CH3_IDX]);
 
     return HAL_OK;
 }

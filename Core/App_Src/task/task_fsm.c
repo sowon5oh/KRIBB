@@ -58,10 +58,27 @@ static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex
 static uint16_t fsm_polling_sec;
 static FsmState_t fsm_cur_state;
 static uint8_t fsm_evt_num_max;
-static fsmTable_t fsm_table[] = { { TASK_FSM_EVENT_INIT_DONE, TASK_FSM_STATE_IDLE,
-NULL, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TEST_REQ, TASK_FSM_STATE_READY, _fsm_proc_test, TASK_FSM_STATE_TEST }, { TASK_FSM_EVENT_TEST_DONE, TASK_FSM_STATE_TEST,
-    _fsm_test_stop, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TIMEOUT, TASK_FSM_STATE_READY,
-NULL, TASK_FSM_STATE_IDLE } };
+static fsmTable_t fsm_table[] = {
+    {
+        TASK_FSM_EVENT_INIT_DONE,
+        TASK_FSM_STATE_IDLE,
+        NULL,
+        TASK_FSM_STATE_READY },
+    {
+        TASK_FSM_EVENT_TEST_REQ,
+        TASK_FSM_STATE_READY,
+        _fsm_proc_test,
+        TASK_FSM_STATE_TEST },
+    {
+        TASK_FSM_EVENT_TEST_DONE,
+        TASK_FSM_STATE_TEST,
+        _fsm_test_stop,
+        TASK_FSM_STATE_READY },
+    {
+        TASK_FSM_EVENT_TIMEOUT,
+        TASK_FSM_STATE_READY,
+        NULL,
+        TASK_FSM_STATE_IDLE } };
 static FsmTaskTestType_t fsm_task_cur_test;
 static FsmTaskTestMode_t fsm_test_mode = FSM_TEST_MODE_SINGLE;
 
@@ -139,12 +156,10 @@ static void _fsm_hdl(FsmEvent_t event) {
     /* If a matching transition is found, proceed to state transition. */
     if (flag == true) {
         if (action_func == NULL) {
-            SYS_LOG_INFO("[FSM] %s ===[ No Action ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
             fsm_cur_state = fsm_next_state;
         }
         else {
             if (action_func() == HAL_OK) {
-                SYS_LOG_INFO("[FSM] %s ===[ Action Completed ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
                 fsm_cur_state = fsm_next_state;
             }
             else {
@@ -310,7 +325,8 @@ static HAL_StatusTypeDef _fsm_test_stop(void) {
 }
 
 static void _perform_mmi_test(const char *test_str) {
-    uint8_t mmi_hex_arr[50] = { 0, };
+    uint8_t mmi_hex_arr[50] = {
+        0, };
     uint8_t mmi_hex_data_len;
     
     _string_to_hex_array(test_str, mmi_hex_arr, strlen(test_str));
@@ -335,7 +351,10 @@ static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex
     
     /* Read 2 characters at a time and convert */
     for (size_t i = 0; i < str_len; i += 2) {
-        char byte_string[3] = { str[i], str[i + 1], '\0' }; /* 2 characters + NULL terminator */
+        char byte_string[3] = {
+            str[i],
+            str[i + 1],
+            '\0' }; /* 2 characters + NULL terminator */
         hex_array[i / 2] = (uint8_t) strtol(byte_string, NULL, 16);
     }
 }

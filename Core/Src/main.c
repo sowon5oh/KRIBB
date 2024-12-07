@@ -23,7 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#if(FEATURE_TEMPERATURE_DMA_MODE != 1)
 #include "hal_drv_temperature.h"
+#endif
 
 /* USER CODE END Includes */
 
@@ -44,6 +46,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
@@ -57,7 +60,8 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 static uint16_t led_timer_1sec_cnt;
-static AppTimer_t app_timers[APP_TIMER_TYPE_MAX];
+static AppTimer_t app_timers[APP_TIMER_ID_MAX];
+static AppTask_t app_tasks[APP_TASK_ID_MAX];
 
 #define	UART_DEBUG_MSG 	1
 /* USER CODE END PV */
@@ -65,6 +69,7 @@ static AppTimer_t app_timers[APP_TIMER_TYPE_MAX];
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI1_Init(void);
@@ -109,13 +114,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     /* 10 kHz Timer (0.1 msec) */
     if (htim->Instance == TIM10) {
         /* app timer */
-        for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_TYPE_MAX; timer_idx++) {
+        for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_ID_MAX; timer_idx++) {
             /* Check if the timer is active and if there is remaining time */
             if (app_timers[timer_idx].active && app_timers[timer_idx].remaining_0_1_ms > 0) {
                 app_timers[timer_idx].remaining_0_1_ms--; /* Decrease the remaining time by 1 ms */
                 if (app_timers[timer_idx].remaining_0_1_ms == 0) {
                     if (NULL != app_timers[timer_idx].timer_cb) {
                         app_timers[timer_idx].timer_cb(); /* Call the timer callback function */
+                        if (app_timers[timer_idx].repeat) {
+                            app_timers[timer_idx].remaining_0_1_ms = app_timers[timer_idx].timeout_0_1_ms; /* Restart Timer */
+                        }
+                        else {
+                            app_timers[timer_idx].active = 0; /* Stop Timer */
+                        }
+                    }
+                }
+            }
+        }
+
+        for (uint8_t task_idx = 0; task_idx < APP_TASK_ID_MAX; task_idx++) {
+            /* Check if the task is active and if there is remaining time */
+            if (app_tasks[task_idx].active && app_tasks[task_idx].remaining_0_1_ms > 0) {
+                app_tasks[task_idx].remaining_0_1_ms--; /* Decrease the remaining time by 1 ms */
+                if (app_tasks[task_idx].remaining_0_1_ms == 0) {
+                    if (NULL != app_tasks[task_idx].task_cb) {
+                        app_tasks[task_idx].task_cb(); /* Call the task callback function */
+                        app_tasks[task_idx].remaining_0_1_ms = app_tasks[task_idx].task_duty_0_1_ms; /* task keep going */
                     }
                 }
             }
@@ -123,11 +147,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
 }
 
+#if(FEATURE_TEMPERATURE_DMA_MODE != 1)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc->Instance == ADC1) {
         Hal_Temp_AdcCb();
     }
 }
+#endif
 
 /* USER CODE END 0 */
 
@@ -159,6 +185,7 @@ int main(void) {
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
+    MX_DMA_Init();
     MX_I2C1_Init();
     MX_I2C2_Init();
     MX_SPI1_Init();
@@ -186,6 +213,7 @@ int main(void) {
     /***********************************************************************
      * System Init
      ***********************************************************************/
+    // @formatter:off
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("  [UNIOTECH] 3CH FL ANALYZER UOT  ");
     SYS_LOG_INFO("* Build Time: %s %s", __DATE__, __TIME__);
@@ -196,26 +224,31 @@ int main(void) {
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("            Devie Start           ");
     SYS_LOG_INFO("----------------------------------");
-
+                                                                                                        // @formatter:on
     /* Init Fsm Task */
     Task_Fsm_Init();
-
+    
     /* Init Meas Task & Read settings from FRAM */
     HAL_Delay(10);
     Task_Meas_Init();
-
-#if (SYS_TEST_MODE_ENABLE != 1)
+    Task_TempCtrl_Init();
+    
+//#if (SYS_TEST_MODE_ENABLE != 1)
     /***********************************************************************
      * Test Sequence
      ***********************************************************************/
-    HAL_Delay(10);
+    HAL_Delay(1000);
+    Task_TempCtrl_Start();
+
+    HAL_Delay(1000);
     Task_Meas_Start();
-#else
+//#else
     /***********************************************************************
      * Test Sequence
      ***********************************************************************/
     /* Add Test Sequence for user tests */
 //    Task_Fsm_StartTest(FSM_TEST_DEVICE_HEATER_ONOFF, FSM_TEST_MODE_SINGLE);
+//    Task_Fsm_StartTest(FSM_TEST_DEVICE_READ_TEMP, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_SET_TEMP_ONOFF, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_SET_LED_ON_TIME, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_SET_LED_ON_LEVEL, FSM_TEST_MODE_SINGLE);
@@ -230,8 +263,7 @@ int main(void) {
 //    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_CTRL_LED_ONOFF, FSM_TEST_MODE_SEQUENCE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_STATUS_REQ, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_REQ_MEASURE, FSM_TEST_MODE_SINGLE);
-#endif
-
+//#endif
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -250,8 +282,10 @@ int main(void) {
  * @retval None
  */
 void SystemClock_Config(void) {
-    RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        0 };
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {
+        0 };
 
     /** Configure the main internal regulator output voltage
      */
@@ -304,8 +338,10 @@ static void MX_ADC1_Init(void) {
 
     /* USER CODE END ADC1_Init 0 */
 
-    ADC_ChannelConfTypeDef sConfig = { 0 };
-    ADC_InjectionConfTypeDef sConfigInjected = { 0 };
+    ADC_ChannelConfTypeDef sConfig = {
+        0 };
+    ADC_InjectionConfTypeDef sConfigInjected = {
+        0 };
 
     /* USER CODE BEGIN ADC1_Init 1 */
 
@@ -317,13 +353,13 @@ static void MX_ADC1_Init(void) {
     hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
     hadc1.Init.Resolution = ADC_RESOLUTION_12B;
     hadc1.Init.ScanConvMode = ENABLE;
-    hadc1.Init.ContinuousConvMode = DISABLE;
+    hadc1.Init.ContinuousConvMode = ENABLE;
     hadc1.Init.DiscontinuousConvMode = DISABLE;
     hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
     hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
     hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
     hadc1.Init.NbrOfConversion = 3;
-    hadc1.Init.DMAContinuousRequests = DISABLE;
+    hadc1.Init.DMAContinuousRequests = ENABLE;
     hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
     if (HAL_ADC_Init(&hadc1) != HAL_OK) {
         Error_Handler();
@@ -333,7 +369,7 @@ static void MX_ADC1_Init(void) {
      */
     sConfig.Channel = ADC_CHANNEL_5;
     sConfig.Rank = 1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
         Error_Handler();
     }
@@ -499,7 +535,8 @@ static void MX_TIM7_Init(void) {
 
     /* USER CODE END TIM7_Init 0 */
 
-    TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+    TIM_MasterConfigTypeDef sMasterConfig = {
+        0 };
 
     /* USER CODE BEGIN TIM7_Init 1 */
 
@@ -584,12 +621,28 @@ static void MX_USART1_UART_Init(void) {
 }
 
 /**
+ * Enable DMA controller clock
+ */
+static void MX_DMA_Init(void) {
+
+    /* DMA controller clock enable */
+    __HAL_RCC_DMA2_CLK_ENABLE();
+
+    /* DMA interrupt init */
+    /* DMA2_Stream0_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+}
+
+/**
  * @brief GPIO Initialization Function
  * @param None
  * @retval None
  */
 static void MX_GPIO_Init(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+    GPIO_InitTypeDef GPIO_InitStruct = {
+        0 };
     /* USER CODE BEGIN MX_GPIO_Init_1 */
     /* USER CODE END MX_GPIO_Init_1 */
 
@@ -643,7 +696,7 @@ static void MX_GPIO_Init(void) {
     /*Configure GPIO pin : ADC_DRDY__Pin */
     GPIO_InitStruct.Pin = ADC_DRDY__Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(ADC_DRDY__GPIO_Port, &GPIO_InitStruct);
 
     /* EXTI interrupt init*/
@@ -655,21 +708,37 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-void App_Timer_Start(AppTimerType_t timer_id, uint32_t timeout_ms, void (*timer_cb)(void)) {
-    if (timer_id < APP_TIMER_TYPE_MAX) {
+void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, bool repeat, void (*timer_cb)(void)) {
+    if (timer_id < APP_TIMER_ID_MAX) {
         app_timers[timer_id].timeout_0_1_ms = timeout_ms * 10;
         app_timers[timer_id].remaining_0_1_ms = timeout_ms * 10;
         app_timers[timer_id].timer_cb = timer_cb;
         app_timers[timer_id].active = 1;
+        app_timers[timer_id].repeat = repeat;
     }
 }
 
-void App_Timer_Stop(AppTimerType_t timer_id) {
-    if (timer_id < APP_TIMER_TYPE_MAX) {
+void App_Timer_Stop(AppTimerId_t timer_id) {
+    if (timer_id < APP_TIMER_ID_MAX) {
         app_timers[timer_id].active = 0;
+        app_timers[timer_id].repeat = false;
     }
 }
 
+void App_Task_Start(AppTaskId_t task_id, uint32_t task_duty_ms, void (*task_cb)(void)) {
+    if (task_id < APP_TASK_ID_MAX) {
+        app_tasks[task_id].task_duty_0_1_ms = task_duty_ms * 10;
+        app_tasks[task_id].remaining_0_1_ms = task_duty_ms * 10;
+        app_tasks[task_id].task_cb = task_cb;
+        app_tasks[task_id].active = 1;
+    }
+}
+
+void App_Task_Stop(AppTaskId_t task_id) {
+    if (task_id < APP_TASK_ID_MAX) {
+        app_tasks[task_id].active = 0;
+    }
+}
 /* USER CODE END 4 */
 
 /**

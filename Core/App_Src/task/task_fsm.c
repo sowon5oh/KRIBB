@@ -57,12 +57,28 @@ static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex
 /* Private variables ---------------------------------------------------------*/
 static uint16_t fsm_polling_sec;
 static FsmState_t fsm_cur_state;
-static FsmStateName_t fsm_state_info[TASK_FSM_STATE_NUM] = { { TASK_FSM_STATE_IDLE, "IDLE" }, { TASK_FSM_STATE_READY, "READY" }, { TASK_FSM_STATE_TEST, "TEST" } };
 static uint8_t fsm_evt_num_max;
-static fsmTable_t fsm_table[] = { { TASK_FSM_EVENT_INIT_DONE, TASK_FSM_STATE_IDLE,
-NULL, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TEST_REQ, TASK_FSM_STATE_READY, _fsm_proc_test, TASK_FSM_STATE_TEST }, { TASK_FSM_EVENT_TEST_DONE, TASK_FSM_STATE_TEST,
-    _fsm_test_stop, TASK_FSM_STATE_READY }, { TASK_FSM_EVENT_TIMEOUT, TASK_FSM_STATE_READY,
-NULL, TASK_FSM_STATE_IDLE } };
+static fsmTable_t fsm_table[] = {
+    {
+        TASK_FSM_EVENT_INIT_DONE,
+        TASK_FSM_STATE_IDLE,
+        NULL,
+        TASK_FSM_STATE_READY },
+    {
+        TASK_FSM_EVENT_TEST_REQ,
+        TASK_FSM_STATE_READY,
+        _fsm_proc_test,
+        TASK_FSM_STATE_TEST },
+    {
+        TASK_FSM_EVENT_TEST_DONE,
+        TASK_FSM_STATE_TEST,
+        _fsm_test_stop,
+        TASK_FSM_STATE_READY },
+    {
+        TASK_FSM_EVENT_TIMEOUT,
+        TASK_FSM_STATE_READY,
+        NULL,
+        TASK_FSM_STATE_IDLE } };
 static FsmTaskTestType_t fsm_task_cur_test;
 static FsmTaskTestMode_t fsm_test_mode = FSM_TEST_MODE_SINGLE;
 
@@ -99,7 +115,7 @@ void Task_Fsm_StartTest(FsmTaskTestType_t test, FsmTaskTestMode_t mode) {
     fsm_task_cur_test = test;
     fsm_test_mode = mode;
 
-    SYS_LOG_TEST("%d Test Start", fsm_task_cur_test);
+    SYS_LOG_INFO("%d Test Start", fsm_task_cur_test);
     _fsm_send_event(TASK_FSM_EVENT_TEST_REQ);
 }
 
@@ -140,12 +156,10 @@ static void _fsm_hdl(FsmEvent_t event) {
     /* If a matching transition is found, proceed to state transition. */
     if (flag == true) {
         if (action_func == NULL) {
-            SYS_LOG_INFO("[FSM] %s ===[ No Action ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
             fsm_cur_state = fsm_next_state;
         }
         else {
             if (action_func() == HAL_OK) {
-                SYS_LOG_INFO("[FSM] %s ===[ Action Completed ]===> %s", fsm_state_info[fsm_cur_state].name, fsm_state_info[fsm_next_state].name);
                 fsm_cur_state = fsm_next_state;
             }
             else {
@@ -176,15 +190,15 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
          * Device Test
          ***********************************************************************/
         case FSM_TEST_DEVICE_LED_ONOFF:
-            SYS_LOG_TEST("LED CH 1 ON");
+            SYS_LOG_INFO("LED CH 1 ON");
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_TEST));
             HAL_Delay(1000);
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_1, HAL_LED_LEVEL_OFF));
-            SYS_LOG_TEST("LED CH 2 ON");
+            SYS_LOG_INFO("LED CH 2 ON");
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_TEST));
             HAL_Delay(1000);
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_2, HAL_LED_LEVEL_OFF));
-            SYS_LOG_TEST("LED CH 3 ON");
+            SYS_LOG_INFO("LED CH 3 ON");
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_TEST));
             HAL_Delay(1000);
             SYS_VERIFY_SUCCESS(Hal_Led_Ctrl(HAL_LED_CH_3, HAL_LED_LEVEL_OFF));
@@ -199,11 +213,17 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
             break;
 
         case FSM_TEST_DEVICE_READ_TEMP:
-            HalTempData_t temp;
             SYS_VERIFY_SUCCESS(Hal_Temp_Start());
             HAL_Delay(500);
-            SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp));
-            SYS_LOG_TEST("Temperature ADC: %d, Degree: %d", temp.adc, temp.degree);
+//            HalTempData_t temp;
+//            SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp));
+//            SYS_LOG_INFO("Temperature Read:");
+//            SYS_LOG_INFO("[CH 0] ADC: %d, Degree: %d.%d", temp.adc[HAL_TEMP_CH_0], (int8_t )temp.degree[HAL_TEMP_CH_0], abs((int8_t )(temp.degree[HAL_TEMP_CH_0] * 100) % 100));
+//            SYS_LOG_INFO("[CH 1] ADC: %d, Degree: %d.%d", temp.adc[HAL_TEMP_CH_1], (int8_t )temp.degree[HAL_TEMP_CH_1], abs((int8_t )(temp.degree[HAL_TEMP_CH_1] * 100) % 100));
+//            SYS_LOG_INFO("[CH 2] ADC: %d, Degree: %d.%d", temp.adc[HAL_TEMP_CH_2], (int8_t )temp.degree[HAL_TEMP_CH_2], abs((int8_t )(temp.degree[HAL_TEMP_CH_2] * 100) % 100));
+
+            uint16_t temp_data[3];
+            Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, MEAS_SET_CH_ALL, temp_data);
             break;
 
             /***********************************************************************
@@ -300,12 +320,13 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
 static HAL_StatusTypeDef _fsm_test_stop(void) {
     _fsm_send_event(TASK_FSM_EVENT_TEST_DONE);
     
-    SYS_LOG_TEST("%d Test Stop");
+    SYS_LOG_INFO("%d Test Stop");
     return HAL_OK;
 }
 
 static void _perform_mmi_test(const char *test_str) {
-    uint8_t mmi_hex_arr[50] = { 0, };
+    uint8_t mmi_hex_arr[50] = {
+        0, };
     uint8_t mmi_hex_data_len;
     
     _string_to_hex_array(test_str, mmi_hex_arr, strlen(test_str));
@@ -330,7 +351,10 @@ static void _string_to_hex_array(const char *str, uint8_t *hex_array, size_t hex
     
     /* Read 2 characters at a time and convert */
     for (size_t i = 0; i < str_len; i += 2) {
-        char byte_string[3] = { str[i], str[i + 1], '\0' }; /* 2 characters + NULL terminator */
+        char byte_string[3] = {
+            str[i],
+            str[i + 1],
+            '\0' }; /* 2 characters + NULL terminator */
         hex_array[i / 2] = (uint8_t) strtol(byte_string, NULL, 16);
     }
 }

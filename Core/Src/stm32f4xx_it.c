@@ -55,7 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern ADC_HandleTypeDef hadc1;
+extern DMA_HandleTypeDef hdma_adc1;
 extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim10;
 extern UART_HandleTypeDef huart1;
@@ -86,24 +86,25 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-    uint32_t cfsr = SCB->CFSR; // Configurable Fault Status Register
-    uint32_t mmar = 0; // Memory Management Fault Address Register
-    uint32_t bfar = 0; // Bus Fault Address Register
-
-    /* The MMAR and BFAR registers are accessible only if determined by the CFSR. */
-    if (cfsr & (1 << 7)) {
-        mmar = SCB->MMFAR;
-    }
-    else {
-        /* MMAR not valid */
-    }
-
-    if (cfsr & (1 << 15)) {
-        bfar = SCB->BFAR;
-    }
-    else {
-        /* BFAR not valid */
-    }
+    /* For Debugging */
+//    uint32_t cfsr = SCB->CFSR; // Configurable Fault Status Register
+//    uint32_t mmar = 0; // Memory Management Fault Address Register
+//    uint32_t bfar = 0; // Bus Fault Address Register
+//
+//    /* The MMAR and BFAR registers are accessible only if determined by the CFSR. */
+//    if (cfsr & (1 << 7)) {
+//        mmar = SCB->MMFAR;
+//    }
+//    else {
+//        /* MMAR not valid */
+//    }
+//
+//    if (cfsr & (1 << 15)) {
+//        bfar = SCB->BFAR;
+//    }
+//    else {
+//        /* BFAR not valid */
+//    }
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -218,20 +219,6 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles ADC1, ADC2 and ADC3 interrupts.
-  */
-void ADC_IRQHandler(void)
-{
-  /* USER CODE BEGIN ADC_IRQn 0 */
-
-  /* USER CODE END ADC_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc1);
-  /* USER CODE BEGIN ADC_IRQn 1 */
-
-  /* USER CODE END ADC_IRQn 1 */
-}
-
-/**
   * @brief This function handles EXTI line[9:5] interrupts.
   */
 void EXTI9_5_IRQHandler(void)
@@ -285,6 +272,20 @@ void TIM7_IRQHandler(void)
   /* USER CODE BEGIN TIM7_IRQn 1 */
 
   /* USER CODE END TIM7_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream0 global interrupt.
+  */
+void DMA2_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream0_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc1);
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream0_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

@@ -46,7 +46,7 @@ HAL_StatusTypeDef DRV_FM24CL64_Init(I2C_HandleTypeDef *p_handle) {
     SYS_VERIFY_SUCCESS(HAL_I2C_IsDeviceReady(fram_i2c_hdl, FM24CL64_I2C_ADDR, 100, HAL_MAX_DELAY));
 
     /* Write protection */
-    _fram_w_protection(true);
+    _fram_w_protection(false);
 
     /* Configuration */
 
@@ -88,9 +88,7 @@ HAL_StatusTypeDef _fram_write(uint16_t mem_addr, uint8_t *p_data, uint16_t data_
     write_data[1] = mem_addr & 0xFF;
     memcpy(&write_data[2], p_data, data_len);
 
-    _fram_w_protection(false);
     SYS_VERIFY_SUCCESS(HAL_I2C_Master_Transmit(fram_i2c_hdl, FM24CL64_I2C_ADDR, write_data, data_len + 2, 50));
-    _fram_w_protection(true);
 
     return HAL_OK;
 }
@@ -104,9 +102,7 @@ HAL_StatusTypeDef _fram_read(uint16_t mem_addr, uint8_t *p_data, uint16_t data_l
     write_data[0] = (mem_addr >> 8) & 0xFF;
     write_data[1] = mem_addr & 0xFF;
 
-    _fram_w_protection(false);
     SYS_VERIFY_SUCCESS(HAL_I2C_Master_Transmit(fram_i2c_hdl, FM24CL64_I2C_ADDR, &write_data[0], 2, 50));
-    _fram_w_protection(true);
 
     SYS_VERIFY_SUCCESS(HAL_I2C_Master_Receive(fram_i2c_hdl, FM24CL64_I2C_ADDR, &read_data[0], data_len, 50));
 

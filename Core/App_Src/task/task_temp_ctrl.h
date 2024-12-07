@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
- * @file           : hal_drv_pd.h
- * @brief          : Header file for hal_drv_pd.c.
+ * @file           : task_meas.h
+ * @brief          : Header file for Task_Meas.c.
  * @date           : 2024.09.
  ******************************************************************************
  * @attention
@@ -17,43 +17,30 @@
  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _HAL_DRV_PD_H
-#define _HAL_DRV_PD_H
+#ifndef _TASK_TEMP_CTRL_H_
+#define _TASK_TEMP_CTRL_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "main.h"
 
 /* Exported constants --------------------------------------------------------*/
-typedef enum {
-    HAL_PD_CAT_RECV = 0,
-    HAL_PD_CAT_MONITOR,
-    HAL_PD_CAT_MAX = HAL_PD_CAT_MONITOR,
-} HalPdCat_t;
 
-typedef enum {
-    HAL_PD_CH_1 = 0,
-    HAL_PD_CH_2,
-    HAL_PD_CH_3,
-    HAL_PD_CH_ALL,
-    HAL_PD_CH_NUM = HAL_PD_CH_ALL,
-} HalPdCh_t;
-
-typedef void (*HalPdMeasRespCb_t)(void);
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
-HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t cb_fn);
-HAL_StatusTypeDef Hal_Pd_Start(void);
-HAL_StatusTypeDef Hal_Pd_Stop(void);
-HAL_StatusTypeDef Hal_Pd_SetMonitorCh(HalPdCh_t ch);
-HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, int16_t *p_data);
-HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, int16_t *p_data);
+void Task_TempCtrl_Init(void);
+HAL_StatusTypeDef Task_TempCtrl_Start(void);
+HAL_StatusTypeDef Task_TempCtrl_Stop(void);
+HAL_StatusTypeDef Task_TempCtrl_SetStableTemp(float stable_temp);
+HAL_StatusTypeDef Task_TempCtrl_GetCurTemp(MeasCh_t ch, float *p_temp);
+HAL_StatusTypeDef Task_TempCtrl_SetCtrlType(MeasCh_t ch, MeasSetTempCtrlTypeVal_t type);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _HAL_DRV_PD_H */
+#endif /* _TASK_TEMP_CTRL_H_ */

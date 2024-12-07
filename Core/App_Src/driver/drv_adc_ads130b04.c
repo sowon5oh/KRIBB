@@ -110,7 +110,6 @@ typedef enum {
 typedef struct {
     SPI_HandleTypeDef *spi_handle;
     HalPdMeasRespCb_t cb_fn;
-    Ads130b04Ch3MuxCh_t ch_num;
 } ads130b04Context_t;
 
 typedef struct {
@@ -221,7 +220,7 @@ typedef struct {
 /* Private function prototypes -----------------------------------------------*/
 static HAL_StatusTypeDef _meas_enable(bool enable);
 static HAL_StatusTypeDef _send_cmd(ads130b04CmdId_t cmd);
-static void _read_data(void);
+static void _fetch_adc(void);
 static HAL_StatusTypeDef _set_clock_cfg(void);
 static HAL_StatusTypeDef _set_gain_cfg(void);
 static HAL_StatusTypeDef _set_ch_mux_cfg(void);
@@ -240,8 +239,7 @@ static uint16_t _make_crc(uint16_t *p_data);
 static void _ch4_mux_enable(bool enable);
 static void _ch4_mux_select(Ads130b04Ch3MuxCh_t ch);
 /* Private variables ---------------------------------------------------------*/
-ads130b04Context_t ads130b04_context = {
-    .ch_num = DRV_ADS130B04_MUX_CH_0 };
+ads130b04Context_t ads130b04_context;
 /* ADS130B04 Settings */
 static ads130b04StateMode_t ads130b04_state_mode;
 static bool ads130b04_lock;
@@ -294,7 +292,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
     
     /* Clock Config */
     ads130b04_clock_sel = ADS130B04_CLOCK_INTERNAL_OSC;
-    ads130b04_osr_mode = ADS130B04_OSR_MODE_128;
+    ads130b04_osr_mode = ADS130B04_OSR_MODE_512;
     ads130b04_pwr_mode = ADS130B04_PWR_MODE_HIGH_RESOLUTION;
     /* Ch0 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_0].enable = true;
@@ -376,11 +374,19 @@ HAL_StatusTypeDef DRV_ADS130B04_Stop(void) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef DRV_ADS130B04_SetMuxCh(Ads130b04Ch3MuxCh_t ch) {
+    SYS_VERIFY_TRUE(ch < DRV_ADS130B04_MUX_CH_NUM);
+
+    _ch4_mux_enable(false);
+    _ch4_mux_select(ch);
+    _ch4_mux_enable(true);
+
+    return HAL_OK;
+}
+
 HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data) {
     SYS_VERIFY_TRUE(ch < DRV_ADS130B04_CH_MAX);
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
-    
-    _read_data();
 
     switch (ch) {
         case DRV_ADS130B04_CH_0:
@@ -408,15 +414,9 @@ HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef DRV_ADS130B04_Read(void) {
-    ads130b04_context.ch_num = DRV_ADS130B04_MUX_CH_0;
-    
-    return HAL_OK;
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == ADC_DRDY__Pin) {
-        _read_data();
+        _fetch_adc();
     }
 }
 
@@ -525,7 +525,7 @@ static HAL_StatusTypeDef _send_cmd(ads130b04CmdId_t cmd) {
  *   - If an invalid command is sent, the device responds as if the NULL command was received,
  *     outputting the STATUS register contents as the response.
  */
-static void _read_data(void) {
+static void _fetch_adc(void) {
     uint8_t drdy_status = 0;
     uint16_t tx_buff[ADS130B04_SEND_CMD_TX_LEN];
     int16_t rx_buff[ADS130B04_READ_DATA_RX_LEN];
@@ -537,8 +537,6 @@ static void _read_data(void) {
     else {
         tx_buff[ADS130B04_SEND_CMD_IDX_CRC] = 0; /* CRC */
     }
-    
-    _ch4_mux_select(ads130b04_context.ch_num);
     
     SYS_VERIFY_SUCCESS_VOID(_comm_tx_rx(&tx_buff[0], ADS130B04_SEND_CMD_TX_LEN, &rx_buff[0], ADS130B04_READ_DATA_RX_LEN));
     
@@ -552,16 +550,11 @@ static void _read_data(void) {
     ads130b04_result.ch2 = rx_buff[3];
     ads130b04_result.ch3_mux = rx_buff[4];
     
-        SYS_LOG_INFO("CH 1  : %5d digit", ads130b04_result.ch0);
-        SYS_LOG_INFO("CH 2  : %5d digit", ads130b04_result.ch1);
-        SYS_LOG_INFO("CH 3  : %5d digit", ads130b04_result.ch2);
-        SYS_LOG_INFO("CH MUX: %5d digit", ads130b04_result.ch3_mux);
+    SYS_LOG_DEBUG("[ADC] %5d, %5d, %5d, %5d", ads130b04_result.ch0, ads130b04_result.ch1, ads130b04_result.ch2, ads130b04_result.ch3_mux);
 
-        ads130b04_context.ch_num = DRV_ADS130B04_MUX_CH_0;
-
-        if (ads130b04_context.cb_fn != NULL) {
-            ads130b04_context.cb_fn();
-        }
+    if (ads130b04_context.cb_fn != NULL) {
+        ads130b04_context.cb_fn();
+    }
 }
 
 static HAL_StatusTypeDef _set_clock_cfg(void) {

@@ -34,6 +34,8 @@ typedef enum {
     MEAS_STATE_LED_STABLE,
     MEAS_STATE_ADC,
     MEAS_STATE_ADC_DONE,
+    MEAS_STATE_CH_CHANGE,
+    MEAS_STATE_CH_STABLE,
     MEAS_STATE_ERROR,
     MEAS_STATE_START = MEAS_STATE_LED_ON,
     MEAS_STATE_STOP = MEAS_STATE_ADC,
@@ -51,7 +53,7 @@ typedef struct {
 /* Private define ------------------------------------------------------------*/
 #define MEAS_TASK_DUTY_MS            10
 #define MEAS_TASK_LED_STABLE_TIME_MS 100
-#define MEAS_TASK_ADC_READ_TIME_MS   100
+#define MEAS_TASK_CH_STABLE_TIME_MS 500
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -64,6 +66,7 @@ static void _meas_result_init(void);
 /* Timer Callback */
 static void _meask_task_led_stable_cb(void);
 static void _meask_task_adc_cb(void);
+static void _meask_task_ch_stable_cb(void);
 /* Task Callback */
 static void _meas_task_cb(void);
 /* Function */
@@ -439,20 +442,14 @@ static void _meas_result_init(void) {
 static void _meask_task_led_stable_cb(void) {
     MeasCh_t cur_ch = meas_task_context.meas_cur_ch;
 
-//    if (HAL_OK == Hal_Pd_SetMonitorCh(cur_ch)) {
-        if (HAL_OK == Hal_Pd_Start()) {
-            meas_task_context.meas_state = MEAS_STATE_ADC;
-            App_Timer_Start(APP_TIMER_ID_ADC_DELAY, meas_set_data.adc_delay_ms[cur_ch], true, _meask_task_adc_cb);
-        }
-        else {
-            meas_task_context.meas_state = MEAS_STATE_ERROR;
-            SYS_LOG_ERR("Pd Start Failed");
-        }
-//    }
-//    else {
-//        meas_task_context.meas_state = MEAS_STATE_ERROR;
-//        SYS_LOG_ERR("Monitor Pd Ch Select Failed");
-//    }
+    if (HAL_OK == Hal_Pd_Start()) {
+        meas_task_context.meas_state = MEAS_STATE_ADC;
+        App_Timer_Start(APP_TIMER_ID_ADC_DELAY, meas_set_data.adc_delay_ms[cur_ch], true, _meask_task_adc_cb);
+    }
+    else {
+        meas_task_context.meas_state = MEAS_STATE_ERROR;
+        SYS_LOG_ERR("Pd Start Failed");
+    }
 }
 
 static void _meask_task_adc_cb(void) {
@@ -471,6 +468,10 @@ static void _meask_task_adc_cb(void) {
     }
 }
 
+static void _meask_task_ch_stable_cb(void) {
+    meas_task_context.meas_state = MEAS_STATE_LED_ON;
+}
+
 static void _meas_task_cb(void) {
     MeasCh_t cur_ch = meas_task_context.meas_cur_ch;
 
@@ -482,7 +483,7 @@ static void _meas_task_cb(void) {
                 meas_task_context.meas_state = MEAS_STATE_LED_STABLE;
                 App_Timer_Start(APP_TIMER_ID_LED_STABLE, MEAS_TASK_LED_STABLE_TIME_MS, false, _meask_task_led_stable_cb);
 
-                SYS_LOG_INFO("-----------------[ CH %d Measure Start ]-----------------", cur_ch + 1);
+                SYS_LOG_INFO("-----------------[ CH %d Measure ]-----------------", cur_ch + 1);
             }
             else {
                 meas_task_context.meas_state = MEAS_STATE_ADC_DONE;
@@ -499,8 +500,6 @@ static void _meas_task_cb(void) {
             break;
             
         case MEAS_STATE_ADC_DONE:
-            SYS_LOG_INFO("-----------------[ CH Measure Stop ]-----------------", cur_ch + 1);
-
             /* Calculate Average */
             Hal_Pd_GetRecvData(cur_ch, &meas_result_data.recv_pd_data[cur_ch]);
             Hal_Pd_GetMonitorData(cur_ch, &meas_result_data.monitor_pd_data[cur_ch]);
@@ -516,15 +515,31 @@ static void _meas_task_cb(void) {
             /* Change Channel */
             if (++cur_ch >= CH_NUM) {
                 meas_task_context.meas_cur_ch = CH1_IDX;
+
+                /* Send MMI */
+                Task_MMI_SendMeasResult();
             }
             else {
                 meas_task_context.meas_cur_ch = cur_ch;
             }
+            
+            meas_task_context.meas_state = MEAS_STATE_CH_CHANGE;
+            break;
 
-            /* Send MMI */
-            //TODO
-            /* Restart Routine */
-            meas_task_context.meas_state = MEAS_STATE_LED_ON;
+        case MEAS_STATE_CH_CHANGE:
+            if (HAL_OK == Hal_Pd_SetMonitorCh(cur_ch)) {
+                /* wait for 1 sec */
+                meas_task_context.meas_state = MEAS_STATE_CH_STABLE;
+                App_Timer_Start(APP_TIMER_ID_ADC_STABLE, MEAS_TASK_CH_STABLE_TIME_MS, false, _meask_task_ch_stable_cb);
+            }
+            else {
+                meas_task_context.meas_state = MEAS_STATE_ERROR;
+                SYS_LOG_ERR("Monitor Pd Ch Select Failed");
+            }
+            break;
+
+        case MEAS_STATE_CH_STABLE:
+            /* Waiting Stable Time */
             break;
             
         case MEAS_STATE_ERROR:

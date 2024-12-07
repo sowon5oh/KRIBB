@@ -48,9 +48,9 @@ typedef void (*HalPdMeasRespCb_t)(void);
 HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t cb_fn);
 HAL_StatusTypeDef Hal_Pd_Start(void);
 HAL_StatusTypeDef Hal_Pd_Stop(void);
+HAL_StatusTypeDef Hal_Pd_SetMonitorCh(HalPdCh_t ch);
 HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, int16_t *p_data);
 HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, int16_t *p_data);
-HAL_StatusTypeDef Hal_Pd_Read(void);
 
 #ifdef __cplusplus
 }

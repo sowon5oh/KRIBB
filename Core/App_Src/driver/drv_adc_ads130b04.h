@@ -54,8 +54,8 @@ typedef enum {
 HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_handle, HalPdMeasRespCb_t cb_fn);
 HAL_StatusTypeDef DRV_ADS130B04_Start(void);
 HAL_StatusTypeDef DRV_ADS130B04_Stop(void);
+HAL_StatusTypeDef DRV_ADS130B04_SetMuxCh(Ads130b04Ch3MuxCh_t ch);
 HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data);
-HAL_StatusTypeDef DRV_ADS130B04_Read(void);
 
 #ifdef __cplusplus
 }

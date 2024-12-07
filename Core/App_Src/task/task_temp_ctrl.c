@@ -28,7 +28,7 @@
 /* Private typedef -----------------------------------------------------------*/
 typedef struct {
     bool task_op_state;
-    uint16_t stable_temperature;
+    float stable_temperature;
     float cur_temp[CH_NUM];
     MeasSetTempCtrlTypeVal_t temp_ctrl_type[CH_NUM];
 } tempCtrlTaskContext_t;

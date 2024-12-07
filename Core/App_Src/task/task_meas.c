@@ -20,6 +20,7 @@
 #include "main.h"
 #include "app_util.h"
 #include "task_meas.h"
+#include "task_temp_ctrl.h"
 #include "task_mmi.h"
 #include "hal_drv_heater.h"
 #include "hal_drv_led.h"
@@ -56,35 +57,33 @@ static void _meas_task_enable(bool enable);
 static void _meas_set_init(void);
 static void _meas_result_init(void);
 
-static void _meas_heat_auto_ctrl(bool enable);
 static void _meas_task_cb(void);
 
-static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val);
+static void _meas_set_temp_ctrl_type(MeasSetChVal_t ch, MeasSetTempCtrlTypeVal_t val);
 static void _meas_set_led_on_time_ms(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_led_on_level(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_sample_cnt(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_stable_temperature_degree(uint16_t val);
-static HAL_StatusTypeDef _meas_get_temperature_data(void);
+static void _meas_get_temperature_data(void);
 static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch);
 static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch);
-static void _heater_ctrl(void);
 static void _led_ctrl(MeasCh_t ch, uint16_t set_data);
 int16_t _calc_pd_avr(int16_t *p_buff, uint16_t sample_cnt);
 
 /* Private variables ---------------------------------------------------------*/
 static measTaskContext_t meas_task_context = {
     .task_op_state = false,
-    .meas_state = MEAS_STATE_LED_ON, };
+    .meas_state = MEAS_STATE_START };
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
 
 #if(FEATURE_SETTINGS_DEFAULT == 1)
 static MeasSetData_t meas_set_default_data = {
-    .temp_ctrl_on[CH1_IDX] = MEAS_SET_DEFAULT_TEMP_CTRL_ON,
-    .temp_ctrl_on[CH2_IDX] = MEAS_SET_DEFAULT_TEMP_CTRL_ON,
-    .temp_ctrl_on[CH3_IDX] = MEAS_SET_DEFAULT_TEMP_CTRL_ON,
+    .temp_ctrl_type[CH1_IDX] = MEAS_SET_DEFAULT_temp_ctrl_type,
+    .temp_ctrl_type[CH2_IDX] = MEAS_SET_DEFAULT_temp_ctrl_type,
+    .temp_ctrl_type[CH3_IDX] = MEAS_SET_DEFAULT_temp_ctrl_type,
     .led_on_time[CH1_IDX] = MEAS_SET_DEFAULT_LED_ON_TIME_MS,
     .led_on_time[CH2_IDX] = MEAS_SET_DEFAULT_LED_ON_TIME_MS,
     .led_on_time[CH3_IDX] = MEAS_SET_DEFAULT_LED_ON_TIME_MS,
@@ -97,7 +96,7 @@ static MeasSetData_t meas_set_default_data = {
     .adc_delay_ms[CH1_IDX] = MEAS_SET_DEFAULT_ADC_DELAY_MS,
     .adc_delay_ms[CH2_IDX] = MEAS_SET_DEFAULT_ADC_DELAY_MS,
     .adc_delay_ms[CH3_IDX] = MEAS_SET_DEFAULT_ADC_DELAY_MS,
-    .stable_temperature = MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100, };
+    .stable_temperature = MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE, };
 #endif
 
 /* Public user code ----------------------------------------------------------*/
@@ -114,9 +113,6 @@ void Task_Meas_Init(void) {
     /* initialize data */
     _meas_set_init();
     _meas_result_init();
-    
-    /* heater control start */
-    _meas_heat_auto_ctrl(true);
 
     /* send first protocol */
     Task_MMI_SendDeviceInfo();
@@ -133,8 +129,8 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
     /* Setting Value Apply */
     switch (set_cat) {
         case MEAS_SET_CAT_TEMP_ON_OFF: {
-            MeasSetTempCtrlVal_t temp_ctrl_val = (MeasSetTempCtrlVal_t) p_set_val[0];
-            _meas_set_temp_ctrl_on(ch, temp_ctrl_val);
+            MeasSetTempCtrlTypeVal_t temp_ctrl_val = (MeasSetTempCtrlTypeVal_t) p_set_val[0];
+            _meas_set_temp_ctrl_type(ch, temp_ctrl_val);
             Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR_CH1 + (ch - 1) * 2, FRAM_TEMP_SETTING_SINGLE_DATA_LEN, &temp_ctrl_val);
             break;
         }
@@ -169,8 +165,8 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
 
         case MEAS_SET_CAT_STABLE_TEMPERATURE: {
             uint16_t set_val = UINT8_2BYTE_ARRAY_TO_UINT16(p_set_val);
-            Hal_Fram_Write(FRAM_STABLE_TEMPERATURE_ADDR, FRAM_STABLE_TEMPERATURE_SINGLE_DATA_LEN, (uint8_t*) &set_val);
             _meas_set_stable_temperature_degree(set_val);
+            Hal_Fram_Write(FRAM_STABLE_TEMPERATURE_ADDR, FRAM_STABLE_TEMPERATURE_SINGLE_DATA_LEN, (uint8_t*) &set_val);
             break;
         }
     }
@@ -369,15 +365,15 @@ static void _meas_set_init(void) {
 
 #if(FEATURE_SETTINGS_DEFAULT == 1)
     /* Set default */
-    _meas_set_temp_ctrl_on(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_TEMP_CTRL_ON);
+    _meas_set_temp_ctrl_type(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_temp_ctrl_type);
     _meas_set_led_on_time_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_TIME_MS);
     _meas_set_led_on_level(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_LEVEL);
     _meas_set_adc_sample_cnt(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_SAMPLE_CNT);
     _meas_set_adc_delay_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_DELAY_MS);
-    _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100);
+    _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE);
 
     /* Save Fram */
-    Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR, FRAM_TEMP_SETTING_DATA_LEN, (uint8_t*) meas_set_default_data.temp_ctrl_on);
+    Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR, FRAM_TEMP_SETTING_DATA_LEN, (uint8_t*) meas_set_default_data.temp_ctrl_type);
     Hal_Fram_Write(FRAM_LED_ON_TIME_ADDR, FRAM_LED_ON_TIME_DATA_LEN, (uint8_t*) meas_set_default_data.led_on_time);
     Hal_Fram_Write(FRAM_LED_ON_LEVEL_ADDR, FRAM_LED_ON_LEVEL_DATA_LEN, (uint8_t*) meas_set_default_data.led_on_level);
     Hal_Fram_Write(FRAM_ADC_SAMPLE_CNT_ADDR, FRAM_ADC_SAMPLE_CNT_DATA_LEN, (uint8_t*) meas_set_default_data.adc_sample_cnt);
@@ -387,9 +383,9 @@ static void _meas_set_init(void) {
     Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data); /* for check */
 #else
     /* Set read data */
-    _meas_set_temp_ctrl_on(MEAS_SET_CH_1, read_data[FRAM_TEMP_SETTING_ADDR_CH1]);
-    _meas_set_temp_ctrl_on(MEAS_SET_CH_2, read_data[FRAM_TEMP_SETTING_ADDR_CH2]);
-    _meas_set_temp_ctrl_on(MEAS_SET_CH_3, read_data[FRAM_TEMP_SETTING_ADDR_CH3]);
+    _meas_set_temp_ctrl_type(MEAS_SET_CH_1, read_data[FRAM_TEMP_SETTING_ADDR_CH1]);
+    _meas_set_temp_ctrl_type(MEAS_SET_CH_2, read_data[FRAM_TEMP_SETTING_ADDR_CH2]);
+    _meas_set_temp_ctrl_type(MEAS_SET_CH_3, read_data[FRAM_TEMP_SETTING_ADDR_CH3]);
 
     _meas_set_led_on_time_ms(MEAS_SET_CH_1, read_data[FRAM_LED_ON_TIME_ADDR_CH1 + 1] << 8 | read_data[FRAM_LED_ON_TIME_ADDR_CH1]);
     _meas_set_led_on_time_ms(MEAS_SET_CH_2, read_data[FRAM_LED_ON_TIME_ADDR_CH2 + 1] << 8 | read_data[FRAM_LED_ON_TIME_ADDR_CH2]);
@@ -416,18 +412,6 @@ static void _meas_set_init(void) {
 
 static void _meas_result_init(void) {
     memset(&meas_result_data, 0, sizeof(MeasResultData_t));
-}
-
-static void _meas_heat_auto_ctrl(bool enable) {
-    if (enable) {
-        SYS_VERIFY_SUCCESS_VOID(Hal_Temp_Start());
-        /* Auto Control */
-        App_Timer_Start(APP_TIMER_ID_HEATER_CTRL, MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
-    }
-    else {
-        SYS_VERIFY_SUCCESS_VOID(Hal_Temp_Stop());
-        App_Timer_Stop(APP_TIMER_ID_HEATER_CTRL);
-    }
 }
 
 static void _meas_task_cb(void) {
@@ -501,53 +485,20 @@ static void _meas_task_cb(void) {
     }
 }
 
-static void _meas_set_temp_ctrl_on(MeasSetChVal_t ch, MeasSetTempCtrlVal_t val) {
-    HalHeaterCh_t heater_ch;
-    
-    switch (ch) {
-        case MEAS_SET_CH_1:
-            meas_set_data.temp_ctrl_on[CH1_IDX] = val;
-            heater_ch = HAL_HEATER_CH_1;
-            
-            break;
-
-        case MEAS_SET_CH_2:
-            meas_set_data.temp_ctrl_on[CH2_IDX] = val;
-            heater_ch = HAL_HEATER_CH_2;
-            break;
-            
-        case MEAS_SET_CH_3:
-            meas_set_data.temp_ctrl_on[CH3_IDX] = val;
-            heater_ch = HAL_HEATER_CH_3;
-            break;
-            
-        case MEAS_SET_CH_ALL:
-            meas_set_data.temp_ctrl_on[CH1_IDX] = val;
-            meas_set_data.temp_ctrl_on[CH2_IDX] = val;
-            meas_set_data.temp_ctrl_on[CH3_IDX] = val;
-            heater_ch = HAL_HEATER_CH_ALL;
-            break;
+static void _meas_set_temp_ctrl_type(MeasSetChVal_t ch, MeasSetTempCtrlTypeVal_t val) {
+    if (ch == MEAS_SET_CH_ALL) {
+        meas_set_data.temp_ctrl_type[CH1_IDX] = val;
+        meas_set_data.temp_ctrl_type[CH2_IDX] = val;
+        meas_set_data.temp_ctrl_type[CH3_IDX] = val;
+        Task_TempCtrl_SetCtrlType(CH1_IDX, val);
+        Task_TempCtrl_SetCtrlType(CH2_IDX, val);
+        Task_TempCtrl_SetCtrlType(CH3_IDX, val);
     }
-    
-    /* Temperature Control */
-    switch (val) {
-        case TEMP_CTRL_OFF:
-            _meas_heat_auto_ctrl(false);
-            Hal_Heater_Ctrl(heater_ch, HAL_HEATER_OFF);
-            break;
-            
-        case TEMP_CTRL_AUTO_ON:
-            /* Auto Control */
-            _meas_heat_auto_ctrl(true);
-            break;
-            
-        case TEMP_CTRL_FORCE_ON:
-            _meas_heat_auto_ctrl(false);
-            Hal_Heater_Ctrl(heater_ch, HAL_HEATER_ON);
-            break;
+    else {
+        meas_set_data.temp_ctrl_type[ch] = val;
     }
 
-    SYS_LOG_INFO("Temperature Control On/Off settings: %d, %d, %d", meas_set_data.temp_ctrl_on[CH1_IDX], meas_set_data.temp_ctrl_on[CH2_IDX], meas_set_data.temp_ctrl_on[CH3_IDX]);
+    SYS_LOG_INFO("Temperature Control On/Off settings: %d, %d, %d", meas_set_data.temp_ctrl_type[CH1_IDX], meas_set_data.temp_ctrl_type[CH2_IDX], meas_set_data.temp_ctrl_type[CH3_IDX]);
 }
 
 static void _meas_set_led_on_time_ms(MeasSetChVal_t ch, uint16_t val) {
@@ -667,45 +618,32 @@ static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val) {
 }
 
 static void _meas_set_stable_temperature_degree(uint16_t val) {
-    if (val > MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100) {
+    if (val > (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
         SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%d]====>", val);
-        val = MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100;
+        val = MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
         SYS_LOG_WARN("Changed : ====>[%d]", val);
     }
-    else if (val < MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100) {
+    else if (val < ( MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
         SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%d]====>", val);
-        val = MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100;
+        val = MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
         SYS_LOG_WARN("Changed : ====>[%d]", val);
     }
     
     meas_set_data.stable_temperature = val;
+    Task_TempCtrl_SetStableTemp((float) val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     
-    SYS_LOG_INFO("Stable Temperature setting: %d ('C)", meas_set_data.stable_temperature);
+    SYS_LOG_INFO("Stable Temperature setting: %d(/100) 'C)", meas_set_data.stable_temperature);
 }
 
-static HAL_StatusTypeDef _meas_get_temperature_data(void) {
-    HalTempData_t temp_data_buff;
+static void _meas_get_temperature_data(void) {
+    float temp_data_buff;
     
-    SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp_data_buff));
-    
-#if(FEATURE_TEMPERATURE_DATA_ADC == FEATURE_TEMPERATURE_DATA_TYPE)
-    meas_result_data.temperature_data[CH1_IDX] = temp_data_buff.adc[HAL_TEMP_CH_0];
-    meas_result_data.temperature_data[CH2_IDX] = temp_data_buff.adc[HAL_TEMP_CH_1];
-    meas_result_data.temperature_data[CH3_IDX] = temp_data_buff.adc[HAL_TEMP_CH_2];
-#else
-#ifdef FEATURE_TEMPERATURE_DEGREE_OFFSET
-    meas_result_data.temperature_data[CH1_IDX] = (int16_t) (temp_data_buff.degree[HAL_TEMP_CH_0] * MEAS_SET_TEMPERATURE_DEGREE_SCALE) + FEATURE_TEMPERATURE_DEGREE_OFFSET;
-    meas_result_data.temperature_data[CH2_IDX] = (int16_t) (temp_data_buff.degree[HAL_TEMP_CH_1] * MEAS_SET_TEMPERATURE_DEGREE_SCALE) + FEATURE_TEMPERATURE_DEGREE_OFFSET;
-    meas_result_data.temperature_data[CH3_IDX] = (int16_t) (temp_data_buff.degree[HAL_TEMP_CH_2] * MEAS_SET_TEMPERATURE_DEGREE_SCALE) + FEATURE_TEMPERATURE_DEGREE_OFFSET;
-#else
-    meas_result_data.temperature_data[CH1_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_0] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-    meas_result_data.temperature_data[CH2_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_1] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-    meas_result_data.temperature_data[CH3_IDX] = (int16_t) temp_data_buff.degree[HAL_TEMP_CH_2] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-#endif
-#endif
-    
-    SYS_LOG_INFO("[CH 1] Temperature: %d.%02d", (meas_result_data.temperature_data[CH1_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE), (meas_result_data.temperature_data[CH1_IDX] % MEAS_SET_TEMPERATURE_DEGREE_SCALE));SYS_LOG_INFO("[CH 2] Temperature: %d.%02d", (meas_result_data.temperature_data[CH2_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE), (meas_result_data.temperature_data[CH2_IDX] % MEAS_SET_TEMPERATURE_DEGREE_SCALE));SYS_LOG_INFO("[CH 3] Temperature: %d.%02d", (meas_result_data.temperature_data[CH3_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE), (meas_result_data.temperature_data[CH3_IDX] % MEAS_SET_TEMPERATURE_DEGREE_SCALE));
-    return HAL_OK;
+    Task_TempCtrl_GetCurTemp(CH1_IDX, &temp_data_buff);
+    meas_result_data.temperature_data[CH1_IDX] = (int16_t) (temp_data_buff * MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+    Task_TempCtrl_GetCurTemp(CH2_IDX, &temp_data_buff);
+    meas_result_data.temperature_data[CH2_IDX] = (int16_t) (temp_data_buff * MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+    Task_TempCtrl_GetCurTemp(CH3_IDX, &temp_data_buff);
+    meas_result_data.temperature_data[CH3_IDX] = (int16_t) (temp_data_buff * MEAS_SET_TEMPERATURE_DEGREE_SCALE);
 }
 
 static HAL_StatusTypeDef _meas_get_recv_pd_data(MeasSetChVal_t ch) {
@@ -804,38 +742,6 @@ static HAL_StatusTypeDef _meas_get_monitor_pd_data(MeasSetChVal_t ch) {
     }
     
     return HAL_OK;
-}
-
-static void _heater_ctrl(void) {
-    _meas_get_temperature_data();
-    
-    for (HalHeaterCh_t ch_idx = HAL_HEATER_CH_1; ch_idx < HAL_HEATER_CH_NUM; ch_idx++) {
-        SYS_LOG_INFO("[CH %d] Current Temperature: %d", ch_idx + 1, meas_result_data.temperature_data[ch_idx]);
-        
-        if (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100 < meas_result_data.temperature_data[ch_idx]) {
-            SYS_LOG_ERR("Temperature Over MAX Limit, %d.%d", (meas_result_data.temperature_data[ch_idx] / 100), (meas_result_data.temperature_data[ch_idx] % 100));
-            Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
-        }
-        else if ( MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100 >= meas_result_data.temperature_data[ch_idx]) {
-            SYS_LOG_ERR("Temperature Below MIN Limit, %d.%d", (meas_result_data.temperature_data[ch_idx] / 100), (meas_result_data.temperature_data[ch_idx] % 100));
-            Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
-        }
-        else {
-            SYS_LOG_INFO("Current Temp, %d.%d", (meas_result_data.temperature_data[ch_idx] / 100), (meas_result_data.temperature_data[ch_idx] % 100));
-            if (meas_result_data.temperature_data[ch_idx] < MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100) {
-                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
-                SYS_LOG_INFO("Heater ON");
-            }
-            else {
-                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
-                SYS_LOG_INFO("Heater OFF");
-            }
-        }
-    }
-    
-    SYS_VERIFY_SUCCESS_VOID(Hal_Temp_Start());
-    
-    App_Timer_Start(APP_TIMER_ID_HEATER_CTRL, MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS, _heater_ctrl);
 }
 
 void _led_ctrl(MeasCh_t ch, uint16_t set_data) {

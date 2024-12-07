@@ -227,7 +227,7 @@ typedef enum {
     TEMP_CTRL_OFF = 0x00,
     TEMP_CTRL_AUTO_ON = 0x01,
     TEMP_CTRL_FORCE_ON = 0x02, /* for test */
-} MeasSetTempCtrlVal_t;
+} MeasSetTempCtrlTypeVal_t;
 
 typedef enum {
     LED_CTRL_FORCE_OFF = 0x00,
@@ -253,15 +253,14 @@ typedef enum {
 #define MEAS_SET_MAX_ADC_DELAY_MS        MEAS_SET_MAX_LED_ON_LEVEL / MEAS_SET_MIN_ADC_SAMPLE_CNT
 #define MEAS_SET_DEFAULT_ADC_DELAY_MS    200
 
-#define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE_X100     2000
-#define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE_X100     4500
-#define MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE_X100 3500
-#define MEAS_SET_TEMPERATURE_DEGREE_SCALE               100
-#define MEAS_SET_STABLE_TEMPERATURE_CTRL_DUTY_MS        1000
+#define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE     20
+#define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE     45
+#define MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE 35
+#define MEAS_SET_TEMPERATURE_DEGREE_SCALE          100
 
 #pragma pack(push, 1)
 typedef struct {
-    MeasSetTempCtrlVal_t temp_ctrl_on[CH_NUM]; /* Ch1 - CH3 */
+    MeasSetTempCtrlTypeVal_t temp_ctrl_type[CH_NUM]; /* Ch1 - CH3 */
     uint16_t led_on_time[CH_NUM];
     uint16_t led_on_level[CH_NUM];
     uint16_t adc_sample_cnt[CH_NUM];

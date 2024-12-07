@@ -72,6 +72,7 @@ typedef struct {
 
 typedef enum {
     APP_TASK_MEASURE = 0,
+    APP_TASK_TEMP_CTRL,
     APP_TASK_ID_MAX,
 } AppTaskId_t;
 /* USER CODE END ET */

@@ -54,13 +54,14 @@ typedef struct {
     uint32_t remaining_0_1_ms; // Remaining time in 0.1 milliseconds
     void (*timer_cb)(void); // Callback function to call when the timer expires
     uint8_t active; // Timer activation status
+    bool repeat; // Timer continous mode
 } AppTimer_t;
 
 typedef enum {
     APP_TIMER_ID_FSM = 0,
     APP_TIMER_ID_MEASURE,
+    APP_TIMER_ID_LED_STABLE,
     APP_TIMER_ID_ADC_DELAY,
-    APP_TIMER_ID_HEATER_CTRL,
     APP_TIMER_ID_MAX,
 } AppTimerId_t;
 
@@ -96,7 +97,7 @@ extern SPI_HandleTypeDef hspi1;
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, void (*timer_cb)(void));
+void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, bool repeat, void (*timer_cb)(void));
 void App_Timer_Stop(AppTimerId_t timer_id);
 void App_Task_Start(AppTaskId_t task_id, uint32_t task_duty, void (*task_cb)(void));
 void App_Task_Stop(AppTaskId_t task_id);

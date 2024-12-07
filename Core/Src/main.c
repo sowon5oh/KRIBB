@@ -121,6 +121,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
                 if (app_timers[timer_idx].remaining_0_1_ms == 0) {
                     if (NULL != app_timers[timer_idx].timer_cb) {
                         app_timers[timer_idx].timer_cb(); /* Call the timer callback function */
+                        if (app_timers[timer_idx].repeat) {
+                            app_timers[timer_idx].remaining_0_1_ms = app_timers[timer_idx].timeout_0_1_ms; /* Restart Timer */
+                        }
+                        else {
+                            app_timers[timer_idx].active = 0; /* Stop Timer */
+                        }
                     }
                 }
             }
@@ -231,9 +237,11 @@ int main(void) {
     /***********************************************************************
      * Test Sequence
      ***********************************************************************/
-    HAL_Delay(10);
-    Task_Meas_Start();
+    HAL_Delay(1000);
     Task_TempCtrl_Start();
+
+    HAL_Delay(1000);
+    Task_Meas_Start();
 //#else
     /***********************************************************************
      * Test Sequence
@@ -314,8 +322,7 @@ void SystemClock_Config(void) {
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
     RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct,
-    FLASH_LATENCY_5) != HAL_OK) {
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
         Error_Handler();
     }
 }
@@ -697,18 +704,20 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, void (*timer_cb)(void)) {
+void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, bool repeat, void (*timer_cb)(void)) {
     if (timer_id < APP_TIMER_ID_MAX) {
         app_timers[timer_id].timeout_0_1_ms = timeout_ms * 10;
         app_timers[timer_id].remaining_0_1_ms = timeout_ms * 10;
         app_timers[timer_id].timer_cb = timer_cb;
         app_timers[timer_id].active = 1;
+        app_timers[timer_id].repeat = repeat;
     }
 }
 
 void App_Timer_Stop(AppTimerId_t timer_id) {
     if (timer_id < APP_TIMER_ID_MAX) {
         app_timers[timer_id].active = 0;
+        app_timers[timer_id].repeat = false;
     }
 }
 
@@ -723,7 +732,7 @@ void App_Task_Start(AppTaskId_t task_id, uint32_t task_duty_ms, void (*task_cb)(
 
 void App_Task_Stop(AppTaskId_t task_id) {
     if (task_id < APP_TASK_ID_MAX) {
-        app_tasks[task_id].active = 1;
+        app_tasks[task_id].active = 0;
     }
 }
 /* USER CODE END 4 */

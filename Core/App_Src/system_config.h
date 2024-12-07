@@ -40,7 +40,7 @@ extern "C" {
 #define SYS_TEST_MODE_ENABLE 0
 
 /* config for system log*/
-#define SYS_LOG_ENABLE_CFG  1
+#define SYS_LOG_ENABLE_CFG  0
 
 #define SYS_LOG_LEVEL_NONE  0
 #define SYS_LOG_LEVEL_DEBUG 1

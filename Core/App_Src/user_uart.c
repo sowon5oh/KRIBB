@@ -23,7 +23,7 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define UART_TX_DEBUG_LOG 1
+#define UART_TX_DEBUG_LOG 0
 //#define UART_RX_DEBUG_LOG 0
 
 #define TX_MSG_MAX_LEN	MMI_PROTOCOL_TX_MSG_LEN_MAX

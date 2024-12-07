@@ -240,6 +240,7 @@ HAL_StatusTypeDef Task_Meas_Stop(void) {
 HAL_StatusTypeDef Task_Meas_Get_AllResult(MeasResultData_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
 
+    _meas_get_temperature_data();
     memcpy(p_data, &meas_result_data, sizeof(MeasResultData_t));
 
     return HAL_OK;

@@ -138,6 +138,7 @@ void App_Task_Stop(AppTaskId_t task_id);
 #define ADC_RST__GPIO_Port GPIOC
 #define ADC_DRDY__Pin GPIO_PIN_7
 #define ADC_DRDY__GPIO_Port GPIOC
+#define ADC_DRDY__EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 

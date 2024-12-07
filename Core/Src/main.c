@@ -224,7 +224,7 @@ int main(void) {
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("            Devie Start           ");
     SYS_LOG_INFO("----------------------------------");
-                                                                        // @formatter:on
+                                                                                                        // @formatter:on
     /* Init Fsm Task */
     Task_Fsm_Init();
     
@@ -291,7 +291,7 @@ void SystemClock_Config(void) {
      */
     __HAL_RCC_PWR_CLK_ENABLE();
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-    
+
     /** Initializes the RCC Oscillators according to the specified parameters
      * in the RCC_OscInitTypeDef structure.
      */
@@ -307,13 +307,13 @@ void SystemClock_Config(void) {
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Activate the Over-Drive mode
      */
     if (HAL_PWREx_EnableOverDrive() != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Initializes the CPU, AHB and APB buses clocks
      */
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
@@ -333,7 +333,7 @@ void SystemClock_Config(void) {
  * @retval None
  */
 static void MX_ADC1_Init(void) {
-    
+
     /* USER CODE BEGIN ADC1_Init 0 */
 
     /* USER CODE END ADC1_Init 0 */
@@ -342,7 +342,7 @@ static void MX_ADC1_Init(void) {
         0 };
     ADC_InjectionConfTypeDef sConfigInjected = {
         0 };
-    
+
     /* USER CODE BEGIN ADC1_Init 1 */
 
     /* USER CODE END ADC1_Init 1 */
@@ -364,7 +364,7 @@ static void MX_ADC1_Init(void) {
     if (HAL_ADC_Init(&hadc1) != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
      */
     sConfig.Channel = ADC_CHANNEL_5;
@@ -373,7 +373,7 @@ static void MX_ADC1_Init(void) {
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
      */
     sConfig.Channel = ADC_CHANNEL_6;
@@ -381,7 +381,7 @@ static void MX_ADC1_Init(void) {
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
      */
     sConfig.Channel = ADC_CHANNEL_7;
@@ -389,7 +389,7 @@ static void MX_ADC1_Init(void) {
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
      */
     sConfigInjected.InjectedChannel = ADC_CHANNEL_5;
@@ -404,14 +404,14 @@ static void MX_ADC1_Init(void) {
     if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
      */
     sConfigInjected.InjectedRank = 2;
     if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK) {
         Error_Handler();
     }
-    
+
     /** Configures for the selected ADC injected channel its corresponding rank in the sequencer and its sample time
      */
     sConfigInjected.InjectedRank = 3;
@@ -430,7 +430,7 @@ static void MX_ADC1_Init(void) {
  * @retval None
  */
 static void MX_I2C1_Init(void) {
-    
+
     /* USER CODE BEGIN I2C1_Init 0 */
 
     /* USER CODE END I2C1_Init 0 */
@@ -462,7 +462,7 @@ static void MX_I2C1_Init(void) {
  * @retval None
  */
 static void MX_I2C2_Init(void) {
-    
+
     /* USER CODE BEGIN I2C2_Init 0 */
 
     /* USER CODE END I2C2_Init 0 */
@@ -494,7 +494,7 @@ static void MX_I2C2_Init(void) {
  * @retval None
  */
 static void MX_SPI1_Init(void) {
-    
+
     /* USER CODE BEGIN SPI1_Init 0 */
 
     /* USER CODE END SPI1_Init 0 */
@@ -530,14 +530,14 @@ static void MX_SPI1_Init(void) {
  * @retval None
  */
 static void MX_TIM7_Init(void) {
-    
+
     /* USER CODE BEGIN TIM7_Init 0 */
 
     /* USER CODE END TIM7_Init 0 */
 
     TIM_MasterConfigTypeDef sMasterConfig = {
         0 };
-    
+
     /* USER CODE BEGIN TIM7_Init 1 */
 
     /* USER CODE END TIM7_Init 1 */
@@ -566,7 +566,7 @@ static void MX_TIM7_Init(void) {
  * @retval None
  */
 static void MX_TIM10_Init(void) {
-    
+
     /* USER CODE BEGIN TIM10_Init 0 */
 
     /* USER CODE END TIM10_Init 0 */
@@ -595,7 +595,7 @@ static void MX_TIM10_Init(void) {
  * @retval None
  */
 static void MX_USART1_UART_Init(void) {
-    
+
     /* USER CODE BEGIN USART1_Init 0 */
 
     /* USER CODE END USART1_Init 0 */
@@ -624,7 +624,7 @@ static void MX_USART1_UART_Init(void) {
  * Enable DMA controller clock
  */
 static void MX_DMA_Init(void) {
-    
+
     /* DMA controller clock enable */
     __HAL_RCC_DMA2_CLK_ENABLE();
 
@@ -632,7 +632,7 @@ static void MX_DMA_Init(void) {
     /* DMA2_Stream0_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-    
+
 }
 
 /**
@@ -651,54 +651,58 @@ static void MX_GPIO_Init(void) {
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    
+
     /*Configure GPIO pin Output Level */
     HAL_GPIO_WritePin(GPIOC, CH1_LED_CON_Pin | CH2_LED_CON_Pin | CH3_LED_CON_Pin | ADC_RST__Pin, GPIO_PIN_RESET);
-    
+
     /*Configure GPIO pin Output Level */
     HAL_GPIO_WritePin(GPIOA, M_SEL_A0_Pin | M_SEL_A1_Pin | M_SEL_EN_Pin, GPIO_PIN_RESET);
 
     /*Configure GPIO pin Output Level */
     HAL_GPIO_WritePin(ADC_CS__GPIO_Port, ADC_CS__Pin, GPIO_PIN_SET);
-    
+
     /*Configure GPIO pin Output Level */
     HAL_GPIO_WritePin(GPIOB, OP_LED_Pin | EEPROM_WP_Pin | HEAT_CON3_Pin | HEAT_CON2_Pin | HEAT_CON1_Pin, GPIO_PIN_RESET);
-    
+
     /*Configure GPIO pins : CH1_LED_CON_Pin CH2_LED_CON_Pin CH3_LED_CON_Pin ADC_RST__Pin */
     GPIO_InitStruct.Pin = CH1_LED_CON_Pin | CH2_LED_CON_Pin | CH3_LED_CON_Pin | ADC_RST__Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init( GPIOC, &GPIO_InitStruct);
-    
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
     /*Configure GPIO pins : M_SEL_A0_Pin M_SEL_A1_Pin M_SEL_EN_Pin */
     GPIO_InitStruct.Pin = M_SEL_A0_Pin | M_SEL_A1_Pin | M_SEL_EN_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init( GPIOA, &GPIO_InitStruct);
-    
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
     /*Configure GPIO pin : ADC_CS__Pin */
     GPIO_InitStruct.Pin = ADC_CS__Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init( ADC_CS__GPIO_Port, &GPIO_InitStruct);
-    
+    HAL_GPIO_Init(ADC_CS__GPIO_Port, &GPIO_InitStruct);
+
     /*Configure GPIO pins : OP_LED_Pin EEPROM_WP_Pin HEAT_CON3_Pin HEAT_CON2_Pin
      HEAT_CON1_Pin */
     GPIO_InitStruct.Pin = OP_LED_Pin | EEPROM_WP_Pin | HEAT_CON3_Pin | HEAT_CON2_Pin | HEAT_CON1_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init( GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /*Configure GPIO pin : ADC_DRDY__Pin */
     GPIO_InitStruct.Pin = ADC_DRDY__Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init( ADC_DRDY__GPIO_Port, &GPIO_InitStruct);
-    
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(ADC_DRDY__GPIO_Port, &GPIO_InitStruct);
+
+    /* EXTI interrupt init*/
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
     /* USER CODE BEGIN MX_GPIO_Init_2 */
     /* USER CODE END MX_GPIO_Init_2 */
 }

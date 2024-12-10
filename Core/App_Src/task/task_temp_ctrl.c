@@ -31,7 +31,7 @@ typedef struct {
     float stable_temperature;
     float temperature_offset[CH_NUM];
     float cur_temp[CH_NUM];
-    MeasSetTempCtrlTypeVal_t temp_ctrl_type[CH_NUM];
+    MeasSetTempCtrlType_t temp_ctrl_type[CH_NUM];
 } tempCtrlTaskContext_t;
 
 /* Private define ------------------------------------------------------------*/
@@ -44,7 +44,7 @@ static void _temp_ctrl_task_init(void);
 static void _temp_ctrl_task_enable(bool enable);
 static void _temp_ctrl_task_cb(void);
 
-static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlTypeVal_t temp_ctrl_type);
+static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlType_t temp_ctrl_type);
 static void _set_stable_temp(float stable_temp);
 static void _set_temp_offset(MeasCh_t ch, float temperature_offset);
 static HAL_StatusTypeDef _fetch_temperature(void);
@@ -56,9 +56,9 @@ static tempCtrlTaskContext_t temp_ctrl_task_context = {
     .cur_temp[CH1_IDX] = 0.0f,
     .cur_temp[CH2_IDX] = 0.0f,
     .cur_temp[CH3_IDX] = 0.0f,
-    .temp_ctrl_type[CH1_IDX] = TEMP_CTRL_OFF,
-    .temp_ctrl_type[CH2_IDX] = TEMP_CTRL_OFF,
-    .temp_ctrl_type[CH3_IDX] = TEMP_CTRL_OFF, };
+    .temp_ctrl_type[CH1_IDX] = TEMP_CTRL_FORCE_OFF,
+    .temp_ctrl_type[CH2_IDX] = TEMP_CTRL_FORCE_OFF,
+    .temp_ctrl_type[CH3_IDX] = TEMP_CTRL_FORCE_OFF, };
 
 /* Public user code ----------------------------------------------------------*/
 void Task_TempCtrl_Init(void) {
@@ -104,7 +104,7 @@ HAL_StatusTypeDef Task_TempCtrl_GetCurTemp(MeasCh_t ch, float *p_temp) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_TempCtrl_SetCtrlType(MeasCh_t ch, MeasSetTempCtrlTypeVal_t type) {
+HAL_StatusTypeDef Task_TempCtrl_SetCtrlType(MeasCh_t ch, MeasSetTempCtrlType_t type) {
     _set_temp_ctrl_type(ch, type);
 
     return HAL_OK;
@@ -165,14 +165,14 @@ static void _temp_ctrl_task_cb(void) {
     }
 }
 
-static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlTypeVal_t temp_ctrl_type) {
+static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlType_t temp_ctrl_type) {
     /* Temperature Control */
     switch (temp_ctrl_type) {
-        case TEMP_CTRL_OFF:
+        case TEMP_CTRL_FORCE_OFF:
             Hal_Heater_Ctrl(ch, HAL_HEATER_OFF);
             break;
 
-        case TEMP_CTRL_AUTO_ON:
+        case TEMP_CTRL_AUTO:
             break;
 
         case TEMP_CTRL_FORCE_ON:

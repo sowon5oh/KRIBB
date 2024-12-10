@@ -503,7 +503,7 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
         case MMI_CMD2_CTRL_DATA_SEND_MODE:
             SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DATA_SEND_MODE_DATA_LEN);
 
-            Task_Meas_SetOpMode(set_data_val[0]);
+            Task_Meas_Ctrl_OpMode(set_data_val[0]);
             break;
 
         default:

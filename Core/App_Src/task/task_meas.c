@@ -72,7 +72,7 @@ static void _meas_task_ch_stable_cb(void);
 /* Task Callback */
 static void _meas_task_cb(void);
 /* Function */
-static void _meas_set_temp_ctrl_type(MeasSetChVal_t ch, MeasSetTempCtrlTypeVal_t val);
+static void _meas_set_temp_ctrl_type(MeasSetChVal_t ch, MeasSetTempCtrlType_t val);
 static void _meas_set_led_on_time_ms(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_led_on_level(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_sample_cnt(MeasSetChVal_t ch, uint16_t val);
@@ -89,7 +89,7 @@ static measTaskContext_t meas_task_context = {
     .meas_state = MEAS_STATE_START,
     .meas_cur_ch = CH1_IDX,
     .sample_cnt = 0, };
-static MeasSetOpModeVal_t meas_op_mode = MEAS_OP_MODE_CONTINUOUS;
+static MeasCtrlOpMode_t meas_op_mode = MEAS_OP_MODE_CONTINUOUS;
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
@@ -151,7 +151,7 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
     /* Setting Value Apply */
     switch (set_cat) {
         case MEAS_SET_CAT_TEMP_ON_OFF: {
-            MeasSetTempCtrlTypeVal_t temp_ctrl_val = (MeasSetTempCtrlTypeVal_t) p_set_val[0];
+            MeasSetTempCtrlType_t temp_ctrl_val = (MeasSetTempCtrlType_t) p_set_val[0];
             _meas_set_temp_ctrl_type(ch, temp_ctrl_val);
             Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR_CH1 + (ch - 1) * 2, FRAM_TEMP_SETTING_SINGLE_DATA_LEN, &temp_ctrl_val);
             break;
@@ -251,7 +251,7 @@ HAL_StatusTypeDef Task_Meas_Stop(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_SetOpMode(MeasSetOpModeVal_t op_mode) {
+HAL_StatusTypeDef Task_Meas_Ctrl_OpMode(MeasCtrlOpMode_t op_mode) {
     SYS_VERIFY_TRUE(op_mode < MEAS_OP_MODE_MAX);
 
     _meas_task_enable(false);
@@ -315,7 +315,7 @@ HAL_StatusTypeDef Task_Meas_Get_Status(MeasReqStatus_t *p_status_val) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasSetLedForcedCtrlVal_t ctrl) {
+HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasCtrlLedType_t ctrl) {
     SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
 
     uint8_t levels[3] = {
@@ -328,13 +328,13 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasSetLedForcedCtrlVal_
         case MEAS_SET_CH_2:
         case MEAS_SET_CH_3:
             _led_ctrl(HAL_LED_CH_1 + (ch - MEAS_SET_CH_1), ctrl == LED_CTRL_FORCE_ON ? meas_set_data.led_on_level[levels[ch - MEAS_SET_CH_1]] : HAL_LED_LEVEL_OFF);
-            meas_set_data.led_ctrl_on[levels[ch - MEAS_SET_CH_1]] = ctrl;
+            meas_set_data.led_ctrl_state[levels[ch - MEAS_SET_CH_1]] = ctrl;
             break;
 
         case MEAS_SET_CH_ALL:
             for (uint8_t i = 0; i < 3; i++) {
                 _led_ctrl(HAL_LED_CH_1 + i, ctrl == LED_CTRL_FORCE_ON ? meas_set_data.led_on_level[i] : HAL_LED_LEVEL_OFF);
-                meas_set_data.led_ctrl_on[i] = ctrl;
+                meas_set_data.led_ctrl_state[i] = ctrl;
             }
             break;
 
@@ -621,7 +621,7 @@ static void _meas_task_cb(void) {
     }
 }
 
-static void _meas_set_temp_ctrl_type(MeasSetChVal_t ch, MeasSetTempCtrlTypeVal_t val) {
+static void _meas_set_temp_ctrl_type(MeasSetChVal_t ch, MeasSetTempCtrlType_t val) {
     if (ch == MEAS_SET_CH_ALL) {
         meas_set_data.temp_ctrl_type[CH1_IDX] = val;
         meas_set_data.temp_ctrl_type[CH2_IDX] = val;
@@ -793,7 +793,7 @@ static void _meas_get_temperature_data(void) {
 
 void _led_ctrl(MeasCh_t ch, uint16_t set_data) {
     bool led_status = (set_data > 0) ? true : false;
-    
+
     meas_req_status_data.led_on_status[ch] = led_status;
     SYS_VERIFY_SUCCESS_VOID(Hal_Led_Ctrl((HalLedCh_t )ch, set_data));
 }

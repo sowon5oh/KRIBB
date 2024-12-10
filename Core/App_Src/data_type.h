@@ -234,40 +234,41 @@ typedef enum {
 } MeasSetChVal_t;
 
 typedef enum {
-    TEMP_CTRL_OFF = 0x00,
-    TEMP_CTRL_AUTO_ON = 0x01,
+    TEMP_CTRL_FORCE_OFF = 0x00,
+    TEMP_CTRL_AUTO = 0x01,
     TEMP_CTRL_FORCE_ON = 0x02, /* for test */
-} MeasSetTempCtrlTypeVal_t;
+} MeasSetTempCtrlType_t;
 
 typedef enum {
     LED_CTRL_FORCE_OFF = 0x00,
     LED_CTRL_FORCE_ON = 0x01,
-} MeasSetLedForcedCtrlVal_t;
+    LED_CTRL_AUTO = 0x02,
+} MeasCtrlLedType_t;
 
 typedef enum {
     MEAS_OP_MODE_SINGLE = 0x00,
     MEAS_OP_MODE_CONTINUOUS = 0x01, /* Default */
     MEAS_OP_MODE_MAX,
-} MeasSetOpModeVal_t;
+} MeasCtrlOpMode_t;
 
 /* Default Measure Setting */
-#define MEAS_SET_DEFAULT_TEMP_CTRL_TYPE  TEMP_CTRL_OFF
+#define MEAS_SET_DEFAULT_TEMP_CTRL_TYPE            LED_CTRL_AUTO
 
-#define MEAS_SET_MIN_LED_ON_TIME_MS      1
-#define MEAS_SET_MAX_LED_ON_TIME_MS      1000
-#define MEAS_SET_DEFAULT_LED_ON_TIME_MS  1000
+#define MEAS_SET_MIN_LED_ON_TIME_MS                1
+#define MEAS_SET_MAX_LED_ON_TIME_MS                1000
+#define MEAS_SET_DEFAULT_LED_ON_TIME_MS            100
 
-#define MEAS_SET_MIN_LED_ON_LEVEL        0
-#define MEAS_SET_MAX_LED_ON_LEVEL        0xFFF
-#define MEAS_SET_DEFAULT_LED_ON_LEVEL    0xFFF
+#define MEAS_SET_MIN_LED_ON_LEVEL                  0
+#define MEAS_SET_MAX_LED_ON_LEVEL                  0xFFF
+#define MEAS_SET_DEFAULT_LED_ON_LEVEL              0xFFF
 
-#define MEAS_SET_MIN_ADC_SAMPLE_CNT      1
-#define MEAS_SET_MAX_ADC_SAMPLE_CNT      1000
-#define MEAS_SET_DEFAULT_ADC_SAMPLE_CNT  50
+#define MEAS_SET_MIN_ADC_SAMPLE_CNT                1
+#define MEAS_SET_MAX_ADC_SAMPLE_CNT                1000
+#define MEAS_SET_DEFAULT_ADC_SAMPLE_CNT            50
 
-#define MEAS_SET_MIN_ADC_DELAY_MS        1
-#define MEAS_SET_MAX_ADC_DELAY_MS        100
-#define MEAS_SET_DEFAULT_ADC_DELAY_MS    (MEAS_SET_DEFAULT_LED_ON_TIME_MS / MEAS_SET_DEFAULT_ADC_SAMPLE_CNT)
+#define MEAS_SET_MIN_ADC_DELAY_MS                  1
+#define MEAS_SET_MAX_ADC_DELAY_MS                  100
+#define MEAS_SET_DEFAULT_ADC_DELAY_MS              (MEAS_SET_DEFAULT_LED_ON_TIME_MS / MEAS_SET_DEFAULT_ADC_SAMPLE_CNT)
 
 #define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE     20
 #define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE     45
@@ -276,19 +277,20 @@ typedef enum {
 #define MEAS_SET_TEMPERATURE_OFFSET_MIN_DEGREE     0
 #define MEAS_SET_TEMPERATURE_OFFSET_MAX_DEGREE     50
 #define MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE 30
-
 #define MEAS_SET_TEMPERATURE_DEGREE_SCALE          100
+
+#define MEAS_SET_DEFAULT_LED_CTRL_TYPE             LED_CTRL_AUTO
 
 #pragma pack(push, 1)
 typedef struct {
-    MeasSetTempCtrlTypeVal_t temp_ctrl_type[CH_NUM]; /* Ch1 - CH3 */
+    MeasSetTempCtrlType_t temp_ctrl_type[CH_NUM]; /* Ch1 - CH3 */
     uint16_t led_on_time[CH_NUM];
     uint16_t led_on_level[CH_NUM];
     uint16_t adc_sample_cnt[CH_NUM];
     uint16_t adc_delay_ms[CH_NUM];
     uint16_t stable_temperature;
     uint16_t temperature_offset[CH_NUM];
-    MeasSetLedForcedCtrlVal_t led_ctrl_on[CH_NUM]; /* Ch1 - CH3 */
+    MeasCtrlLedType_t led_ctrl_state[CH_NUM]; /* Ch1 - CH3 */
 } MeasSetData_t;
 #pragma pack(pop)
 

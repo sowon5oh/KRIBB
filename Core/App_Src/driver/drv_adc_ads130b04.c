@@ -296,16 +296,16 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
     ads130b04_pwr_mode = ADS130B04_PWR_MODE_HIGH_RESOLUTION;
     /* Ch0 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_0].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_0].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_0].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
     /* Ch1 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_1].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_1].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_1].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
     /* Ch2 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_2].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_2].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_2].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
     /* Ch3 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_3].enable = true;
-    ads130b04_ch_cfg[DRV_ADS130B04_CH_3].input_mode = DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_3].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
     
     /* Gain Config */
     ads130b04_gain_mode = ADS130B04_CH_GAIN_MODE_64;
@@ -608,7 +608,8 @@ static HAL_StatusTypeDef _set_ch_mux_cfg(void) {
     /* Ch MUX Config */
     for (uint8_t idx = 0; idx < 4; idx++) { //5
         send_cfg = BF_VAL(input_mode[idx], DRV_ADS130B04_CH_CFG_MUX_BCNT, DRV_ADS130B04_CH_CFG_MUX_BOFF);
-        SYS_VERIFY_SUCCESS(_register_sigle_write(ADS130B04_REG_ADDR_CH0_CFG + 5 * idx, send_cfg));SYS_LOG_INFO("ADC Set MUX CH%d Config Success: %04X", idx, send_cfg); // CH1234 success : 0000
+        SYS_VERIFY_SUCCESS(_register_sigle_write(ADS130B04_REG_ADDR_CH0_CFG + 5 * idx, send_cfg));
+        SYS_LOG_INFO("ADC Set MUX CH%d Config Success: %04X", idx, send_cfg); // CH1234 success : 0000
     }
     
     return HAL_OK;

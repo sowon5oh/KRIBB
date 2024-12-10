@@ -138,6 +138,13 @@ extern "C" {
 #define MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE          0x01
 #define MMI_CMD3_MEAS_SET_STABLE_TEMPERATURE_DEGREE_DATA_LEN (2)
 
+#define MMI_CMD2_MEAS_SET_CH_TEST_W_RESP                     0x07
+#define MMI_CMD3_MEAS_SET_CH_TEST_CH1                        0x01
+#define MMI_CMD3_MEAS_SET_CH_TEST_CH2                        0x02
+#define MMI_CMD3_MEAS_SET_CH_TEST_CH3                        0x03
+#define MMI_CMD3_MEAS_SET_CH_TEST_DATA_LEN                   (2)
+#define MMI_CMD2_MEAS_SET_RESP_CH_TEST                       0x17
+
 #define MMI_CMD2_MEAS_SET_TEMPERATURE_OFFSET                 0x08
 #define MMI_CMD3_MEAS_SET_TEMPERATURE_OFFSET_DEGREE          0x00
 #define MMI_CMD3_MEAS_SET_TEMPERATURE_OFFSET_DEGREE_DATA_LEN (2)
@@ -214,6 +221,7 @@ typedef enum {
     MEAS_SET_CAT_ADC_SAMPLE_CNT,
     MEAS_SET_CAT_ADC_ON_DELAY,
     MEAS_SET_CAT_STABLE_TEMPERATURE,
+    MEAS_SET_CAT_CH_TEST,
     MEAS_SET_CAT_TEMPERATURE_OFFSET,
     MEAS_SET_CAT_MAX = MEAS_SET_CAT_TEMPERATURE_OFFSET,
 } MeasSetCat_t;
@@ -238,6 +246,11 @@ typedef enum {
     TEMP_CTRL_AUTO = 0x01,
     TEMP_CTRL_FORCE_ON = 0x02, /* for test */
 } MeasSetTempCtrlType_t;
+
+typedef enum {
+    CH_TEST_OFF = 0x00,
+    CH_TEST_ON = 0x01,
+} MeasSetChTest_t;
 
 typedef enum {
     LED_CTRL_FORCE_OFF = 0x00,
@@ -290,6 +303,8 @@ typedef struct {
     uint16_t adc_delay_ms[CH_NUM];
     uint16_t stable_temperature;
     uint16_t temperature_offset[CH_NUM];
+    /* ~NVM */
+    MeasSetChTest_t ch_test[CH_NUM];
     MeasCtrlLedType_t led_ctrl_state[CH_NUM]; /* Ch1 - CH3 */
 } MeasSetData_t;
 #pragma pack(pop)

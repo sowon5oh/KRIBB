@@ -77,6 +77,7 @@ static void _meas_set_led_on_time_ms(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_led_on_level(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_sample_cnt(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val);
+static void _meas_set_ch_test(MeasSetChVal_t ch, MeasSetChTest_t state);
 static void _meas_set_stable_temperature_degree(uint16_t val);
 static void _meas_set_temperature_offset_degree(MeasSetChVal_t ch, uint16_t val);
 static void _meas_get_temperature_data(void);
@@ -189,6 +190,12 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
             uint16_t set_val = UINT8_2BYTE_ARRAY_TO_UINT16(p_set_val);
             _meas_set_stable_temperature_degree(set_val);
             Hal_Fram_Write(FRAM_STABLE_TEMPERATURE_ADDR, FRAM_STABLE_TEMPERATURE_SINGLE_DATA_LEN, (uint8_t*) &set_val);
+            break;
+        }
+
+        case MEAS_SET_CAT_CH_TEST: {
+            uint16_t set_val = p_set_val[0];
+            _meas_set_ch_test(ch, set_val);
             break;
         }
 
@@ -770,6 +777,29 @@ static void _meas_set_stable_temperature_degree(uint16_t val) {
     Task_TempCtrl_SetStableTemp((float) temp_val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     
     SYS_LOG_INFO("Stable Temperature setting: %d(/100) 'C)", meas_set_data.stable_temperature);
+}
+
+static void _meas_set_ch_test(MeasSetChVal_t ch, MeasSetChTest_t state) {
+    if (ch == MEAS_SET_CH_ALL) {
+        meas_set_data.ch_test[CH1_IDX] = state;
+        meas_set_data.ch_test[CH2_IDX] = state;
+        meas_set_data.ch_test[CH3_IDX] = state;
+    }
+    else {
+        meas_set_data.ch_test[ch - 1] = state;
+    }
+
+    if (state == CH_TEST_ON) {
+        /* LED Forced On */
+        meas_set_data.led_ctrl_state[ch - 1] = LED_CTRL_FORCE_ON;
+    }
+    else if (state) {
+        /* LED Auto */
+        meas_set_data.led_ctrl_state[ch - 1] = LED_CTRL_AUTO;
+    }
+
+    Task_MMI_SendMonitorPdResult(ch);
+    SYS_LOG_INFO("CH Test Settings: %d, %d, %d (/100)'C)", meas_set_data.ch_test[CH1_IDX], meas_set_data.ch_test[CH2_IDX], meas_set_data.ch_test[CH3_IDX]);
 }
 
 static void _meas_set_temperature_offset_degree(MeasSetChVal_t ch, uint16_t val) {

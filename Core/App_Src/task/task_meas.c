@@ -76,6 +76,7 @@ static void _meas_set_led_on_level(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_sample_cnt(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val);
 static void _meas_set_stable_temperature_degree(uint16_t val);
+static void _meas_set_temperature_offset_degree(uint16_t val);
 static void _meas_get_temperature_data(void);
 static void _led_ctrl(MeasCh_t ch, uint16_t set_data);
 int16_t _calc_pd_avr(int16_t *p_buff, uint16_t sample_cnt);
@@ -182,6 +183,13 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
             uint16_t set_val = UINT8_2BYTE_ARRAY_TO_UINT16(p_set_val);
             _meas_set_stable_temperature_degree(set_val);
             Hal_Fram_Write(FRAM_STABLE_TEMPERATURE_ADDR, FRAM_STABLE_TEMPERATURE_SINGLE_DATA_LEN, (uint8_t*) &set_val);
+            break;
+        }
+
+        case MEAS_SET_CAT_TEMPERATURE_OFFSET: {
+            uint16_t set_val = UINT8_2BYTE_ARRAY_TO_UINT16(p_set_val);
+            _meas_set_temperature_offset_degree(set_val);
+            Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR, FRAM_TEMPERATURE_OFFSET_SINGLE_DATA_LEN, (uint8_t*) &set_val);
             break;
         }
     }
@@ -387,7 +395,7 @@ static void _meas_set_init(void) {
 
     Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
 
-#if(FEATURE_SETTINGS_DEFAULT == 1)
+#if(CONFIG_FEATURE_SETTINGS_DEFAULT == 1)
     /* Set default */
     _meas_set_temp_ctrl_type(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_temp_ctrl_type);
     _meas_set_led_on_time_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_TIME_MS);
@@ -395,6 +403,7 @@ static void _meas_set_init(void) {
     _meas_set_adc_sample_cnt(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_SAMPLE_CNT);
     _meas_set_adc_delay_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_DELAY_MS);
     _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE);
+    _meas_set_temperature_offset_degree(MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE);
 
     /* Save Fram */
     Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR, FRAM_TEMP_SETTING_DATA_LEN, (uint8_t*) meas_set_default_data.temp_ctrl_type);
@@ -403,6 +412,7 @@ static void _meas_set_init(void) {
     Hal_Fram_Write(FRAM_ADC_SAMPLE_CNT_ADDR, FRAM_ADC_SAMPLE_CNT_DATA_LEN, (uint8_t*) meas_set_default_data.adc_sample_cnt);
     Hal_Fram_Write(FRAM_ADC_DELAY_MS_ADDR, FRAM_ADC_DELAY_MS_DATA_LEN, (uint8_t*) meas_set_default_data.adc_delay_ms);
     Hal_Fram_Write(FRAM_STABLE_TEMPERATURE_ADDR, FRAM_STABLE_TEMPERATURE_DATA_LEN, (uint8_t*) &meas_set_default_data.stable_temperature);
+    Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR, FRAM_TEMPERATURE_OFFSET_DATA_LEN, (uint8_t*) &meas_set_default_data.temperature_offset);
 
     Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data); /* for check */
 #else
@@ -429,6 +439,7 @@ static void _meas_set_init(void) {
 
     _meas_set_stable_temperature_degree(read_data[FRAM_STABLE_TEMPERATURE_ADDR + 1] << 8 | read_data[FRAM_STABLE_TEMPERATURE_ADDR]);
 
+    _meas_set_temperature_offset_degree(read_data[FRAM_TEMPERATURE_OFFSET_ADDR + 1] << 8 | read_data[FRAM_TEMPERATURE_OFFSET_ADDR]);
 #endif
 
     SYS_LOG_INFO("Settings Done");
@@ -686,23 +697,47 @@ static void _meas_set_adc_delay_ms(MeasSetChVal_t ch, uint16_t val) {
 }
 
 static void _meas_set_stable_temperature_degree(uint16_t val) {
+    uint16_t temp_val = val;
+
     if (val > (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
         SYS_LOG_WARN("stable temperature settings changed");
         SYS_LOG_WARN("Original: [%d]====>", val);
-        val = MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-        SYS_LOG_WARN("Changed : ====>[%d]", val);
+        temp_val = MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+        SYS_LOG_WARN("Changed : ====>[%d]", temp_val);
     }
     else if (val < ( MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
         SYS_LOG_WARN("stable temperature settings changed");
         SYS_LOG_WARN("Original: [%d]====>", val);
-        val = MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-        SYS_LOG_WARN("Changed : ====>[%d]", val);
+        temp_val = MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+        SYS_LOG_WARN("Changed : ====>[%d]", temp_val);
     }
     
-    meas_set_data.stable_temperature = val;
-    Task_TempCtrl_SetStableTemp((float) val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+    meas_set_data.stable_temperature = temp_val;
+    Task_TempCtrl_SetStableTemp((float) temp_val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     
     SYS_LOG_INFO("Stable Temperature setting: %d(/100) 'C)", meas_set_data.stable_temperature);
+}
+
+static void _meas_set_temperature_offset_degree(uint16_t val) {
+    uint16_t temp_val = val;
+
+    if (val > (MEAS_SET_TEMPERATURE_OFFSET_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
+        SYS_LOG_WARN("temperature offset settings changed");
+        SYS_LOG_WARN("Original: [%d]====>", val);
+        temp_val = MEAS_SET_TEMPERATURE_OFFSET_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+        SYS_LOG_WARN("Changed : ====>[%d]", temp_val);
+    }
+    else if (val < (MEAS_SET_TEMPERATURE_OFFSET_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
+        SYS_LOG_WARN("temperature offset settings changed");
+        SYS_LOG_WARN("Original: [%d]====>", val);
+        temp_val = MEAS_SET_TEMPERATURE_OFFSET_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+        SYS_LOG_WARN("Changed : ====>[%d]", temp_val);
+    }
+
+    meas_set_data.temperature_offset = temp_val;
+    Task_TempCtrl_SetTempOffset((float) temp_val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+
+    SYS_LOG_INFO("Temperature Offset setting: %d(/100) 'C)", meas_set_data.temperature_offset);
 }
 
 static void _meas_get_temperature_data(void) {

@@ -388,6 +388,11 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
                 return Task_Meas_Apply_Set(MEAS_SET_CAT_STABLE_TEMPERATURE, ch_cfg, set_data_val);
 
+            case MMI_CMD2_MEAS_SET_TEMPERATURE_OFFSET:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_SET_TEMPERATURE_OFFSET_DEGREE_DATA_LEN);
+
+                return Task_Meas_Apply_Set(MEAS_SET_CAT_TEMPERATURE_OFFSET, ch_cfg, set_data_val);
+
             default:
                 SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
                 return HAL_ERROR;

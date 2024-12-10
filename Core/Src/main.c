@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#if(FEATURE_TEMPERATURE_DMA_MODE != 1)
+#if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE != 1)
 #include "hal_drv_temperature.h"
 #endif
 
@@ -147,7 +147,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
 }
 
-#if(FEATURE_TEMPERATURE_DMA_MODE != 1)
+#if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE != 1)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     if (hadc->Instance == ADC1) {
         Hal_Temp_AdcCb();

@@ -65,7 +65,7 @@ HAL_StatusTypeDef DRV_LMT86LP_Init(ADC_HandleTypeDef *p_hdl) {
 }
 
 HAL_StatusTypeDef DRV_LMT86LP_Start(void) {
-#if(FEATURE_TEMPERATURE_DMA_MODE == 1)
+#if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE == 1)
     return HAL_ADC_Start_DMA(tempsensor_adc_hdl, (uint32_t*) adc_read_data, 3);
 #else
     return HAL_ADC_Start_IT(tempsensor_adc_hdl);
@@ -73,7 +73,7 @@ HAL_StatusTypeDef DRV_LMT86LP_Start(void) {
 }
 
 HAL_StatusTypeDef DRV_LMT86LP_Stop(void) {
-#if(FEATURE_TEMPERATURE_DMA_MODE == 1)
+#if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE == 1)
     return HAL_ADC_Stop_DMA(tempsensor_adc_hdl);
 #else
     return HAL_ADC_Stop_IT(tempsensor_adc_hdl);
@@ -85,7 +85,8 @@ HAL_StatusTypeDef DRV_LMT86LP_GetValue(HalTempData_t *p_data) {
 
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
 
-#if(FEATURE_TEMPERATURE_DMA_MODE == 1)
+
+#if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE == 1)
     if (adc_read_data[0] > 0) {
         adc_val[HAL_TEMP_CH_0] = adc_read_data[0];
         temperature_data.adc[HAL_TEMP_CH_0] = adc_val[HAL_TEMP_CH_0];

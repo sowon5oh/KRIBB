@@ -46,7 +46,7 @@ HAL_StatusTypeDef Hal_Temp_Init(ADC_HandleTypeDef *p_hdl) {
     return HAL_OK;
 }
 
-#if(FEATURE_TEMPERATURE_DMA_MODE != 1)
+#if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE != 1)
 void Hal_Temp_AdcCb(void) {
     SYS_VERIFY_SUCCESS_VOID(DRV_LMT86LP_GetValue(&temp_data));
     SYS_LOG_DEBUG("Temperature Result");
@@ -66,7 +66,7 @@ HAL_StatusTypeDef Hal_Temp_Stop(void) {
 }
 
 HAL_StatusTypeDef Hal_Temp_GetData(HalTempData_t *p_data) {
-#if(FEATURE_TEMPERATURE_DMA_MODE == 1)
+#if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE == 1)
     SYS_VERIFY_SUCCESS(DRV_LMT86LP_GetValue(&temp_data));
 #endif
 

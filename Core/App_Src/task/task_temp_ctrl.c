@@ -29,6 +29,7 @@
 typedef struct {
     bool task_op_state;
     float stable_temperature;
+    float temperature_offset;
     float cur_temp[CH_NUM];
     MeasSetTempCtrlTypeVal_t temp_ctrl_type[CH_NUM];
 } tempCtrlTaskContext_t;
@@ -45,6 +46,7 @@ static void _temp_ctrl_task_cb(void);
 
 static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlTypeVal_t temp_ctrl_type);
 static void _set_stable_temp(float stable_temp);
+static void _set_temp_offset(float temperature_offset);
 static HAL_StatusTypeDef _fetch_temperature(void);
 static void _temp_ctrl_task_cb(void);
 
@@ -82,8 +84,14 @@ HAL_StatusTypeDef Task_TempCtrl_Stop(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_TempCtrl_SetStableTemp(float stable_temp) {
-    _set_stable_temp(stable_temp);
+HAL_StatusTypeDef Task_TempCtrl_SetStableTemp(float stable_temperature) {
+    _set_stable_temp(stable_temperature);
+
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef Task_TempCtrl_SetTempOffset(float temperature_offset) {
+    _set_temp_offset(temperature_offset);
 
     return HAL_OK;
 }
@@ -108,6 +116,7 @@ static void _temp_ctrl_task_init(void) {
 
     Task_Meas_Get_Set(&temp_set_data);
     _set_stable_temp((float) temp_set_data.stable_temperature / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+    _set_temp_offset((float) temp_set_data.temperature_offset / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     _set_temp_ctrl_type(CH1_IDX, temp_set_data.temp_ctrl_type[CH1_IDX]);
     _set_temp_ctrl_type(CH2_IDX, temp_set_data.temp_ctrl_type[CH2_IDX]);
     _set_temp_ctrl_type(CH3_IDX, temp_set_data.temp_ctrl_type[CH3_IDX]);
@@ -171,20 +180,15 @@ static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlTypeVal_t temp_ctrl_
 }
 
 static void _set_stable_temp(float stable_temp) {
-    if (stable_temp > MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE) {
-        SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%.2f]====>", stable_temp);
-        stable_temp = MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE;
-        SYS_LOG_WARN("Changed : ====>[%.2f]", stable_temp);
-    }
-    else if (stable_temp < MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE) {
-        SYS_LOG_WARN("stable temperature settings changed");SYS_LOG_WARN("Original: [%.2f]====>", stable_temp);
-        stable_temp = MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE;
-        SYS_LOG_WARN("Changed : ====>[%.2f]", stable_temp);
-    }
-
     temp_ctrl_task_context.stable_temperature = stable_temp;
 
     SYS_LOG_INFO("Stable Temperature setting: %.2f ('C)", temp_ctrl_task_context.stable_temperature);
+}
+
+static void _set_temp_offset(float temperature_offset) {
+    temp_ctrl_task_context.temperature_offset = temperature_offset;
+
+    SYS_LOG_INFO("Temperature Offset setting: %.2f ('C)", temp_ctrl_task_context.temperature_offset);
 }
 
 static HAL_StatusTypeDef _fetch_temperature(void) {
@@ -192,20 +196,14 @@ static HAL_StatusTypeDef _fetch_temperature(void) {
     
     SYS_VERIFY_SUCCESS(Hal_Temp_GetData(&temp_data_buff));
     
-#if(FEATURE_TEMPERATURE_DATA_ADC == FEATURE_TEMPERATURE_DATA_TYPE)
+#if(CONFIG_FEATURE_TEMPERATURE_DATA_TYPE == FEATURE_TEMPERATURE_DATA_TYPE_ADC)
     temp_ctrl_task_context.cur_temp[CH1_IDX] = temp_data_buff.adc[HAL_TEMP_CH_0];
     temp_ctrl_task_context.cur_temp[CH2_IDX] = temp_data_buff.adc[HAL_TEMP_CH_1];
     temp_ctrl_task_context.cur_temp[CH3_IDX] = temp_data_buff.adc[HAL_TEMP_CH_2];
 #else
-#ifdef FEATURE_TEMPERATURE_DEGREE_OFFSET
-    temp_ctrl_task_context.cur_temp[CH1_IDX] = temp_data_buff.degree[HAL_TEMP_CH_0] + FEATURE_TEMPERATURE_DEGREE_OFFSET;
-    temp_ctrl_task_context.cur_temp[CH2_IDX] = temp_data_buff.degree[HAL_TEMP_CH_1] + FEATURE_TEMPERATURE_DEGREE_OFFSET;
-    temp_ctrl_task_context.cur_temp[CH3_IDX] = temp_data_buff.degree[HAL_TEMP_CH_2] + FEATURE_TEMPERATURE_DEGREE_OFFSET;
-#else
-    temp_ctrl_task_context.cur_temp[CH1_IDX] = temp_data_buff.degree[HAL_TEMP_CH_0];
-    temp_ctrl_task_context.cur_temp[CH2_IDX] = temp_data_buff.degree[HAL_TEMP_CH_1];
-    temp_ctrl_task_context.cur_temp[CH3_IDX] = temp_data_buff.degree[HAL_TEMP_CH_2];
-#endif
+    temp_ctrl_task_context.cur_temp[CH1_IDX] = temp_data_buff.degree[HAL_TEMP_CH_0] + temp_ctrl_task_context.temperature_offset;
+    temp_ctrl_task_context.cur_temp[CH2_IDX] = temp_data_buff.degree[HAL_TEMP_CH_1] + temp_ctrl_task_context.temperature_offset;
+    temp_ctrl_task_context.cur_temp[CH3_IDX] = temp_data_buff.degree[HAL_TEMP_CH_2] + temp_ctrl_task_context.temperature_offset;
 #endif
 
     SYS_LOG_INFO("Temperature: [CH 1] %.2f, [CH 2] %.2f, [CH 3] %.2f", temp_ctrl_task_context.cur_temp[CH1_IDX], temp_ctrl_task_context.cur_temp[CH2_IDX], temp_ctrl_task_context.cur_temp[CH3_IDX]);

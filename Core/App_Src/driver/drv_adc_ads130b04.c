@@ -292,7 +292,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
     
     /* Clock Config */
     ads130b04_clock_sel = ADS130B04_CLOCK_INTERNAL_OSC;
-    ads130b04_osr_mode = ADS130B04_OSR_MODE_512;
+    ads130b04_osr_mode = ADS130B04_OSR_MODE_256;
     ads130b04_pwr_mode = ADS130B04_PWR_MODE_HIGH_RESOLUTION;
     /* Ch0 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_0].enable = true;
@@ -542,7 +542,8 @@ static void _fetch_adc(void) {
     
     drdy_status = BF_GET(rx_buff[0], 4, ADS130B04_CH0_DRDY_BOFF);
     if (drdy_status != 0x0f) {
-        SYS_LOG_ERR("[ADC MEASURE], INVALID STATUS: %0x", drdy_status);
+        SYS_LOG_WARN("[ADC], INVALID STATUS: %0x", drdy_status);
+        return;
     }
     
     ads130b04_result.ch0 = rx_buff[1];

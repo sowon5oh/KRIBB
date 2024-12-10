@@ -190,6 +190,10 @@ extern "C" {
 #define MMI_CMD3_CTRL_DEVICE_LED_ALL      0x04
 #define MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN (1)
 
+#define MMI_CMD2_CTRL_DATA_SEND_MODE          0x02
+#define MMI_CMD3_CTRL_DATA_SEND_MODE          0x00
+#define MMI_CMD3_CTRL_DATA_SEND_MODE_DATA_LEN (1)
+
 typedef union {
     uint8_t bVal[4];
     float fVal;
@@ -240,6 +244,12 @@ typedef enum {
     LED_CTRL_FORCE_ON = 0x01,
 } MeasSetLedForcedCtrlVal_t;
 
+typedef enum {
+    MEAS_OP_MODE_SINGLE = 0x00,
+    MEAS_OP_MODE_CONTINUOUS = 0x01, /* Default */
+    MEAS_OP_MODE_MAX,
+} MeasSetOpModeVal_t;
+
 /* Default Measure Setting */
 #define MEAS_SET_DEFAULT_TEMP_CTRL_TYPE  TEMP_CTRL_OFF
 
@@ -257,7 +267,7 @@ typedef enum {
 
 #define MEAS_SET_MIN_ADC_DELAY_MS        1
 #define MEAS_SET_MAX_ADC_DELAY_MS        100
-#define MEAS_SET_DEFAULT_ADC_DELAY_MS    (MEAS_SET_MAX_ADC_DELAY_MS / MEAS_SET_DEFAULT_ADC_SAMPLE_CNT)
+#define MEAS_SET_DEFAULT_ADC_DELAY_MS    (MEAS_SET_DEFAULT_LED_ON_TIME_MS / MEAS_SET_DEFAULT_ADC_SAMPLE_CNT)
 
 #define MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE     20
 #define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE     45

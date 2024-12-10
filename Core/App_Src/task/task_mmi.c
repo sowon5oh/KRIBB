@@ -413,9 +413,7 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
         SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_ALL_DATA_LEN);
 
 #if(FEATURE_TEST_REQ_FAKE_DATA_ENABLE == 0)
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, MEAS_SET_CH_ALL, (uint16_t* )&result_data_val.temperature_data[0]));
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, MEAS_SET_CH_ALL, (uint16_t* )&result_data_val.recv_pd_data[0]));
-        SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, MEAS_SET_CH_ALL, (uint16_t* )&result_data_val.monitor_pd_data[0]));
+        SYS_VERIFY_SUCCESS(Task_Meas_Get_AllResult(&result_data_val));
 
         memcpy(&req_all_msg[0], &result_data_val.temperature_data[0], temp_data_len);
         memcpy(&req_all_msg[temp_data_len], &result_data_val.recv_pd_data[0], recv_pd_data_len);
@@ -441,6 +439,8 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
             test_num++;
         }
 #endif
+
+        Task_Meas_Single();
 
         return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, MMI_CMD3_MEAS_REQ_ALL_DATA_LEN, req_all_msg);
     }
@@ -498,6 +498,12 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             else {
                 Task_Meas_Ctrl_Led(ch_cfg, LED_CTRL_FORCE_OFF);
             }
+            break;
+
+        case MMI_CMD2_CTRL_DATA_SEND_MODE:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DATA_SEND_MODE_DATA_LEN);
+
+            Task_Meas_SetOpMode(set_data_val[0]);
             break;
 
         default:

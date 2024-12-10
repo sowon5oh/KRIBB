@@ -32,13 +32,14 @@
 typedef enum {
     MEAS_STATE_LED_ON = 0,
     MEAS_STATE_LED_STABLE,
-    MEAS_STATE_ADC,
+    MEAS_STATE_ADC_START,
+    MEAS_STATE_ADC_WAIT,
     MEAS_STATE_ADC_DONE,
     MEAS_STATE_CH_CHANGE,
-    MEAS_STATE_CH_STABLE,
+    MEAS_STATE_WAIT,
     MEAS_STATE_ERROR,
     MEAS_STATE_START = MEAS_STATE_LED_ON,
-    MEAS_STATE_STOP = MEAS_STATE_ADC,
+    MEAS_STATE_STOP = MEAS_STATE_ADC_START,
     MEAS_STATE_MAX = MEAS_STATE_ERROR,
 } measState_t;
 
@@ -52,9 +53,9 @@ typedef struct {
 
 /* Private define ------------------------------------------------------------*/
 #define MEAS_MSG_DEBUG_LOG           0
-#define MEAS_TASK_DUTY_MS            10
+#define MEAS_TASK_DUTY_MS            1
 #define MEAS_TASK_LED_STABLE_TIME_MS 100
-#define MEAS_TASK_CH_STABLE_TIME_MS  500
+#define MEAS_TASK_CH_STABLE_TIME_MS  5
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -65,9 +66,9 @@ static void _meas_task_enable(bool enable);
 static void _meas_set_init(void);
 static void _meas_result_init(void);
 /* Timer Callback */
-static void _meask_task_led_stable_cb(void);
-static void _meask_task_adc_cb(void);
-static void _meask_task_ch_stable_cb(void);
+static void _meas_task_led_stable_cb(void);
+static void _meas_task_adc_cb(void);
+static void _meas_task_ch_stable_cb(void);
 /* Task Callback */
 static void _meas_task_cb(void);
 /* Function */
@@ -88,6 +89,7 @@ static measTaskContext_t meas_task_context = {
     .meas_state = MEAS_STATE_START,
     .meas_cur_ch = CH1_IDX,
     .sample_cnt = 0, };
+static MeasSetOpModeVal_t meas_op_mode = MEAS_OP_MODE_CONTINUOUS;
 static MeasSetData_t meas_set_data;
 static MeasResultData_t meas_result_data;
 static MeasReqStatus_t meas_req_status_data;
@@ -213,11 +215,6 @@ HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val) {
 }
 
 HAL_StatusTypeDef Task_Meas_Start(void) {
-    if (MEAS_STATE_LED_ON != meas_task_context.meas_state) {
-        SYS_LOG_ERR("Privious measure not conmplted, Please Stop");
-        return HAL_ERROR;
-    }
-
 #if 0
     for (uint8_t ch_idx = 0; ch_idx < CH_NUM; ch_idx++) {
         meas_req_status_data.target_ch[ch_idx] = (ch == ch_idx) ? MEAS_TARGET_CH_ACTIVE : MEAS_TARGET_CH_DEACTIV;
@@ -231,6 +228,8 @@ HAL_StatusTypeDef Task_Meas_Start(void) {
 
     _meas_task_enable(true);
 
+    /* ADC Stop */
+    Hal_Pd_Start();
     SYS_LOG_INFO("[MEASURE START]");
     SYS_LOG_INFO("- LED ON TIME MS    : %3d / %3d / %3d", meas_set_data.led_on_time[CH1_IDX], meas_set_data.led_on_time[CH2_IDX], meas_set_data.led_on_time[CH3_IDX]);
     SYS_LOG_INFO("- LED ON LEVEL      : %4d / %4d / %4d", meas_set_data.led_on_level[CH1_IDX], meas_set_data.led_on_level[CH2_IDX], meas_set_data.led_on_level[CH3_IDX]);
@@ -244,7 +243,25 @@ HAL_StatusTypeDef Task_Meas_Start(void) {
 HAL_StatusTypeDef Task_Meas_Stop(void) {
     _meas_task_enable(false);
 
+    /* ADC Stop */
+    Hal_Pd_Stop();
+
     SYS_LOG_INFO("[MEASURE STOP]");
+
+    return HAL_OK;
+}
+
+HAL_StatusTypeDef Task_Meas_SetOpMode(MeasSetOpModeVal_t op_mode) {
+    SYS_VERIFY_TRUE(op_mode < MEAS_OP_MODE_MAX);
+
+    _meas_task_enable(false);
+
+    meas_op_mode = op_mode;
+    SYS_LOG_INFO("[MEASURE OP MODE: %s]", (op_mode == MEAS_OP_MODE_SINGLE) ? "SINGLE" : "CONTINOUS");
+
+    if (op_mode == MEAS_OP_MODE_CONTINUOUS) {
+        _meas_task_enable(true);
+    }
 
     return HAL_OK;
 }
@@ -252,10 +269,18 @@ HAL_StatusTypeDef Task_Meas_Stop(void) {
 HAL_StatusTypeDef Task_Meas_Get_AllResult(MeasResultData_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
 
+    /* Send Current Meas Data */
     _meas_get_temperature_data();
     memcpy(p_data, &meas_result_data, sizeof(MeasResultData_t));
 
     return HAL_OK;
+}
+
+void Task_Meas_Single(void) {
+    /* Single Mode Operation */
+    if (meas_op_mode == MEAS_OP_MODE_SINGLE) {
+        _meas_task_enable(true);
+    }
 }
 
 HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val) {
@@ -372,6 +397,10 @@ static void _meas_task_enable(bool enable) {
     if (enable) {
         meas_task_context.task_op_state = true;
         meas_task_context.meas_state = MEAS_STATE_START;
+        meas_task_context.sample_cnt = 0;
+        if (meas_op_mode == MEAS_OP_MODE_CONTINUOUS) {
+            meas_task_context.meas_cur_ch = CH1_IDX;
+        }
 
         /* Init Result Data */
         _meas_result_init();
@@ -382,6 +411,7 @@ static void _meas_task_enable(bool enable) {
     else {
         meas_task_context.task_op_state = false;
         meas_task_context.meas_state = MEAS_STATE_STOP;
+        meas_task_context.meas_cur_ch = CH1_IDX;
 
         /* Task Stop */
         App_Task_Stop(APP_TASK_MEASURE);
@@ -468,20 +498,11 @@ static void _meas_result_init(void) {
     memset(&monitor_pd_buff, 0, sizeof(monitor_pd_buff));
 }
 
-static void _meask_task_led_stable_cb(void) {
-    MeasCh_t cur_ch = meas_task_context.meas_cur_ch;
-
-    if (HAL_OK == Hal_Pd_Start()) {
-        meas_task_context.meas_state = MEAS_STATE_ADC;
-        App_Timer_Start(APP_TIMER_ID_ADC_DELAY, meas_set_data.adc_delay_ms[cur_ch], true, _meask_task_adc_cb);
-    }
-    else {
-        meas_task_context.meas_state = MEAS_STATE_ERROR;
-        SYS_LOG_ERR("Pd Start Failed");
-    }
+static void _meas_task_led_stable_cb(void) {
+    meas_task_context.meas_state = MEAS_STATE_ADC_START;
 }
 
-static void _meask_task_adc_cb(void) {
+static void _meas_task_adc_cb(void) {
     MeasCh_t cur_ch = meas_task_context.meas_cur_ch;
 
     Hal_Pd_GetRecvData(cur_ch, &recv_pd_buff[cur_ch][meas_task_context.sample_cnt]);
@@ -490,27 +511,34 @@ static void _meask_task_adc_cb(void) {
     if (++meas_task_context.sample_cnt >= meas_set_data.adc_sample_cnt[cur_ch]) {
         meas_result_data.recv_pd_data[cur_ch] = _calc_pd_avr(recv_pd_buff[cur_ch], meas_set_data.adc_sample_cnt[cur_ch]);
         meas_result_data.monitor_pd_data[cur_ch] = _calc_pd_avr(monitor_pd_buff[cur_ch], meas_set_data.adc_sample_cnt[cur_ch]);
-        meas_task_context.meas_state = MEAS_STATE_ADC_DONE;
 
-        /* ADC Stop */
-        Hal_Pd_Stop();
+        meas_task_context.meas_state = MEAS_STATE_ADC_DONE;
+        meas_task_context.sample_cnt = 0;
+    }
+    else {
+        meas_task_context.meas_state = MEAS_STATE_ADC_START;
     }
 }
 
-static void _meask_task_ch_stable_cb(void) {
-    meas_task_context.meas_state = MEAS_STATE_LED_ON;
+static void _meas_task_ch_stable_cb(void) {
+    meas_task_context.meas_state = MEAS_STATE_START;
 }
 
 static void _meas_task_cb(void) {
     MeasCh_t cur_ch = meas_task_context.meas_cur_ch;
+
+    if (meas_task_context.task_op_state == false) {
+        return;
+    }
 
     switch (meas_task_context.meas_state) {
         case MEAS_STATE_LED_ON:
             if (meas_req_status_data.target_ch[cur_ch] == MEAS_TARGET_CH_ACTIVE) {
                 /* LED On */
                 _led_ctrl(cur_ch, meas_set_data.led_on_level[cur_ch]);
+
+                App_Timer_Start(APP_TIMER_ID_LED_STABLE, MEAS_TASK_LED_STABLE_TIME_MS, false, _meas_task_led_stable_cb);
                 meas_task_context.meas_state = MEAS_STATE_LED_STABLE;
-                App_Timer_Start(APP_TIMER_ID_LED_STABLE, MEAS_TASK_LED_STABLE_TIME_MS, false, _meask_task_led_stable_cb);
 
 #if(MEAS_MSG_DEBUG_LOG == 1)
                 SYS_LOG_INFO("-----------------[ CH %d Measure ]-----------------", cur_ch + 1);
@@ -528,8 +556,14 @@ static void _meas_task_cb(void) {
             /* Waiting Stable Time */
             break;
 
-        case MEAS_STATE_ADC:
+        case MEAS_STATE_ADC_START:
             /* Collecting Data */
+            App_Timer_Start(APP_TIMER_ID_ADC_DELAY, meas_set_data.adc_delay_ms[cur_ch], false, _meas_task_adc_cb);
+            meas_task_context.meas_state = MEAS_STATE_ADC_WAIT;
+            break;
+
+        case MEAS_STATE_ADC_WAIT:
+            /* Wait for adc delay time */
             break;
             
         case MEAS_STATE_ADC_DONE:
@@ -547,24 +581,29 @@ static void _meas_task_cb(void) {
             _led_ctrl(cur_ch, 0);
 
             /* Change Channel */
+            meas_task_context.meas_state = MEAS_STATE_CH_CHANGE;
+
             if (++cur_ch >= CH_NUM) {
                 meas_task_context.meas_cur_ch = CH1_IDX;
-
+#if 1
                 /* Send MMI */
                 Task_MMI_SendMeasResult();
+#endif
+                if (meas_op_mode == MEAS_OP_MODE_SINGLE) {
+                    /* 1 Frame */
+                    meas_task_context.meas_state = MEAS_STATE_WAIT;
+                }
             }
             else {
                 meas_task_context.meas_cur_ch = cur_ch;
             }
-            
-            meas_task_context.meas_state = MEAS_STATE_CH_CHANGE;
             break;
 
         case MEAS_STATE_CH_CHANGE:
             if (HAL_OK == Hal_Pd_SetMonitorCh(cur_ch)) {
-                /* wait for 1 sec */
-                meas_task_context.meas_state = MEAS_STATE_CH_STABLE;
-                App_Timer_Start(APP_TIMER_ID_ADC_STABLE, MEAS_TASK_CH_STABLE_TIME_MS, false, _meask_task_ch_stable_cb);
+                /* wait for stable time */
+                meas_task_context.meas_state = MEAS_STATE_WAIT;
+                App_Timer_Start(APP_TIMER_ID_ADC_STABLE, MEAS_TASK_CH_STABLE_TIME_MS, false, _meas_task_ch_stable_cb);
             }
             else {
                 meas_task_context.meas_state = MEAS_STATE_ERROR;
@@ -572,12 +611,12 @@ static void _meas_task_cb(void) {
             }
             break;
 
-        case MEAS_STATE_CH_STABLE:
-            /* Waiting Stable Time */
+        case MEAS_STATE_WAIT:
+            /* Waiting Time */
             break;
             
         case MEAS_STATE_ERROR:
-            SYS_LOG_ERR("[MEAS] Error State");
+            /* Error State */
             return;
     }
 }

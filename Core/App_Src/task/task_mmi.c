@@ -491,13 +491,7 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
         case MMI_CMD2_CTRL_DEVICE_LED:
             SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN);
 
-            if (set_data_val[0] > 0) {
-                Task_Meas_Ctrl_Led(ch_cfg, LED_CTRL_FORCE_ON);
-
-            }
-            else {
-                Task_Meas_Ctrl_Led(ch_cfg, LED_CTRL_FORCE_OFF);
-            }
+            Task_Meas_Ctrl_Led(ch_cfg, set_data_val[0]);
             break;
 
         case MMI_CMD2_CTRL_DATA_SEND_MODE:

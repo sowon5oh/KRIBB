@@ -327,13 +327,29 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasCtrlLedType_t ctrl) 
         case MEAS_SET_CH_1:
         case MEAS_SET_CH_2:
         case MEAS_SET_CH_3:
-            _led_ctrl(HAL_LED_CH_1 + (ch - MEAS_SET_CH_1), ctrl == LED_CTRL_FORCE_ON ? meas_set_data.led_on_level[levels[ch - MEAS_SET_CH_1]] : HAL_LED_LEVEL_OFF);
+            if (ctrl == LED_CTRL_FORCE_ON) {
+                _led_ctrl(HAL_LED_CH_1 + (ch - MEAS_SET_CH_1), meas_set_data.led_on_level[levels[ch - MEAS_SET_CH_1]]);
+            }
+            else if (ctrl == LED_CTRL_FORCE_OFF) {
+                _led_ctrl(HAL_LED_CH_1 + (ch - MEAS_SET_CH_1), HAL_LED_LEVEL_OFF);
+            }
+            else if (ctrl == LED_CTRL_AUTO) {
+                /* not control */
+            }
             meas_set_data.led_ctrl_state[levels[ch - MEAS_SET_CH_1]] = ctrl;
             break;
 
         case MEAS_SET_CH_ALL:
             for (uint8_t i = 0; i < 3; i++) {
-                _led_ctrl(HAL_LED_CH_1 + i, ctrl == LED_CTRL_FORCE_ON ? meas_set_data.led_on_level[i] : HAL_LED_LEVEL_OFF);
+                if (ctrl == LED_CTRL_FORCE_ON) {
+                    _led_ctrl(HAL_LED_CH_1 + i, meas_set_data.led_on_level[i]);
+                }
+                else if (ctrl == LED_CTRL_FORCE_OFF) {
+                    _led_ctrl(HAL_LED_CH_1 + i, HAL_LED_LEVEL_OFF);
+                }
+                else if (ctrl == LED_CTRL_AUTO) {
+                    /* not control */
+                }
                 meas_set_data.led_ctrl_state[i] = ctrl;
             }
             break;
@@ -487,6 +503,11 @@ static void _meas_set_init(void) {
     _meas_set_temperature_offset_degree(MEAS_SET_CH_2, (float) temp_temperature);
     temp_temperature = (read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH3 + 1] << 8 | read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH3]);
     _meas_set_temperature_offset_degree(MEAS_SET_CH_3, (float) temp_temperature);
+
+    /* Set other default data */
+    meas_set_data.led_ctrl_state[CH1_IDX] = MEAS_SET_DEFAULT_LED_CTRL_TYPE;
+    meas_set_data.led_ctrl_state[CH2_IDX] = MEAS_SET_DEFAULT_LED_CTRL_TYPE;
+    meas_set_data.led_ctrl_state[CH3_IDX] = MEAS_SET_DEFAULT_LED_CTRL_TYPE;
 #endif
 
     SYS_LOG_INFO("Settings Done");
@@ -535,7 +556,9 @@ static void _meas_task_cb(void) {
         case MEAS_STATE_LED_ON:
             if (meas_req_status_data.target_ch[cur_ch] == MEAS_TARGET_CH_ACTIVE) {
                 /* LED On */
-                _led_ctrl(cur_ch, meas_set_data.led_on_level[cur_ch]);
+                if (meas_set_data.led_ctrl_state[cur_ch] == LED_CTRL_AUTO) {
+                    _led_ctrl(cur_ch, meas_set_data.led_on_level[cur_ch]);
+                }
 
                 App_Timer_Start(APP_TIMER_ID_LED_STABLE, MEAS_TASK_LED_STABLE_TIME_MS, false, _meas_task_led_stable_cb);
                 meas_task_context.meas_state = MEAS_STATE_LED_STABLE;
@@ -578,7 +601,9 @@ static void _meas_task_cb(void) {
 #endif
             
             /* LED Off */
-            _led_ctrl(cur_ch, 0);
+            if (meas_set_data.led_ctrl_state[cur_ch] == LED_CTRL_AUTO) {
+                _led_ctrl(cur_ch, 0);
+            }
 
             /* Change Channel */
             meas_task_context.meas_state = MEAS_STATE_CH_CHANGE;

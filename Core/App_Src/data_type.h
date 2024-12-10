@@ -180,15 +180,15 @@ extern "C" {
 #define MMI_CMD3_REQ_DEVICE_STATUS_DATA_LEN (4)
 
 /* RX Command Group 5: Device Control */
-#define MMI_CMD1_CTRL_DEVICE               0x0D
-#define MMI_CMD1_CTRL_DEVICE_MAX_DATA_LEN (1)
+#define MMI_CMD1_CTRL_DEVICE                  0x0D
+#define MMI_CMD1_CTRL_DEVICE_MAX_DATA_LEN     (1)
 
-#define MMI_CMD2_CTRL_DEVICE_LED          0x01
-#define MMI_CMD3_CTRL_DEVICE_LED_CH1      0x01
-#define MMI_CMD3_CTRL_DEVICE_LED_CH2      0x02
-#define MMI_CMD3_CTRL_DEVICE_LED_CH3      0x03
-#define MMI_CMD3_CTRL_DEVICE_LED_ALL      0x04
-#define MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN (1)
+#define MMI_CMD2_CTRL_DEVICE_LED              0x01
+#define MMI_CMD3_CTRL_DEVICE_LED_CH1          0x01
+#define MMI_CMD3_CTRL_DEVICE_LED_CH2          0x02
+#define MMI_CMD3_CTRL_DEVICE_LED_CH3          0x03
+#define MMI_CMD3_CTRL_DEVICE_LED_ALL          0x04
+#define MMI_CMD3_CTRL_DEVICE_LED_DATA_LEN     (1)
 
 #define MMI_CMD2_CTRL_DATA_SEND_MODE          0x02
 #define MMI_CMD3_CTRL_DATA_SEND_MODE          0x00

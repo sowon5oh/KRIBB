@@ -233,7 +233,7 @@ int main(void) {
     Task_Meas_Init();
     Task_TempCtrl_Init();
     
-//#if (SYS_TEST_MODE_ENABLE != 1)
+#if (SYS_TEST_MODE_ENABLE != 1)
     /***********************************************************************
      * Test Sequence
      ***********************************************************************/
@@ -242,7 +242,7 @@ int main(void) {
 
     HAL_Delay(1000);
     Task_Meas_Start();
-//#else
+#else
     /***********************************************************************
      * Test Sequence
      ***********************************************************************/
@@ -263,7 +263,7 @@ int main(void) {
 //    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_CTRL_LED_ONOFF, FSM_TEST_MODE_SEQUENCE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_DEV_STATUS_REQ, FSM_TEST_MODE_SINGLE);
 //    Task_Fsm_StartTest(FSM_TEST_MMI_REQ_MEASURE, FSM_TEST_MODE_SINGLE);
-//#endif
+#endif
     /* USER CODE END 2 */
 
     /* Infinite loop */

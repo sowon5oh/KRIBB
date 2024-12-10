@@ -36,7 +36,7 @@ void Task_TempCtrl_Init(void);
 HAL_StatusTypeDef Task_TempCtrl_Start(void);
 HAL_StatusTypeDef Task_TempCtrl_Stop(void);
 HAL_StatusTypeDef Task_TempCtrl_SetStableTemp(float stable_temperature);
-HAL_StatusTypeDef Task_TempCtrl_SetTempOffset(float temperature_offset);
+HAL_StatusTypeDef Task_TempCtrl_SetTempOffset(MeasCh_t ch, float temperature_offset);
 HAL_StatusTypeDef Task_TempCtrl_GetCurTemp(MeasCh_t ch, float *p_temp);
 HAL_StatusTypeDef Task_TempCtrl_SetCtrlType(MeasCh_t ch, MeasSetTempCtrlTypeVal_t type);
 

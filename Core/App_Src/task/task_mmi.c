@@ -25,7 +25,7 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define MMI_MSG_DEBUG_LOG 1
+#define MMI_MSG_DEBUG_LOG 0
 
 #define PROTOCOL_BUFF_TX_LEN_MAX	MMI_PROTOCOL_TX_MSG_LEN_MAX
 #define PROTOCOL_BUFF_RX_LEN_MAX	MMI_PROTOCOL_RX_MSG_LEN_MAX

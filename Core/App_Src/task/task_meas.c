@@ -53,7 +53,7 @@ typedef struct {
 
 /* Private define ------------------------------------------------------------*/
 #define MEAS_MSG_DEBUG_LOG           0
-#define MEAS_TASK_DUTY_MS            1
+#define MEAS_TASK_DUTY_MS            10
 #define MEAS_TASK_LED_STABLE_TIME_MS 100
 #define MEAS_TASK_CH_STABLE_TIME_MS  5
 

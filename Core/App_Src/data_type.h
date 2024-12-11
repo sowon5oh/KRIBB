@@ -267,16 +267,16 @@ typedef enum {
 /* Default Measure Setting */
 #define MEAS_SET_DEFAULT_TEMP_CTRL_TYPE            LED_CTRL_AUTO
 
-#define MEAS_SET_MIN_LED_ON_TIME_MS                1
+#define MEAS_SET_MIN_LED_ON_TIME_MS                100
 #define MEAS_SET_MAX_LED_ON_TIME_MS                1000
-#define MEAS_SET_DEFAULT_LED_ON_TIME_MS            100
+#define MEAS_SET_DEFAULT_LED_ON_TIME_MS            500
 
 #define MEAS_SET_MIN_LED_ON_LEVEL                  0
 #define MEAS_SET_MAX_LED_ON_LEVEL                  0xFFF
 #define MEAS_SET_DEFAULT_LED_ON_LEVEL              0xFFF
 
-#define MEAS_SET_MIN_ADC_SAMPLE_CNT                1
-#define MEAS_SET_MAX_ADC_SAMPLE_CNT                1000
+#define MEAS_SET_MIN_ADC_SAMPLE_CNT                10
+#define MEAS_SET_MAX_ADC_SAMPLE_CNT                100
 #define MEAS_SET_DEFAULT_ADC_SAMPLE_CNT            50
 
 #define MEAS_SET_MIN_ADC_DELAY_MS                  1

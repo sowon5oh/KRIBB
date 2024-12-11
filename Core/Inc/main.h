@@ -59,10 +59,7 @@ typedef struct {
 
 typedef enum {
     APP_TIMER_ID_FSM = 0,
-    APP_TIMER_ID_MEASURE,
-    APP_TIMER_ID_LED_STABLE,
-    APP_TIMER_ID_ADC_DELAY,
-    APP_TIMER_ID_ADC_STABLE,
+    APP_TIMER_ID_MEAS,
     APP_TIMER_ID_MAX,
 } AppTimerId_t;
 

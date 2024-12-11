@@ -567,7 +567,7 @@ static void _meas_task_cb(void) {
                     _led_ctrl(cur_ch, meas_set_data.led_on_level[cur_ch]);
                 }
 
-                App_Timer_Start(APP_TIMER_ID_LED_STABLE, MEAS_TASK_LED_STABLE_TIME_MS, false, _meas_task_led_stable_cb);
+                App_Timer_Start(APP_TIMER_ID_MEAS, MEAS_TASK_LED_STABLE_TIME_MS, false, _meas_task_led_stable_cb);
                 meas_task_context.meas_state = MEAS_STATE_LED_STABLE;
 
 #if(MEAS_MSG_DEBUG_LOG == 1)
@@ -588,7 +588,7 @@ static void _meas_task_cb(void) {
 
         case MEAS_STATE_ADC_START:
             /* Collecting Data */
-            App_Timer_Start(APP_TIMER_ID_ADC_DELAY, meas_set_data.adc_delay_ms[cur_ch], false, _meas_task_adc_cb);
+            App_Timer_Start(APP_TIMER_ID_MEAS, meas_set_data.adc_delay_ms[cur_ch], false, _meas_task_adc_cb);
             meas_task_context.meas_state = MEAS_STATE_ADC_WAIT;
             break;
 
@@ -635,7 +635,7 @@ static void _meas_task_cb(void) {
             if (HAL_OK == Hal_Pd_SetMonitorCh(cur_ch)) {
                 /* wait for stable time */
                 meas_task_context.meas_state = MEAS_STATE_WAIT;
-                App_Timer_Start(APP_TIMER_ID_ADC_STABLE, MEAS_TASK_CH_STABLE_TIME_MS, false, _meas_task_ch_stable_cb);
+                App_Timer_Start(APP_TIMER_ID_MEAS, MEAS_TASK_CH_STABLE_TIME_MS, false, _meas_task_ch_stable_cb);
             }
             else {
                 meas_task_context.meas_state = MEAS_STATE_ERROR;

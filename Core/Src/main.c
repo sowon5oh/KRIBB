@@ -224,7 +224,7 @@ int main(void) {
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("            Devie Start           ");
     SYS_LOG_INFO("----------------------------------");
-                                                                                                        // @formatter:on
+                                                                                                                        // @formatter:on
     /* Init Fsm Task */
     Task_Fsm_Init();
     
@@ -630,7 +630,7 @@ static void MX_DMA_Init(void) {
 
     /* DMA interrupt init */
     /* DMA2_Stream0_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
@@ -700,7 +700,7 @@ static void MX_GPIO_Init(void) {
     HAL_GPIO_Init(ADC_DRDY__GPIO_Port, &GPIO_InitStruct);
 
     /* EXTI interrupt init*/
-    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
     /* USER CODE BEGIN MX_GPIO_Init_2 */

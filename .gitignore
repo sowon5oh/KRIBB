@@ -1,0 +1,34 @@
+*.launch
+# 전체 폴더 제외
+.settings/*
+
+# 포매터 설정 파일만 포함
+!.settings/org.eclipse.cdt.core.prefs
+
+# STM32CubeIDE 빌드 파일 및 바이너리 파일
+/Debug/
+/Release/
+/build/
+
+# 자동 생성된 바이너리 파일 및 빌드 관련 파일
+*.bin
+*.hex
+*.elf
+*.map
+*.srec
+*.lst
+*.crf
+*.o
+*.d
+*.a
+
+# 기타 임시 파일 및 시스템 파일
+*.log
+*.tmp
+*.bak
+*.swp
+*.dmp
+.DS_Store
+*.gch
+*.pyc
+__pycache__/

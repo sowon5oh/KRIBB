@@ -36,23 +36,53 @@ extern "C" {
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+#include "system_config.h"
 #include "data_type.h"
 #include "util_debug.h"
 #include "app_util.h"
 #include "user_uart.h"
-#include "user_mmi.h"
-#include "adc_ads130b04.h"
-#include "dac_dac63204.h"
-#include "led_task.h"
+#include "task_mmi.h"
+#include "task_fsm.h"
+#include "task_meas.h"
+#include "task_temp_ctrl.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct {
+    uint32_t timeout_0_1_ms; // Timer interval in 0.1 milliseconds
+    uint32_t remaining_0_1_ms; // Remaining time in 0.1 milliseconds
+    void (*timer_cb)(void); // Callback function to call when the timer expires
+    uint8_t active; // Timer activation status
+    bool repeat; // Timer continous mode
+} AppTimer_t;
 
+typedef enum {
+    APP_TIMER_ID_FSM = 0,
+    APP_TIMER_ID_MEAS,
+    APP_TIMER_ID_MAX,
+} AppTimerId_t;
+
+typedef struct {
+    uint32_t task_duty_0_1_ms; // Timer interval in 0.1 milliseconds
+    uint32_t remaining_0_1_ms; // Remaining time in 0.1 milliseconds
+    void (*task_cb)(void); // Callback function to call when the timer expires
+    uint8_t active; // Timer activation status
+} AppTask_t;
+
+typedef enum {
+    APP_TASK_MEASURE = 0,
+    APP_TASK_TEMP_CTRL,
+    APP_TASK_ID_MAX,
+} AppTaskId_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c2;
+extern ADC_HandleTypeDef hadc1;
+extern SPI_HandleTypeDef hspi1;
 
 /* USER CODE END EC */
 
@@ -65,6 +95,10 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, bool repeat, void (*timer_cb)(void));
+void App_Timer_Stop(AppTimerId_t timer_id);
+void App_Task_Start(AppTaskId_t task_id, uint32_t task_duty, void (*task_cb)(void));
+void App_Task_Stop(AppTaskId_t task_id);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -102,6 +136,7 @@ void Error_Handler(void);
 #define ADC_RST__GPIO_Port GPIOC
 #define ADC_DRDY__Pin GPIO_PIN_7
 #define ADC_DRDY__GPIO_Port GPIOC
+#define ADC_DRDY__EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 

@@ -308,7 +308,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
     ads130b04_ch_cfg[DRV_ADS130B04_CH_3].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;
     
     /* Gain Config */
-    ads130b04_gain_mode = ADS130B04_CH_GAIN_MODE_64;
+    ads130b04_gain_mode = ADS130B04_CH_GAIN_MODE_1;
     double fsr = (1.2 / ads130b04_gain_mode); /* Full Scale Range: (+/-1.2V)/gain */
     ads_130b04_lsb = fsr / pow(2, 15); /* LSB: 1 LSB = (2.4 / Gain) / 2^16 = +FSR / 2^15 */
     /* if Gain is 1,    1 LSB = 36.62109 uV */

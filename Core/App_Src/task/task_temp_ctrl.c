@@ -145,6 +145,12 @@ static void _temp_ctrl_task_cb(void) {
     for (uint8_t ch_idx = CH1_IDX; ch_idx < CH_NUM; ch_idx++) {
         SYS_LOG_DEBUG("[CH %d] Current Temperature: %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
 
+        if (temp_ctrl_task_context.temp_ctrl_type[ch_idx] != TEMP_CTRL_AUTO)
+        {
+            SYS_LOG_ERR("[CH %d] Temperature Auto Control Off");
+            break;
+        }
+
         if (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE < temp_ctrl_task_context.cur_temp[ch_idx]) {
             SYS_LOG_DEBUG("[CH %d] Temperature Over MAX Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
             Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
@@ -169,14 +175,20 @@ static void _set_temp_ctrl_type(MeasCh_t ch, MeasSetTempCtrlType_t temp_ctrl_typ
     /* Temperature Control */
     switch (temp_ctrl_type) {
         case TEMP_CTRL_FORCE_OFF:
+            _temp_ctrl_task_enable(false);
             Hal_Heater_Ctrl(ch, HAL_HEATER_OFF);
+            SYS_LOG_INFO("Heater Force Off");
             break;
 
         case TEMP_CTRL_AUTO:
+            _temp_ctrl_task_enable(true);
+            SYS_LOG_INFO("Heater Auto Contol");
             break;
 
         case TEMP_CTRL_FORCE_ON:
+            _temp_ctrl_task_enable(false);
             Hal_Heater_Ctrl(ch, HAL_HEATER_ON);
+            SYS_LOG_INFO("Heater Force On");
             break;
     }
 }

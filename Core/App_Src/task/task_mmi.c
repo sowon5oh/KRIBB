@@ -39,7 +39,7 @@ static bool _protocol_chksum_check(uint8_t *arr, uint8_t cnt);
 static HAL_StatusTypeDef _process_command(uint8_t *arr, uint16_t len);
 static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
-static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3);
+static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 static HAL_StatusTypeDef _process_get_device_status(uint8_t cmd2, uint8_t cmd3);
 static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len);
 /* Private variables ---------------------------------------------------------*/
@@ -82,16 +82,33 @@ HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_MMI_SendMeasResult(void) {
+HAL_StatusTypeDef Task_MMI_SendMeasAllChResult(void) {
     MeasResultData_t result_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_DATA_ALL_DATA_LEN];
-    Task_Meas_Get_AllResult(&result_data_buff);
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN];
+    Task_Meas_Get_AllChResult(&result_data_buff);
 
     memcpy(&temp_msg_buff[0], &result_data_buff.temperature_data, sizeof(result_data_buff.temperature_data));
     memcpy(&temp_msg_buff[6], &result_data_buff.recv_pd_data, sizeof(result_data_buff.recv_pd_data));
     memcpy(&temp_msg_buff[12], &result_data_buff.monitor_pd_data, sizeof(result_data_buff.monitor_pd_data));
 
-    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_DATA_ALL, MMI_CMD3_MEAS_REQ_DATA_ALL_DATA_LEN, &temp_msg_buff[0]);
+    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_DATA_ALL_CH, MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN, &temp_msg_buff[0]);
+}
+
+HAL_StatusTypeDef Task_MMI_SendMeasSigleChResult(void) {
+    MeasSetChVal_t meas_ch;
+    uint16_t meas_cnt;
+    int16_t recv_pd_data_buff;
+    int16_t temperature_data_buff;
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN];
+
+    Task_Meas_Get_SingleChResult(&meas_ch, &meas_cnt, &recv_pd_data_buff, &temperature_data_buff);
+
+    temp_msg_buff[0] = meas_ch;
+    memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
+    memcpy(&temp_msg_buff[3], &recv_pd_data_buff, sizeof(recv_pd_data_buff));
+    memcpy(&temp_msg_buff[5], &temperature_data_buff, sizeof(temperature_data_buff));
+
+    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH, MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN, &temp_msg_buff[0]);
 }
 
 HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
@@ -100,8 +117,8 @@ HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
 
     SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &monitor_pd_data));
 
-    data_buff[0] = monitor_pd_data && 0xFF;
-    data_buff[1] = (monitor_pd_data >> 8) && 0xFF;
+    data_buff[0] = (monitor_pd_data >> 8) && 0xFF;
+    data_buff[1] = monitor_pd_data && 0xFF;
 
     return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN, &data_buff[0]);
 }
@@ -116,7 +133,7 @@ static HAL_StatusTypeDef _mmi_send(uint8_t cmd1, uint8_t cmd2, uint8_t cmd3, uin
 
     orig_arr[MMI_PROTOCOL_IDX_STX] = MMI_PROTOCOL_STX;
     orig_arr[MMI_PROTOCOL_IDX_LEN] = (data_len >> 8) & 0xFF;
-    orig_arr[MMI_PROTOCOL_IDX_LEN + 1] = (data_len) & 0xFF;
+    orig_arr[MMI_PROTOCOL_IDX_LEN + 1] = data_len & 0xFF;
     orig_arr[MMI_PROTOCOL_IDX_CMD1] = cmd1;
     orig_arr[MMI_PROTOCOL_IDX_CMD2] = cmd2;
     orig_arr[MMI_PROTOCOL_IDX_CMD3] = cmd3;
@@ -269,7 +286,7 @@ static HAL_StatusTypeDef _process_command(uint8_t *p_arr, uint16_t len) {
 
         case MMI_CMD1_MEAS_REQ:
             SYS_LOG_INFO("[Command 1-3: 0x%02X] Request measure", cmd1);
-            _process_req_meas(cmd2, cmd3);
+            _process_req_meas(cmd2, cmd3, p_data, data_len);
             break;
 
         case MMI_CMD1_REQ_DEVICE_STATUS:
@@ -347,7 +364,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
         SYS_VERIFY_TRUE(MMI_CMD3_MEAS_SET_VAL_REQ == cmd3);
 
         Task_Meas_Get_Set(&set_data_buff.settings);
-        SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET_RESP, cmd2, cmd3, MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN, &set_data_buff.msg[0]));
+        SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET_RESP, cmd2, cmd3, MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN, &set_data_buff.msg[0]));
 
         return HAL_OK;
     }
@@ -400,55 +417,38 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
     }
 }
 
-static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3) {
+static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
     MeasResultData_t result_data_val;
 
     if (MMI_CMD2_MEAS_REQ_DATA_W_RESP == cmd2) {
         switch (cmd3) {
-            case MMI_CMD3_MEAS_REQ_DATA_ALL:
-                uint8_t req_all_msg[MMI_CMD3_MEAS_REQ_DATA_ALL_DATA_LEN];
+            case MMI_CMD3_MEAS_REQ_DATA_ALL_CH:
+                uint8_t req_all_msg[MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN];
                 uint8_t temp_data_len = sizeof(result_data_val.temperature_data);
                 uint8_t recv_pd_data_len = sizeof(result_data_val.recv_pd_data);
                 uint8_t monitor_pd_data_len = sizeof(result_data_val.monitor_pd_data);
-                SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_DATA_ALL_DATA_LEN);
+                SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN);
 
-#if(FEATURE_TEST_REQ_FAKE_DATA_ENABLE == 0)
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_AllResult(&result_data_val));
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_AllChResult(&result_data_val));
 
                 memcpy(&req_all_msg[0], &result_data_val.temperature_data[0], temp_data_len);
                 memcpy(&req_all_msg[temp_data_len], &result_data_val.recv_pd_data[0], recv_pd_data_len);
                 memcpy(&req_all_msg[temp_data_len + recv_pd_data_len], &result_data_val.monitor_pd_data[0], monitor_pd_data_len);
-#else
-                static uint16_t test_num = 0;
-                uint16_t test_arr[2][CH_NUM];
 
-                test_arr[0][CH1_IDX] = test_num; /* Temperature Ch 1 */
-                test_arr[0][CH2_IDX] = test_num; /* Temperature Ch 2 */
-                test_arr[0][CH3_IDX] = test_num; /* Temperature Ch 3 */
-                test_arr[1][CH1_IDX] = test_num; /* ADC Ch 1 */
-                test_arr[1][CH2_IDX] = test_num; /* ADC Ch 2 */
-                test_arr[1][CH3_IDX] = test_num; /* ADC Ch 3 */
+                Task_Meas_Req_AllCh();
+                return HAL_OK;
 
-                memcpy(&req_all_msg[0], &test_arr[0], temp_data_len);
-                memcpy(&req_all_msg[temp_data_len], &test_arr[1], recv_pd_data_len);
+            case MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_DATA_LEN);
+                MeasSetChVal_t ch_cfg = p_data[0];
+                uint16_t ch_cnt = (p_data[1] << 8) | p_data[2];
 
-                if (test_num >= UINT16_MAX) {
-                    test_num = 0;
-                }
-                else {
-                    test_num++;
-                }
-#endif
-                Task_Meas_Single();
+                Task_Meas_Req_SingleCh(ch_cfg, ch_cnt);
+                return HAL_OK;
 
-                return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, MMI_CMD3_MEAS_REQ_DATA_ALL_DATA_LEN, req_all_msg);
-                break;
-
-            case MMI_CMD3_MEAS_REQ_DATA_CH1:
-            case MMI_CMD3_MEAS_REQ_DATA_CH2:
-            case MMI_CMD3_MEAS_REQ_DATA_CH3:
-                //TODO
-                break;
+            default:
+                SYS_LOG_ERR("Invalid cmd2 value: %d", cmd2);
+                return HAL_ERROR;
         }
     }
     else {

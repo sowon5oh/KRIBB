@@ -91,11 +91,11 @@ extern "C" {
 /* RX Command Group 2: Set for Measuring */
 #define MMI_CMD1_MEAS_SET                   0x0A
 #define MMI_CMD1_MEAS_SET_RESP              0x1A
-#define MMI_CMD1_MEAS_SET_MAX_DATA_LEN      MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN
+#define MMI_CMD1_MEAS_SET_MAX_DATA_LEN      MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN
 
-#define MMI_CMD2_MEAS_SET_VAL_REQ_W_RESP    0x00
-#define MMI_CMD3_MEAS_SET_VAL_REQ           0x00
-#define MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN  (29)
+#define MMI_CMD2_MEAS_SET_VAL_REQ_W_RESP         0x00
+#define MMI_CMD3_MEAS_SET_VAL_REQ                0x00
+#define MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN  (29)
 //#define MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN  (31) /* Add Temperature offset */
 
 #define MMI_CMD2_MEAS_SET_TEMP           	  0x01
@@ -154,13 +154,13 @@ extern "C" {
 #define MMI_CMD1_MEAS_REQ_RESP           0x1B
 #define MMI_CMD1_MEAS_REQ_MAX_DATA_LEN   MMI_CMD3_MEAS_REQ_ALL_DATA_LEN
 
-#define MMI_CMD2_MEAS_REQ_DATA_W_RESP         0x00
-#define MMI_CMD3_MEAS_REQ_DATA_ALL            0x00
-#define MMI_CMD3_MEAS_REQ_DATA_CH1            0x01
-#define MMI_CMD3_MEAS_REQ_DATA_CH2            0x02
-#define MMI_CMD3_MEAS_REQ_DATA_CH3            0x03
-#define MMI_CMD3_MEAS_REQ_DATA_ALL_DATA_LEN   (18)
-#define MMI_CMD3_MEAS_REQ_DATA_CHX_DATA_LEN   (7)
+#define MMI_CMD2_MEAS_REQ_DATA_W_RESP        	         0x00
+#define MMI_CMD3_MEAS_REQ_DATA_ALL_CH          	         0x00
+#define MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH                 0x01
+#define MMI_CMD3_MEAS_REQ_DATA_ALL_CH_DATA_LEN           (1)
+#define MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_DATA_LEN        (3)
+#define MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN      (18)
+#define MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN   (7)
 
 #define MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN    (2)
 #define MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN    (6)
@@ -263,8 +263,8 @@ typedef enum {
 } MeasCtrlLedType_t;
 
 typedef enum {
-    MEAS_OP_MODE_SINGLE = 0x00,
-    MEAS_OP_MODE_CONTINUOUS = 0x01, /* Default */
+    MEAS_OP_MODE_SINGLE_CH = 0x00,
+    MEAS_OP_MODE_ALL_CH = 0x01,
     MEAS_OP_MODE_MAX,
 } MeasCtrlOpMode_t;
 
@@ -316,7 +316,7 @@ typedef struct {
 typedef struct {
     union {
         MeasSetData_t settings;
-        uint8_t msg[MMI_CMD3_MEAS_SET_VAL_REQ_DATA_LEN + 3];
+        uint8_t msg[MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN + 3];
     };
 } MeasSetDataMsg_t;
 

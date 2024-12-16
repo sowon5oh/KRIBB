@@ -223,7 +223,7 @@ static HAL_StatusTypeDef _fsm_proc_test(void) {
 //            SYS_LOG_INFO("[CH 2] ADC: %d, Degree: %d.%d", temp.adc[HAL_TEMP_CH_2], (int8_t )temp.degree[HAL_TEMP_CH_2], abs((int8_t )(temp.degree[HAL_TEMP_CH_2] * 100) % 100));
 
             uint16_t temp_data[3];
-            Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, MEAS_SET_CH_ALL, temp_data);
+            Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, temp_data);
             break;
 
             /***********************************************************************

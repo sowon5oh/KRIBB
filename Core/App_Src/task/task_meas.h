@@ -41,7 +41,7 @@ void Task_Meas_Req_ContinuosMode(void);
 void Task_Meas_Req_SingleMode(uint8_t ch, uint16_t cnt);
 HAL_StatusTypeDef Task_Meas_Get_AllChResult(MeasResultData_t *p_data);
 HAL_StatusTypeDef Task_Meas_Get_SingleChResult(MeasSetChVal_t * p_ch, uint16_t * p_cnt, int16_t *p_recv, int16_t *p_temp);
-HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val);
+HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, uint16_t *p_result_val);
 HAL_StatusTypeDef Task_Meas_Get_Status(MeasReqStatus_t *p_status_val);
 HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasCtrlLedType_t ctrl);
 HAL_StatusTypeDef Task_Meas_Ctrl_OpMode(MeasCtrlOpMode_t op_mode);

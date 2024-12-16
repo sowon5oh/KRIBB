@@ -112,13 +112,19 @@ HAL_StatusTypeDef Task_MMI_SendMeasSigleChResult(void) {
 }
 
 HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
-    uint16_t monitor_pd_data;
+    int16_t monitor_pd_data[3];
     uint8_t data_buff[MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN];
 
-    SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, &monitor_pd_data));
+    SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, (uint16_t*)&monitor_pd_data[0]));
 
-    data_buff[0] = (monitor_pd_data >> 8) && 0xFF;
-    data_buff[1] = monitor_pd_data && 0xFF;
+    if(ch_cfg == MEAS_SET_CH_MAX){
+        //TODO
+        return HAL_ERROR;
+    }
+    else{
+        data_buff[0] = (monitor_pd_data[ch_cfg - 1] >> 8) && 0xFF;
+        data_buff[1] = monitor_pd_data[ch_cfg - 1] && 0xFF;
+    }
 
     return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN, &data_buff[0]);
 }
@@ -458,15 +464,15 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
         switch (cmd2) {
             case MMI_CMD2_MEAS_REQ_TEMPERATURE_W_RESP:
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, ch_cfg, (uint16_t* )&result_data_val.temperature_data[0]));
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_TEMPERATURE, (uint16_t* )&result_data_val.temperature_data[0]));
                 return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.temperature_data[0]);
 
             case MMI_CMD2_MEAS_REQ_RESP_ADC_W_RESP:
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, ch_cfg, (uint16_t* )&result_data_val.recv_pd_data[0]));
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_RECV_PD_ADC, (uint16_t* )&result_data_val.recv_pd_data[0]));
                 return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.recv_pd_data[0]);
 
             case MMI_CMD2_MEAS_REQ_MONITOR_ADC_W_RESP:
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, ch_cfg, (uint16_t* )&result_data_val.monitor_pd_data[0]));
+                SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, (uint16_t* )&result_data_val.monitor_pd_data[0]));
                 return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, cmd2, cmd3, result_data_len, (uint8_t*) &result_data_val.monitor_pd_data[0]);
 
             default:

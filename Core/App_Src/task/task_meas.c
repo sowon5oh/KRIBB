@@ -336,23 +336,22 @@ HAL_StatusTypeDef Task_Meas_Get_SingleChResult(MeasSetChVal_t *p_ch, uint16_t *p
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val) {
-    SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
+HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, uint16_t *p_result_val) {
     SYS_VERIFY_TRUE(result_cat <= MEAS_RESULT_CAT_MAX);
     SYS_VERIFY_PARAM_NOT_NULL(p_result_val);
     
     switch (result_cat) {
         case MEAS_RESULT_CAT_TEMPERATURE:
             _meas_get_temperature_data();
-            memcpy(p_result_val, &meas_result_data.temperature_data, sizeof(uint16_t) * CH_NUM);
+            memcpy(p_result_val, &meas_result_data.temperature_data, sizeof(uint16_t));
             return HAL_OK;
 
         case MEAS_RESULT_CAT_RECV_PD_ADC:
-            memcpy(p_result_val, &meas_result_data.recv_pd_data, sizeof(uint16_t) * CH_NUM);
+            memcpy(p_result_val, &meas_result_data.recv_pd_data, sizeof(uint16_t));
             return HAL_OK;
 
         case MEAS_RESULT_CAT_MONITOR_PD_ADC:
-            memcpy(p_result_val, &meas_result_data.monitor_pd_data, sizeof(uint16_t) * CH_NUM);
+            memcpy(p_result_val, &meas_result_data.monitor_pd_data, sizeof(uint16_t));
             return HAL_OK;
 
         default:

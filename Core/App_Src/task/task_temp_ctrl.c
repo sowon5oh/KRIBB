@@ -147,7 +147,7 @@ static void _temp_ctrl_task_cb(void) {
 
         if (temp_ctrl_task_context.temp_ctrl_type[ch_idx] != TEMP_CTRL_AUTO)
         {
-            SYS_LOG_ERR("[CH %d] Temperature Auto Control Off");
+            SYS_LOG_DEBUG("[CH %d] Temperature Auto Control Off");
             break;
         }
 

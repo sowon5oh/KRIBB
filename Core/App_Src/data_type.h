@@ -263,8 +263,8 @@ typedef enum {
 } MeasCtrlLedType_t;
 
 typedef enum {
-    MEAS_OP_MODE_SINGLE_CH = 0x00,
-    MEAS_OP_MODE_ALL_CH = 0x01,
+    MEAS_OP_MODE_CONTINUOS = 0x00,
+    MEAS_OP_MODE_SINGLE = 0x01,
     MEAS_OP_MODE_MAX,
 } MeasCtrlOpMode_t;
 

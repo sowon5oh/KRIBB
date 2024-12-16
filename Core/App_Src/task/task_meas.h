@@ -37,8 +37,8 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
 HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val);
 HAL_StatusTypeDef Task_Meas_Start(void);
 HAL_StatusTypeDef Task_Meas_Stop(void);
-void Task_Meas_Req_AllCh(void);
-void Task_Meas_Req_SingleCh(uint8_t ch, uint16_t cnt);
+void Task_Meas_Req_ContinuosMode(void);
+void Task_Meas_Req_SingleMode(uint8_t ch, uint16_t cnt);
 HAL_StatusTypeDef Task_Meas_Get_AllChResult(MeasResultData_t *p_data);
 HAL_StatusTypeDef Task_Meas_Get_SingleChResult(MeasSetChVal_t * p_ch, uint16_t * p_cnt, int16_t *p_recv, int16_t *p_temp);
 HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, MeasSetChVal_t ch, uint16_t *p_result_val);

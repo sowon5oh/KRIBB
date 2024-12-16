@@ -435,7 +435,7 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 memcpy(&req_all_msg[temp_data_len], &result_data_val.recv_pd_data[0], recv_pd_data_len);
                 memcpy(&req_all_msg[temp_data_len + recv_pd_data_len], &result_data_val.monitor_pd_data[0], monitor_pd_data_len);
 
-                Task_Meas_Req_AllCh();
+                Task_Meas_Req_ContinuosMode();
                 return HAL_OK;
 
             case MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH:
@@ -443,7 +443,7 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 MeasSetChVal_t ch_cfg = p_data[0];
                 uint16_t ch_cnt = (p_data[1] << 8) | p_data[2];
 
-                Task_Meas_Req_SingleCh(ch_cfg, ch_cnt);
+                Task_Meas_Req_SingleMode(ch_cfg, ch_cnt);
                 return HAL_OK;
 
             default:

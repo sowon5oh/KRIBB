@@ -896,6 +896,7 @@ static void _ch4_mux_enable(bool enable) {
 
 static void _ch4_mux_select(Ads130b04Ch3MuxCh_t ch) {
     SYS_VERIFY_TRUE_VOID(ch < DRV_ADS130B04_MUX_CH_MAX);
+    SYS_LOG_INFO("Mux Ch %d Selected", ch);
     
     switch (ch) {
         case DRV_ADS130B04_MUX_CH_0:

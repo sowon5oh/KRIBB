@@ -91,7 +91,7 @@ int16_t _calc_pd_avr(int16_t *p_buff, uint16_t sample_cnt);
 static measTaskContext_t meas_task_context = {
     .task_op_state = false,
     .meas_state = MEAS_STATE_START,
-    .meas_op_mode = MEAS_OP_MODE_SINGLE_CH,
+    .meas_op_mode = MEAS_OP_MODE_SINGLE,
     .meas_cur_ch = CH1_IDX,
     .meas_cnt = 0,
     .sample_cnt = 0, };
@@ -239,7 +239,12 @@ HAL_StatusTypeDef Task_Meas_Start(void) {
 
     /* ADC Stop */
     Hal_Pd_Start();
-    SYS_LOG_INFO("[MEASURE START]");SYS_LOG_INFO("- LED ON TIME MS    : %3d / %3d / %3d", meas_set_data.led_on_time[CH1_IDX], meas_set_data.led_on_time[CH2_IDX], meas_set_data.led_on_time[CH3_IDX]);SYS_LOG_INFO("- LED ON LEVEL      : %4d / %4d / %4d", meas_set_data.led_on_level[CH1_IDX], meas_set_data.led_on_level[CH2_IDX], meas_set_data.led_on_level[CH3_IDX]);SYS_LOG_INFO("- ADC DELAY MS      : %4d / %4d / %4d", meas_set_data.adc_delay_ms[CH1_IDX], meas_set_data.adc_delay_ms[CH2_IDX], meas_set_data.adc_delay_ms[CH3_IDX]);SYS_LOG_INFO("- ADC SAMPLE CNT    : %2d / %2d / %2d", meas_set_data.adc_sample_cnt[CH1_IDX], meas_set_data.adc_sample_cnt[CH2_IDX], meas_set_data.adc_sample_cnt[CH3_IDX]);SYS_LOG_INFO("- STABLE TEMPERATURE: %d", meas_set_data.stable_temperature);
+    SYS_LOG_INFO("[MEASURE START]"); //
+    SYS_LOG_INFO("- LED ON TIME MS    : %3d / %3d / %3d", meas_set_data.led_on_time[CH1_IDX], meas_set_data.led_on_time[CH2_IDX], meas_set_data.led_on_time[CH3_IDX]); //
+    SYS_LOG_INFO("- LED ON LEVEL      : %4d / %4d / %4d", meas_set_data.led_on_level[CH1_IDX], meas_set_data.led_on_level[CH2_IDX], meas_set_data.led_on_level[CH3_IDX]); //
+    SYS_LOG_INFO("- ADC DELAY MS      : %4d / %4d / %4d", meas_set_data.adc_delay_ms[CH1_IDX], meas_set_data.adc_delay_ms[CH2_IDX], meas_set_data.adc_delay_ms[CH3_IDX]); //
+    SYS_LOG_INFO("- ADC SAMPLE CNT    : %2d / %2d / %2d", meas_set_data.adc_sample_cnt[CH1_IDX], meas_set_data.adc_sample_cnt[CH2_IDX], meas_set_data.adc_sample_cnt[CH3_IDX]); //
+    SYS_LOG_INFO("- STABLE TEMPERATURE: %d", meas_set_data.stable_temperature);
 
     return HAL_OK;
 }
@@ -255,21 +260,39 @@ HAL_StatusTypeDef Task_Meas_Stop(void) {
     return HAL_OK;
 }
 
-void Task_Meas_Req_AllCh(void) {
+void Task_Meas_Req_ContinuosMode(void) {
     /* All Ch Mode Operation */
-    meas_task_context.meas_op_mode = MEAS_OP_MODE_ALL_CH;
+    meas_task_context.meas_op_mode = MEAS_OP_MODE_CONTINUOS;
     meas_task_context.meas_cur_ch = CH1_IDX;
     meas_task_context.meas_cnt = 0;
+    /* Change to LED Auto Ctrl Mode */
+    meas_set_data.led_ctrl_state[CH1_IDX] = LED_CTRL_AUTO;
+    meas_set_data.led_ctrl_state[CH2_IDX] = LED_CTRL_AUTO;
+    meas_set_data.led_ctrl_state[CH3_IDX] = LED_CTRL_AUTO;
 
+    SYS_LOG_INFO("[CONTINUOS MEASURE START]");
     _meas_task_enable(true);
 }
 
-void Task_Meas_Req_SingleCh(MeasSetChVal_t ch, uint16_t cnt) {
+void Task_Meas_Req_SingleMode(MeasSetChVal_t ch, uint16_t cnt) {
     /* Single Ch Mode Operation */
-    meas_task_context.meas_op_mode = MEAS_OP_MODE_SINGLE_CH;
-    meas_task_context.meas_cur_ch = (MeasCh_t)(ch - 1);
+    meas_task_context.meas_op_mode = MEAS_OP_MODE_SINGLE;
     meas_task_context.meas_cnt = cnt;
 
+    /* Change to LED Auto Ctrl Mode */
+    meas_set_data.led_ctrl_state[CH1_IDX] = LED_CTRL_AUTO;
+    meas_set_data.led_ctrl_state[CH2_IDX] = LED_CTRL_AUTO;
+    meas_set_data.led_ctrl_state[CH3_IDX] = LED_CTRL_AUTO;
+
+    /* Set Ch */
+    if (ch == MEAS_SET_CH_ALL) {
+        meas_task_context.meas_cur_ch = CH1_IDX;
+    }
+    else {
+        meas_task_context.meas_cur_ch = (MeasCh_t) (ch - 1);
+    }
+
+    SYS_LOG_INFO("[SINGLE MEASURE START, CH: %d]", ch);
     _meas_task_enable(true);
 }
 
@@ -279,7 +302,7 @@ HAL_StatusTypeDef Task_Meas_Ctrl_OpMode(MeasCtrlOpMode_t op_mode) {
     _meas_task_enable(false);
 
     meas_task_context.meas_op_mode = op_mode;
-    SYS_LOG_INFO("[MEASURE OP MODE: %s]", (op_mode == MEAS_OP_MODE_SINGLE_CH) ? "SINGLE" : "CONTINOUS");
+    SYS_LOG_INFO("[MEASURE CTRL SET TO ]", (op_mode == MEAS_OP_MODE_SINGLE) ? "SINGLE" : "CONTINOUS");
 
     /* Not Used */
 
@@ -296,7 +319,7 @@ HAL_StatusTypeDef Task_Meas_Get_AllChResult(MeasResultData_t *p_data) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_Get_SingleChResult(MeasSetChVal_t * p_ch, uint16_t * p_cnt, int16_t *p_recv, int16_t *p_temp) {
+HAL_StatusTypeDef Task_Meas_Get_SingleChResult(MeasSetChVal_t *p_ch, uint16_t *p_cnt, int16_t *p_recv, int16_t *p_temp) {
     SYS_VERIFY_PARAM_NOT_NULL(p_ch);
     SYS_VERIFY_PARAM_NOT_NULL(p_cnt);
     SYS_VERIFY_PARAM_NOT_NULL(p_recv);
@@ -305,7 +328,7 @@ HAL_StatusTypeDef Task_Meas_Get_SingleChResult(MeasSetChVal_t * p_ch, uint16_t *
     /* Send Current Meas Data */
     _meas_get_temperature_data();
 
-    *p_ch = (MeasSetChVal_t)meas_task_context.meas_cur_ch + 1;
+    *p_ch = (MeasSetChVal_t) meas_task_context.meas_cur_ch + 1;
     *p_cnt = meas_task_context.meas_cnt;
     *p_recv = meas_result_data.recv_pd_data[meas_task_context.meas_cur_ch];
     *p_temp = meas_result_data.temperature_data[meas_task_context.meas_cur_ch];
@@ -582,10 +605,7 @@ static void _meas_task_cb(void) {
     switch (meas_task_context.meas_state) {
         case MEAS_STATE_LED_ON:
             if (meas_req_status_data.target_ch[cur_ch] == MEAS_TARGET_CH_ACTIVE) {
-                /* LED On */
-                if (meas_set_data.led_ctrl_state[cur_ch] == LED_CTRL_AUTO) {
-                    _led_ctrl(cur_ch, meas_set_data.led_on_level[cur_ch]);
-                }
+                _led_ctrl(cur_ch, meas_set_data.led_on_level[cur_ch]);
 
                 App_Timer_Start(APP_TIMER_ID_MEAS, MEAS_TASK_LED_STABLE_TIME_MS, false, _meas_task_led_stable_cb);
                 meas_task_context.meas_state = MEAS_STATE_LED_STABLE;
@@ -628,25 +648,10 @@ static void _meas_task_cb(void) {
 #endif
             
             /* LED Off */
-            if (meas_set_data.led_ctrl_state[cur_ch] == LED_CTRL_AUTO) {
-                _led_ctrl(cur_ch, 0);
-            }
+            _led_ctrl(cur_ch, 0);
 
             switch (meas_task_context.meas_op_mode) {
-                case MEAS_OP_MODE_SINGLE_CH:
-                    /* 1 Frame */
-                    meas_task_context.meas_state = MEAS_STATE_WAIT;
-
-                    /* Meas End */
-                    _meas_task_enable(false);
-
-#if 1
-                    /* Send MMI */
-                    Task_MMI_SendMeasSigleChResult();
-#endif
-                    break;
-
-                case MEAS_OP_MODE_ALL_CH:
+                case MEAS_OP_MODE_CONTINUOS:
                     /* Change Channel */
                     if (++cur_ch >= CH_NUM) {
                         meas_task_context.meas_cur_ch = CH1_IDX;
@@ -659,6 +664,19 @@ static void _meas_task_cb(void) {
 #if 1
                     /* Send MMI */
                     Task_MMI_SendMeasAllChResult();
+#endif
+                    break;
+
+                case MEAS_OP_MODE_SINGLE:
+                    /* 1 Frame */
+                    meas_task_context.meas_state = MEAS_STATE_WAIT;
+
+                    /* Meas End */
+                    _meas_task_enable(false);
+
+#if 1
+                    /* Send MMI */
+                    Task_MMI_SendMeasSigleChResult();
 #endif
                     break;
 

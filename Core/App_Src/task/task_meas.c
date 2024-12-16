@@ -415,48 +415,6 @@ HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasCtrlLedType_t ctrl) 
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_Meas_Ctrl_Monitor(MeasSetChVal_t ch, uint8_t *p_set_val) {
-    SYS_VERIFY_TRUE(ch <= MEAS_SET_CH_MAX);
-    SYS_VERIFY_PARAM_NOT_NULL(p_set_val);
-    
-    /* Pause Measure */
-    _meas_task_enable(false);
-
-    switch (ch) {
-        case MEAS_SET_CH_1:
-            meas_req_status_data.target_ch[MEAS_SET_CH_1] = MEAS_TARGET_CH_ACTIVE;
-            meas_req_status_data.target_ch[MEAS_SET_CH_2] = MEAS_TARGET_CH_DEACTIV;
-            meas_req_status_data.target_ch[MEAS_SET_CH_3] = MEAS_TARGET_CH_DEACTIV;
-            break;
-
-        case MEAS_SET_CH_2:
-            meas_req_status_data.target_ch[MEAS_SET_CH_1] = MEAS_TARGET_CH_DEACTIV;
-            meas_req_status_data.target_ch[MEAS_SET_CH_2] = MEAS_TARGET_CH_ACTIVE;
-            meas_req_status_data.target_ch[MEAS_SET_CH_3] = MEAS_TARGET_CH_DEACTIV;
-            break;
-
-        case MEAS_SET_CH_3:
-            meas_req_status_data.target_ch[MEAS_SET_CH_1] = MEAS_TARGET_CH_DEACTIV;
-            meas_req_status_data.target_ch[MEAS_SET_CH_2] = MEAS_TARGET_CH_DEACTIV;
-            meas_req_status_data.target_ch[MEAS_SET_CH_3] = MEAS_TARGET_CH_ACTIVE;
-            break;
-
-        case MEAS_SET_CH_ALL:
-            meas_req_status_data.target_ch[MEAS_SET_CH_1] = MEAS_TARGET_CH_ACTIVE;
-            meas_req_status_data.target_ch[MEAS_SET_CH_2] = MEAS_TARGET_CH_ACTIVE;
-            meas_req_status_data.target_ch[MEAS_SET_CH_3] = MEAS_TARGET_CH_ACTIVE;
-            break;
-
-        default:
-            return HAL_ERROR;
-    }
-    
-    /* Restart Measure */
-    _meas_task_enable(true);
-
-    return HAL_OK;
-}
-
 /* Private user code ---------------------------------------------------------*/
 static void _meas_task_init(void) {
     meas_task_context.meas_state = MEAS_STATE_START;
@@ -604,6 +562,7 @@ static void _meas_task_cb(void) {
 
     switch (meas_task_context.meas_state) {
         case MEAS_STATE_LED_ON:
+            //TODO Selected All Ch
             if (meas_req_status_data.target_ch[cur_ch] == MEAS_TARGET_CH_ACTIVE) {
                 _led_ctrl(cur_ch, meas_set_data.led_on_level[cur_ch]);
 

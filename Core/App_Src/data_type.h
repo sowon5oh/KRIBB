@@ -331,7 +331,7 @@ typedef struct {
 #pragma pack(push, 1)
 typedef struct {
     bool led_on_status[CH_NUM];
-    uint8_t target_ch[CH_NUM];
+    uint8_t target_ch[CH_NUM]; //TODO
 } MeasReqStatus_t;
 #pragma pack(pop)
 

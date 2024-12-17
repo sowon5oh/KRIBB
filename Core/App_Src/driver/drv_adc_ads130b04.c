@@ -215,6 +215,10 @@ typedef struct {
 #define ADS130B04_WRITE_REG_SINGLE_IDX_CRC  2
 #define ADS130B04_WRITE_REG_RESP_RX_LEN     1 /* [Command Resp] */
 
+#define ADS130B04_OSR_MODE_DEFAULT   ADS130B04_OSR_MODE_256
+#define ADS130B04_CLOCK_DEFAULT      ADS130B04_CLOCK_INTERNAL_OSC
+#define ADS130B04_PWR_MODE_DEFAULT   ADS130B04_PWR_MODE_HIGH_RESOLUTION
+
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
@@ -291,9 +295,9 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
     }
     
     /* Clock Config */
-    ads130b04_clock_sel = ADS130B04_CLOCK_INTERNAL_OSC;
-    ads130b04_osr_mode = ADS130B04_OSR_MODE_256;
-    ads130b04_pwr_mode = ADS130B04_PWR_MODE_HIGH_RESOLUTION;
+    ads130b04_clock_sel = ADS130B04_CLOCK_DEFAULT;
+    ads130b04_osr_mode = ADS130B04_OSR_MODE_DEFAULT;
+    ads130b04_pwr_mode = ADS130B04_PWR_MODE_DEFAULT;
     /* Ch0 Config */
     ads130b04_ch_cfg[DRV_ADS130B04_CH_0].enable = true;
     ads130b04_ch_cfg[DRV_ADS130B04_CH_0].input_mode = DRV_ADS130B04_CH_INPUT_MODE_CONN;

@@ -216,6 +216,7 @@ typedef enum {
     CH2_IDX,
     CH3_IDX,
     CH_NUM,
+    CH_ALL = CH_NUM,
 } MeasCh_t;
 
 typedef enum {
@@ -326,12 +327,9 @@ typedef struct {
     int16_t monitor_pd_data[CH_NUM];
 } MeasResultData_t;
 
-#define MEAS_TARGET_CH_DEACTIV 0
-#define MEAS_TARGET_CH_ACTIVE  1
 #pragma pack(push, 1)
 typedef struct {
     bool led_on_status[CH_NUM];
-    uint8_t target_ch[CH_NUM]; //TODO
 } MeasReqStatus_t;
 #pragma pack(pop)
 

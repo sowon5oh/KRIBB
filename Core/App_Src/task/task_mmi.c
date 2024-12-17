@@ -431,6 +431,7 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
     MeasResultData_t result_data_val;
+    MeasSetChVal_t set_ch;
 
     if (MMI_CMD2_MEAS_REQ_DATA_W_RESP == cmd2) {
         switch (cmd3) {
@@ -443,7 +444,13 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 MeasSetChVal_t ch_cfg = p_data[0];
                 uint16_t ch_cnt = (p_data[1] << 8) | p_data[2];
 
-                Task_Meas_Req_SingleMode(ch_cfg, ch_cnt);
+                if(ch_cfg < MEAS_SET_CH_ALL && ch_cfg >= MEAS_SET_CH_1){
+                    set_ch = ch_cfg;
+                }
+                else{
+                    set_ch = MEAS_SET_CH_ALL;
+                }
+                Task_Meas_Req_SingleMode(set_ch, ch_cnt);
                 return HAL_OK;
 
             default:

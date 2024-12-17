@@ -220,7 +220,7 @@ static HAL_StatusTypeDef _fetch_temperature(void) {
     temp_ctrl_task_context.cur_temp[CH3_IDX] = temp_data_buff.degree[HAL_TEMP_CH_2] + temp_ctrl_task_context.temperature_offset[CH3_IDX];
 #endif
 
-    SYS_LOG_INFO("Temperature: [CH 1] %.2f, [CH 2] %.2f, [CH 3] %.2f", temp_ctrl_task_context.cur_temp[CH1_IDX], temp_ctrl_task_context.cur_temp[CH2_IDX], temp_ctrl_task_context.cur_temp[CH3_IDX]);
+    SYS_LOG_DEBUG("Temperature: [CH 1] %.2f, [CH 2] %.2f, [CH 3] %.2f", temp_ctrl_task_context.cur_temp[CH1_IDX], temp_ctrl_task_context.cur_temp[CH2_IDX], temp_ctrl_task_context.cur_temp[CH3_IDX]);
 
     return HAL_OK;
 }

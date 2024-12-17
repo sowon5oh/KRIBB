@@ -154,13 +154,13 @@ extern "C" {
 #define MMI_CMD1_MEAS_REQ_RESP           0x1B
 #define MMI_CMD1_MEAS_REQ_MAX_DATA_LEN   MMI_CMD3_MEAS_REQ_ALL_DATA_LEN
 
-#define MMI_CMD2_MEAS_REQ_DATA_W_RESP        	         0x00
-#define MMI_CMD3_MEAS_REQ_DATA_ALL_CH          	         0x00
-#define MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH                 0x01
-#define MMI_CMD3_MEAS_REQ_DATA_ALL_CH_DATA_LEN           (1)
-#define MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_DATA_LEN        (3)
-#define MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN      (18)
-#define MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN   (7)
+#define MMI_CMD2_MEAS_REQ_DATA_W_RESP        	   0x00
+#define MMI_CMD3_MEAS_REQ_CONTINUOS_MODE           0x00
+#define MMI_CMD3_MEAS_REQ_CONTINUOS_DATA_LEN       (1)   /* Don' care */
+#define MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN  (18)  /* CH 1-3 Data (Temperature, Recv ADC, Monitor ADC) */
+#define MMI_CMD3_MEAS_REQ_SINGLE_MODE              0x01
+#define MMI_CMD3_MEAS_REQ_SINGLE_DATA_LEN          (3)   /* CH, Count */
+#define MMI_CMD3_MEAS_REQ_SINGLE_RESP_DATA_LEN     (7)
 
 #define MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN    (2)
 #define MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN    (6)
@@ -300,7 +300,7 @@ typedef enum {
 
 #pragma pack(push, 1)
 typedef struct {
-    MeasSetTempCtrlType_t temp_ctrl_type[CH_NUM]; /* Ch1 - CH3 */
+    MeasSetTempCtrlType_t temp_ctrl_mode[CH_NUM]; /* Ch1 - CH3 */
     uint16_t led_on_time[CH_NUM];
     uint16_t led_on_level[CH_NUM];
     uint16_t adc_sample_cnt[CH_NUM];
@@ -309,7 +309,7 @@ typedef struct {
     uint16_t temperature_offset[CH_NUM];
     /* ~NVM */
     MeasSetChTest_t ch_test[CH_NUM];
-    MeasCtrlLedType_t led_ctrl_state[CH_NUM]; /* Ch1 - CH3 */
+    MeasCtrlLedType_t led_ctrl_mode[CH_NUM]; /* Ch1 - CH3 */
 } MeasSetData_t;
 #pragma pack(pop)
 

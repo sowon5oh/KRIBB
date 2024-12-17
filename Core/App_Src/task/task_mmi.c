@@ -82,24 +82,30 @@ HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_MMI_SendMeasAllChResult(void) {
+HAL_StatusTypeDef Task_MMI_SendMeasContinousResult(void) {
     MeasResultData_t result_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN];
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN];
+
+    uint8_t temp_data_len = sizeof(result_data_buff.temperature_data);
+    uint8_t recv_pd_data_len = sizeof(result_data_buff.recv_pd_data);
+    uint8_t monitor_pd_data_len = sizeof(result_data_buff.monitor_pd_data);
+    SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN);
+
     Task_Meas_Get_AllChResult(&result_data_buff);
 
     memcpy(&temp_msg_buff[0], &result_data_buff.temperature_data, sizeof(result_data_buff.temperature_data));
     memcpy(&temp_msg_buff[6], &result_data_buff.recv_pd_data, sizeof(result_data_buff.recv_pd_data));
     memcpy(&temp_msg_buff[12], &result_data_buff.monitor_pd_data, sizeof(result_data_buff.monitor_pd_data));
 
-    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_DATA_ALL_CH, MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN, &temp_msg_buff[0]);
+    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_CONTINUOS_MODE, MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN, &temp_msg_buff[0]);
 }
 
-HAL_StatusTypeDef Task_MMI_SendMeasSigleChResult(void) {
+HAL_StatusTypeDef Task_MMI_SendMeasSigleResult(void) {
     MeasSetChVal_t meas_ch;
     uint16_t meas_cnt;
     int16_t recv_pd_data_buff;
     int16_t temperature_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN];
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_SINGLE_RESP_DATA_LEN];
 
     Task_Meas_Get_SingleChResult(&meas_ch, &meas_cnt, &recv_pd_data_buff, &temperature_data_buff);
 
@@ -108,7 +114,7 @@ HAL_StatusTypeDef Task_MMI_SendMeasSigleChResult(void) {
     memcpy(&temp_msg_buff[3], &recv_pd_data_buff, sizeof(recv_pd_data_buff));
     memcpy(&temp_msg_buff[5], &temperature_data_buff, sizeof(temperature_data_buff));
 
-    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH, MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN, &temp_msg_buff[0]);
+    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_SINGLE_MODE, MMI_CMD3_MEAS_REQ_SINGLE_RESP_DATA_LEN, &temp_msg_buff[0]);
 }
 
 HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
@@ -428,24 +434,12 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
     if (MMI_CMD2_MEAS_REQ_DATA_W_RESP == cmd2) {
         switch (cmd3) {
-            case MMI_CMD3_MEAS_REQ_DATA_ALL_CH:
-                uint8_t req_all_msg[MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN];
-                uint8_t temp_data_len = sizeof(result_data_val.temperature_data);
-                uint8_t recv_pd_data_len = sizeof(result_data_val.recv_pd_data);
-                uint8_t monitor_pd_data_len = sizeof(result_data_val.monitor_pd_data);
-                SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN);
-
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_AllChResult(&result_data_val));
-
-                memcpy(&req_all_msg[0], &result_data_val.temperature_data[0], temp_data_len);
-                memcpy(&req_all_msg[temp_data_len], &result_data_val.recv_pd_data[0], recv_pd_data_len);
-                memcpy(&req_all_msg[temp_data_len + recv_pd_data_len], &result_data_val.monitor_pd_data[0], monitor_pd_data_len);
-
+            case MMI_CMD3_MEAS_REQ_CONTINUOS_MODE:
                 Task_Meas_Req_ContinuosMode();
                 return HAL_OK;
 
-            case MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH:
-                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_DATA_LEN);
+            case MMI_CMD3_MEAS_REQ_SINGLE_MODE:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_REQ_SINGLE_DATA_LEN);
                 MeasSetChVal_t ch_cfg = p_data[0];
                 uint16_t ch_cnt = (p_data[1] << 8) | p_data[2];
 

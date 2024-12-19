@@ -537,25 +537,32 @@ static void _meas_task_adc_continous_cb(void) {
 
 static void _meas_task_adc_single_cb(void) {
     MeasCh_t cur_ch = meas_task_context.meas_cur_ch;
+    MeasCh_t set_ch = CH1_IDX;
     SYS_VERIFY_TRUE_VOID(MEAS_SET_MAX_ADC_SAMPLE_CNT >= meas_set_data.adc_sample_cnt[CH1_IDX]);
 
     if (cur_ch == CH_ALL) {
         Hal_Pd_GetRecvData(CH1_IDX, &recv_pd_buff[CH1_IDX][meas_task_context.sample_cnt]);
         meas_result_data.recv_pd_data[CH1_IDX] = _calc_pd_avr(recv_pd_buff[CH1_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]); /* Use Same Sample Count */
         Hal_Pd_GetRecvData(CH2_IDX, &recv_pd_buff[CH2_IDX][meas_task_context.sample_cnt]);
-        meas_result_data.recv_pd_data[CH1_IDX] = _calc_pd_avr(recv_pd_buff[CH1_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]);
+        meas_result_data.recv_pd_data[CH2_IDX] = _calc_pd_avr(recv_pd_buff[CH2_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]);
         Hal_Pd_GetRecvData(CH3_IDX, &recv_pd_buff[CH3_IDX][meas_task_context.sample_cnt]);
-        meas_result_data.recv_pd_data[CH1_IDX] = _calc_pd_avr(recv_pd_buff[CH1_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]);
+        meas_result_data.recv_pd_data[CH3_IDX] = _calc_pd_avr(recv_pd_buff[CH3_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]);
+
+        set_ch = CH1_IDX;
     }
     else {
         Hal_Pd_GetRecvData(cur_ch, &recv_pd_buff[cur_ch][meas_task_context.sample_cnt]);
+
+        set_ch = cur_ch;
     }
 
-    if (++meas_task_context.sample_cnt >= meas_set_data.adc_sample_cnt[cur_ch]) {
+    if (++meas_task_context.sample_cnt >= meas_set_data.adc_sample_cnt[set_ch]) {
+        SYS_LOG_INFO("%d Samples Measure Done", meas_task_context.sample_cnt);
+
         if (cur_ch == CH_ALL) {
-            meas_result_data.recv_pd_data[CH1_IDX] = _calc_pd_avr(recv_pd_buff[CH1_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]); /* Use Same Sample Count */
-            meas_result_data.recv_pd_data[CH2_IDX] = _calc_pd_avr(recv_pd_buff[CH2_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]);
-            meas_result_data.recv_pd_data[CH3_IDX] = _calc_pd_avr(recv_pd_buff[CH3_IDX], meas_set_data.adc_sample_cnt[CH1_IDX]);
+            meas_result_data.recv_pd_data[CH1_IDX] = _calc_pd_avr(recv_pd_buff[CH1_IDX], meas_set_data.adc_sample_cnt[set_ch]); /* Use Same Sample Count */
+            meas_result_data.recv_pd_data[CH2_IDX] = _calc_pd_avr(recv_pd_buff[CH2_IDX], meas_set_data.adc_sample_cnt[set_ch]);
+            meas_result_data.recv_pd_data[CH3_IDX] = _calc_pd_avr(recv_pd_buff[CH3_IDX], meas_set_data.adc_sample_cnt[set_ch]);
         }
         else {
             meas_result_data.recv_pd_data[cur_ch] = _calc_pd_avr(recv_pd_buff[cur_ch], meas_set_data.adc_sample_cnt[cur_ch]);
@@ -681,7 +688,13 @@ static void _meas_task_single_cb(void) {
 
         case MEAS_STATE_ADC_START:
             /* Collecting Data */
-            App_Timer_Start(APP_TIMER_ID_MEAS, meas_set_data.adc_delay_ms[cur_ch], false, _meas_task_adc_single_cb);
+            if (cur_ch >= CH_ALL) {
+                /* Use Ch1 Settings */
+                App_Timer_Start(APP_TIMER_ID_MEAS, meas_set_data.adc_delay_ms[CH1_IDX], false, _meas_task_adc_single_cb);
+            }
+            else{
+                App_Timer_Start(APP_TIMER_ID_MEAS, meas_set_data.adc_delay_ms[cur_ch], false, _meas_task_adc_single_cb);
+            }
             meas_task_context.meas_state = MEAS_STATE_ADC_WAIT;
             break;
 

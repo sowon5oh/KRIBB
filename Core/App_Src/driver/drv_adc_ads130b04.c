@@ -94,7 +94,6 @@ typedef enum {
 
 typedef struct {
     bool enable;
-//    ads130b04ChGainMode_t gain_mode;
     ads130b04ChInputMode_t input_mode;
 } ads130b04ChCfg_t;
 
@@ -362,8 +361,9 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t
 
 HAL_StatusTypeDef DRV_ADS130B04_Start(void) {
     /* Wake Up */
-    SYS_VERIFY_SUCCESS(_send_cmd(ADS130B04_CMD_ID_WAKEUP));
-    SYS_VERIFY_SUCCESS(_meas_enable(true));
+    _send_cmd(ADS130B04_CMD_ID_WAKEUP);
+    HAL_Delay(100);
+    _meas_enable(true);
     _ch4_mux_enable(true);
     
     return HAL_OK;

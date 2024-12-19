@@ -103,36 +103,59 @@ HAL_StatusTypeDef Task_MMI_SendMeasContinousResult(void) {
 HAL_StatusTypeDef Task_MMI_SendMeasSigleResult(void) {
     MeasSetChVal_t meas_ch;
     uint16_t meas_cnt;
-    int16_t recv_pd_data_buff;
-    int16_t temperature_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_SINGLE_RESP_DATA_LEN];
+    int16_t recv_pd_data_buff[MEAS_SET_CH_NUM];
+    int16_t temperature_data_buff[MEAS_SET_CH_NUM];
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_ALL_DATA_LEN] = {
+        0, };
 
-    Task_Meas_Get_SingleChResult(&meas_ch, &meas_cnt, &recv_pd_data_buff, &temperature_data_buff);
+    SYS_VERIFY_TRUE(MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_ALL_DATA_LEN >= (sizeof(meas_ch) + sizeof(meas_cnt) + sizeof(recv_pd_data_buff[0]) + sizeof(temperature_data_buff[0])));
 
-    temp_msg_buff[0] = meas_ch;
-    memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
-    memcpy(&temp_msg_buff[3], &recv_pd_data_buff, sizeof(recv_pd_data_buff));
-    memcpy(&temp_msg_buff[5], &temperature_data_buff, sizeof(temperature_data_buff));
+    Task_Meas_Get_SingleChResult(&meas_ch, &meas_cnt, &recv_pd_data_buff[0], &temperature_data_buff[0]);
 
-    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_SINGLE_MODE, MMI_CMD3_MEAS_REQ_SINGLE_RESP_DATA_LEN, &temp_msg_buff[0]);
+    if (meas_ch < MEAS_SET_CH_ALL && meas_ch >= MEAS_SET_CH_1) {
+        /* Single Data */
+        temp_msg_buff[0] = meas_ch;
+        memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
+        memcpy(&temp_msg_buff[3], &recv_pd_data_buff[meas_ch - 1], 2);
+        memcpy(&temp_msg_buff[5], &temperature_data_buff[meas_ch - 1], 2);
+
+        return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_SINGLE_MODE, MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_X_DATA_LEN, &temp_msg_buff[0]);
+    }
+    else {
+        /* All Data */
+        temp_msg_buff[0] = meas_ch;
+        memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
+        memcpy(&temp_msg_buff[3], &recv_pd_data_buff[CH1_IDX], 2);
+        memcpy(&temp_msg_buff[5], &temperature_data_buff[CH1_IDX], 2);
+        memcpy(&temp_msg_buff[7], &recv_pd_data_buff[CH2_IDX], 2);
+        memcpy(&temp_msg_buff[9], &temperature_data_buff[CH2_IDX], 2);
+        memcpy(&temp_msg_buff[11], &recv_pd_data_buff[CH3_IDX], 2);
+        memcpy(&temp_msg_buff[13], &temperature_data_buff[CH3_IDX], 2);
+
+        return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_SINGLE_MODE, MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_ALL_DATA_LEN, &temp_msg_buff[0]);
+    }
 }
 
 HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
     int16_t monitor_pd_data[3];
-    uint8_t data_buff[MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN];
+    uint8_t data_buff[MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN];
 
-    SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, (uint16_t*)&monitor_pd_data[0]));
+    SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, (uint16_t* )&monitor_pd_data[0]));
 
-    if(ch_cfg == MEAS_SET_CH_MAX){
-        //TODO
-        return HAL_ERROR;
+    if (ch_cfg == MEAS_SET_CH_MAX) {
+        data_buff[0] = (monitor_pd_data[CH1_IDX] >> 8) && 0xFF;
+        data_buff[1] = monitor_pd_data[CH1_IDX] && 0xFF;
+        data_buff[0] = (monitor_pd_data[CH2_IDX] >> 8) && 0xFF;
+        data_buff[1] = monitor_pd_data[CH2_IDX] && 0xFF;
+        data_buff[0] = (monitor_pd_data[CH3_IDX] >> 8) && 0xFF;
+        data_buff[1] = monitor_pd_data[CH3_IDX] && 0xFF;
+        return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN, &data_buff[0]);
     }
-    else{
+    else {
         data_buff[0] = (monitor_pd_data[ch_cfg - 1] >> 8) && 0xFF;
         data_buff[1] = monitor_pd_data[ch_cfg - 1] && 0xFF;
+        return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN, &data_buff[0]);
     }
-
-    return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN, &data_buff[0]);
 }
 
 /* Private user code ---------------------------------------------------------*/
@@ -444,10 +467,10 @@ static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
                 MeasSetChVal_t ch_cfg = p_data[0];
                 uint16_t ch_cnt = (p_data[1] << 8) | p_data[2];
 
-                if(ch_cfg < MEAS_SET_CH_ALL && ch_cfg >= MEAS_SET_CH_1){
+                if (ch_cfg < MEAS_SET_CH_ALL && ch_cfg >= MEAS_SET_CH_1) {
                     set_ch = ch_cfg;
                 }
-                else{
+                else {
                     set_ch = MEAS_SET_CH_ALL;
                 }
                 Task_Meas_Req_SingleMode(set_ch, ch_cnt);

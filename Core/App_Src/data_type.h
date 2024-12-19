@@ -154,13 +154,14 @@ extern "C" {
 #define MMI_CMD1_MEAS_REQ_RESP           0x1B
 #define MMI_CMD1_MEAS_REQ_MAX_DATA_LEN   MMI_CMD3_MEAS_REQ_ALL_DATA_LEN
 
-#define MMI_CMD2_MEAS_REQ_DATA_W_RESP        	   0x00
-#define MMI_CMD3_MEAS_REQ_CONTINUOS_MODE           0x00
-#define MMI_CMD3_MEAS_REQ_CONTINUOS_DATA_LEN       (1)   /* Don' care */
-#define MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN  (18)  /* CH 1-3 Data (Temperature, Recv ADC, Monitor ADC) */
-#define MMI_CMD3_MEAS_REQ_SINGLE_MODE              0x01
-#define MMI_CMD3_MEAS_REQ_SINGLE_DATA_LEN          (3)   /* CH, Count */
-#define MMI_CMD3_MEAS_REQ_SINGLE_RESP_DATA_LEN     (7)
+#define MMI_CMD2_MEAS_REQ_DATA_W_RESP        	      0x00
+#define MMI_CMD3_MEAS_REQ_CONTINUOS_MODE              0x00
+#define MMI_CMD3_MEAS_REQ_CONTINUOS_DATA_LEN          (1)   /* Don' care */
+#define MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN     (18)  /* CH 1-3 Data (Temperature, Recv ADC, Monitor ADC) */
+#define MMI_CMD3_MEAS_REQ_SINGLE_MODE                 0x01
+#define MMI_CMD3_MEAS_REQ_SINGLE_DATA_LEN             (3)   /* CH, Count */
+#define MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_X_DATA_LEN   (7)
+#define MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_ALL_DATA_LEN (15)
 
 #define MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN    (2)
 #define MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN    (6)
@@ -244,6 +245,7 @@ typedef enum {
     MEAS_SET_CH_3 = 0x03,
     MEAS_SET_CH_ALL = 0x04,
     MEAS_SET_CH_MAX = MEAS_SET_CH_ALL,
+    MEAS_SET_CH_NUM = 3,
 } MeasSetChVal_t;
 
 typedef enum {

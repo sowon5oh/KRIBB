@@ -257,7 +257,7 @@ int main(void) {
     Task_Fsm_Init();
     
     /* Init Meas Task & Read settings from FRAM */
-    HAL_Delay(10);
+    HAL_Delay(50);
     Task_Meas_Init();
     Task_TempCtrl_Init();
     

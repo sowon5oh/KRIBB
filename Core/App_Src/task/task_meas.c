@@ -67,6 +67,7 @@ typedef struct {
 static void _meas_task_init(void);
 static void _meas_task_enable(bool enable);
 static void _meas_set_init(void);
+static void _meas_set_default(void);
 static void _meas_result_init(void);
 /* Timer Callback */
 static void _meas_task_led_stable_cb(void);
@@ -104,12 +105,10 @@ static int16_t recv_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT] = {
     0, };
 static int16_t monitor_pd_buff[CH_NUM][MEAS_SET_MAX_ADC_SAMPLE_CNT] = {
     0, };
-
-#if(CONFIG_FEATURE_SETTINGS_DEFAULT == 1)
 static MeasSetData_t meas_set_default_data = {
-    .temp_ctrl_mode[CH1_IDX] = MEAS_SET_DEFAULT_temp_ctrl_mode,
-    .temp_ctrl_mode[CH2_IDX] = MEAS_SET_DEFAULT_temp_ctrl_mode,
-    .temp_ctrl_mode[CH3_IDX] = MEAS_SET_DEFAULT_temp_ctrl_mode,
+    .temp_ctrl_mode[CH1_IDX] = MEAS_SET_DEFAULT_TEMP_CTRL_MODE,
+    .temp_ctrl_mode[CH2_IDX] = MEAS_SET_DEFAULT_TEMP_CTRL_MODE,
+    .temp_ctrl_mode[CH3_IDX] = MEAS_SET_DEFAULT_TEMP_CTRL_MODE,
     .led_on_time[CH1_IDX] = MEAS_SET_DEFAULT_LED_ON_TIME_MS,
     .led_on_time[CH2_IDX] = MEAS_SET_DEFAULT_LED_ON_TIME_MS,
     .led_on_time[CH3_IDX] = MEAS_SET_DEFAULT_LED_ON_TIME_MS,
@@ -126,7 +125,6 @@ static MeasSetData_t meas_set_default_data = {
     .temperature_offset[CH1_IDX] = MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE,
     .temperature_offset[CH2_IDX] = MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE,
     .temperature_offset[CH3_IDX] = MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE };
-#endif
 
 /* Public user code ----------------------------------------------------------*/
 void Task_Meas_Init(void) {
@@ -225,6 +223,10 @@ HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val) {
     memcpy(p_set_val, &meas_set_data, sizeof(MeasSetData_t));
     
     return HAL_OK;
+}
+
+void Task_Meas_Set_Initialize(void) {
+    _meas_set_default();
 }
 
 HAL_StatusTypeDef Task_Meas_Start(void) {
@@ -441,31 +443,7 @@ static void _meas_set_init(void) {
     Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data);
 
 #if(CONFIG_FEATURE_SETTINGS_DEFAULT == 1)
-    /* Set default */
-    _meas_set_temp_ctrl_mode(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_temp_ctrl_mode);
-    _meas_set_led_on_time_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_TIME_MS);
-    _meas_set_led_on_level(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_LEVEL);
-    _meas_set_adc_sample_cnt(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_SAMPLE_CNT);
-    _meas_set_adc_delay_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_DELAY_MS);
-    _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE);
-    _meas_set_temperature_offset_degree(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE);
-
-    /* Save Fram */
-    Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR_CH1, FRAM_TEMP_SETTING_DATA_LEN, (uint8_t*) meas_set_default_data.temp_ctrl_mode);
-    Hal_Fram_Write(FRAM_LED_ON_TIME_ADDR_CH1, FRAM_LED_ON_TIME_DATA_LEN, (uint8_t*) meas_set_default_data.led_on_time);
-    Hal_Fram_Write(FRAM_LED_ON_LEVEL_ADDR_CH1, FRAM_LED_ON_LEVEL_DATA_LEN, (uint8_t*) meas_set_default_data.led_on_level);
-    Hal_Fram_Write(FRAM_ADC_SAMPLE_CNT_ADDR_CH1, FRAM_ADC_SAMPLE_CNT_DATA_LEN, (uint8_t*) meas_set_default_data.adc_sample_cnt);
-    Hal_Fram_Write(FRAM_ADC_DELAY_MS_ADDR_CH1, FRAM_ADC_DELAY_MS_DATA_LEN, (uint8_t*) meas_set_default_data.adc_delay_ms);
-
-    temp_temperature = meas_set_default_data.stable_temperature * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-    Hal_Fram_Write(FRAM_STABLE_TEMPERATURE_ADDR, FRAM_STABLE_TEMPERATURE_DATA_LEN, (uint8_t*) &temp_temperature);
-
-    temp_temperature = meas_set_default_data.temperature_offset[CH1_IDX] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-    Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR_CH1, FRAM_TEMPERATURE_OFFSET_DATA_LEN, (uint8_t*) &temp_temperature);
-    Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR_CH2, FRAM_TEMPERATURE_OFFSET_DATA_LEN, (uint8_t*) &temp_temperature);
-    Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR_CH3, FRAM_TEMPERATURE_OFFSET_DATA_LEN, (uint8_t*) &temp_temperature);
-
-    Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data); /* for check */
+    _meas_set_default();
 #else
     /* Set read data */
     _meas_set_temp_ctrl_mode(MEAS_SET_CH_1, read_data[FRAM_TEMP_SETTING_ADDR_CH1]);
@@ -505,6 +483,38 @@ static void _meas_set_init(void) {
 #endif
 
     SYS_LOG_INFO("Settings Done");
+}
+
+static void _meas_set_default(void) {
+    uint16_t temp_temperature;
+    uint8_t read_data[FRAM_DATA_MAX_LEN] = {
+        0, };
+
+    /* Set default */
+    _meas_set_temp_ctrl_mode(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_TEMP_CTRL_MODE);
+    _meas_set_led_on_time_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_TIME_MS);
+    _meas_set_led_on_level(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_LED_ON_LEVEL);
+    _meas_set_adc_sample_cnt(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_SAMPLE_CNT);
+    _meas_set_adc_delay_ms(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_ADC_DELAY_MS);
+    _meas_set_stable_temperature_degree(MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+    _meas_set_temperature_offset_degree(MEAS_SET_CH_ALL, MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+
+    /* Save Fram */
+    Hal_Fram_Write(FRAM_TEMP_SETTING_ADDR_CH1, FRAM_TEMP_SETTING_DATA_LEN, (uint8_t*) meas_set_default_data.temp_ctrl_mode);
+    Hal_Fram_Write(FRAM_LED_ON_TIME_ADDR_CH1, FRAM_LED_ON_TIME_DATA_LEN, (uint8_t*) meas_set_default_data.led_on_time);
+    Hal_Fram_Write(FRAM_LED_ON_LEVEL_ADDR_CH1, FRAM_LED_ON_LEVEL_DATA_LEN, (uint8_t*) meas_set_default_data.led_on_level);
+    Hal_Fram_Write(FRAM_ADC_SAMPLE_CNT_ADDR_CH1, FRAM_ADC_SAMPLE_CNT_DATA_LEN, (uint8_t*) meas_set_default_data.adc_sample_cnt);
+    Hal_Fram_Write(FRAM_ADC_DELAY_MS_ADDR_CH1, FRAM_ADC_DELAY_MS_DATA_LEN, (uint8_t*) meas_set_default_data.adc_delay_ms);
+
+    temp_temperature = meas_set_default_data.stable_temperature * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+    Hal_Fram_Write(FRAM_STABLE_TEMPERATURE_ADDR, FRAM_STABLE_TEMPERATURE_DATA_LEN, (uint8_t*) &temp_temperature);
+
+    temp_temperature = meas_set_default_data.temperature_offset[CH1_IDX] * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
+    Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR_CH1, FRAM_TEMPERATURE_OFFSET_DATA_LEN, (uint8_t*) &temp_temperature);
+    Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR_CH2, FRAM_TEMPERATURE_OFFSET_DATA_LEN, (uint8_t*) &temp_temperature);
+    Hal_Fram_Write(FRAM_TEMPERATURE_OFFSET_ADDR_CH3, FRAM_TEMPERATURE_OFFSET_DATA_LEN, (uint8_t*) &temp_temperature);
+
+    Hal_Fram_Read(FRAM_DATA_MIN_ADDR, FRAM_DATA_MAX_LEN, read_data); /* for check */
 }
 
 static void _meas_result_init(void) {
@@ -692,7 +702,7 @@ static void _meas_task_single_cb(void) {
                 /* Use Ch1 Settings */
                 App_Timer_Start(APP_TIMER_ID_MEAS, meas_set_data.adc_delay_ms[CH1_IDX], false, _meas_task_adc_single_cb);
             }
-            else{
+            else {
                 App_Timer_Start(APP_TIMER_ID_MEAS, meas_set_data.adc_delay_ms[cur_ch], false, _meas_task_adc_single_cb);
             }
             meas_task_context.meas_state = MEAS_STATE_ADC_WAIT;

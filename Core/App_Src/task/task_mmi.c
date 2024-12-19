@@ -403,6 +403,13 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
         return HAL_OK;
     }
+    else if (MMI_CMD2_MEAS_SET_INITIALIZE == cmd2 ) {
+        SYS_VERIFY_TRUE(MMI_CMD3_MEAS_SET_INITIALIZE == cmd3);
+
+        Task_Meas_Set_Initialize();
+
+        return HAL_OK;
+    }
     else {
         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
         uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN];

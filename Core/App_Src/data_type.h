@@ -149,6 +149,9 @@ extern "C" {
 #define MMI_CMD3_MEAS_SET_TEMPERATURE_OFFSET_DEGREE          0x00
 #define MMI_CMD3_MEAS_SET_TEMPERATURE_OFFSET_DEGREE_DATA_LEN (2)
 
+#define MMI_CMD2_MEAS_SET_INITIALIZE                         0xFF
+#define MMI_CMD3_MEAS_SET_INITIALIZE                         0x00
+
 /* RX Command Group 3: Request Measuring */
 #define MMI_CMD1_MEAS_REQ                0x0B
 #define MMI_CMD1_MEAS_REQ_RESP           0x1B
@@ -272,7 +275,7 @@ typedef enum {
 } MeasCtrlOpMode_t;
 
 /* Default Measure Setting */
-#define MEAS_SET_DEFAULT_TEMP_CTRL_TYPE            LED_CTRL_AUTO
+#define MEAS_SET_DEFAULT_TEMP_CTRL_MODE            TEMP_CTRL_AUTO
 
 #define MEAS_SET_MIN_LED_ON_TIME_MS                100
 #define MEAS_SET_MAX_LED_ON_TIME_MS                1000

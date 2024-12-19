@@ -35,6 +35,7 @@ extern "C" {
 void Task_Meas_Init(void);
 HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, uint8_t *p_set_val);
 HAL_StatusTypeDef Task_Meas_Get_Set(MeasSetData_t *p_set_val);
+void Task_Meas_Set_Initialize(void);
 HAL_StatusTypeDef Task_Meas_Start(void);
 HAL_StatusTypeDef Task_Meas_Stop(void);
 void Task_Meas_Req_ContinuosMode(void);

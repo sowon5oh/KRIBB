@@ -35,7 +35,7 @@ typedef struct {
 } tempCtrlTaskContext_t;
 
 /* Private define ------------------------------------------------------------*/
-#define TEMP_CTRL_TASK_DUTY_MS 500
+#define TEMP_CTRL_TASK_DUTY_MS 100
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -119,9 +119,9 @@ static void _temp_ctrl_task_init(void) {
     _set_temp_offset(CH1_IDX, (float) temp_set_data.temperature_offset[CH1_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     _set_temp_offset(CH2_IDX, (float) temp_set_data.temperature_offset[CH2_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     _set_temp_offset(CH3_IDX, (float) temp_set_data.temperature_offset[CH3_IDX] / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
-    _set_temp_ctrl_mode(CH1_IDX, temp_set_data.temp_ctrl_mode[CH1_IDX]);
-    _set_temp_ctrl_mode(CH2_IDX, temp_set_data.temp_ctrl_mode[CH2_IDX]);
-    _set_temp_ctrl_mode(CH3_IDX, temp_set_data.temp_ctrl_mode[CH3_IDX]);
+    _set_temp_ctrl_mode(CH1_IDX, TEMP_CTRL_AUTO);
+    _set_temp_ctrl_mode(CH2_IDX, TEMP_CTRL_AUTO);
+    _set_temp_ctrl_mode(CH3_IDX, TEMP_CTRL_AUTO);
 }
 
 static void _temp_ctrl_task_enable(bool enable) {
@@ -201,6 +201,7 @@ static void _set_temp_ctrl_mode(MeasCh_t ch, MeasSetTempCtrlType_t temp_ctrl_mod
             SYS_LOG_INFO("Heater Force On");
             break;
     }
+    temp_ctrl_task_context.temp_ctrl_mode[ch] = temp_ctrl_mode;
 }
 
 static void _set_stable_temp(float stable_temp) {

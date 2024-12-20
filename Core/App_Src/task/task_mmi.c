@@ -116,8 +116,8 @@ HAL_StatusTypeDef Task_MMI_SendMeasSigleResult(void) {
         /* Single Data */
         temp_msg_buff[0] = meas_ch;
         memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
-        memcpy(&temp_msg_buff[3], &recv_pd_data_buff[meas_ch - 1], 2);
-        memcpy(&temp_msg_buff[5], &temperature_data_buff[meas_ch - 1], 2);
+        memcpy(&temp_msg_buff[3], &recv_pd_data_buff[0], 2);
+        memcpy(&temp_msg_buff[5], &temperature_data_buff[0], 2);
 
         return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_SINGLE_MODE, MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_X_DATA_LEN, &temp_msg_buff[0]);
     }

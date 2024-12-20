@@ -211,9 +211,6 @@ HAL_StatusTypeDef Task_Meas_Apply_Set(MeasSetCat_t set_cat, MeasSetChVal_t ch, u
         }
     }
 
-    /* Restart Measure */
-    _meas_task_enable(true);
-
     return HAL_OK;
 }
 

@@ -35,7 +35,7 @@ typedef struct {
 } tempCtrlTaskContext_t;
 
 /* Private define ------------------------------------------------------------*/
-#define TEMP_CTRL_TASK_DUTY_MS 3000
+#define TEMP_CTRL_TASK_DUTY_MS 500
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -145,27 +145,37 @@ static void _temp_ctrl_task_cb(void) {
     for (uint8_t ch_idx = CH1_IDX; ch_idx < CH_NUM; ch_idx++) {
         SYS_LOG_DEBUG("[CH %d] Current Temperature: %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
 
-        if (temp_ctrl_task_context.temp_ctrl_mode[ch_idx] != TEMP_CTRL_AUTO)
+        if (temp_ctrl_task_context.temp_ctrl_mode[ch_idx] == TEMP_CTRL_FORCE_OFF)
         {
-            SYS_LOG_DEBUG("[CH %d] Temperature Auto Control Off");
-            break;
-        }
-
-        if (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE < temp_ctrl_task_context.cur_temp[ch_idx]) {
-            SYS_LOG_DEBUG("[CH %d] Temperature Over MAX Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
             Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
+            SYS_LOG_DEBUG("[CH %d] Temperature Control Force Off");
         }
-        else if (MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE >= temp_ctrl_task_context.cur_temp[ch_idx]) {
-            SYS_LOG_DEBUG("[CH %d] Temperature Below MIN Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
+        else if(temp_ctrl_task_context.temp_ctrl_mode[ch_idx] == TEMP_CTRL_FORCE_ON)
+        {
             Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
+            SYS_LOG_DEBUG("[CH %d] Temperature Control Force On");
         }
-        else {
-            SYS_LOG_DEBUG("[CH %d] Current Temp, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx], temp_ctrl_task_context.cur_temp[ch_idx]);
-            if (temp_ctrl_task_context.cur_temp[ch_idx] < temp_ctrl_task_context.stable_temperature) {
+        else // Auto Control
+        {
+            if (MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE < temp_ctrl_task_context.cur_temp[ch_idx])
+            {
+                SYS_LOG_DEBUG("[CH %d] Temperature Over MAX Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
+                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
+            }
+            else if (MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE >= temp_ctrl_task_context.cur_temp[ch_idx])
+            {
+                SYS_LOG_DEBUG("[CH %d] Temperature Below MIN Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
             }
-            else {
-                Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
+            else
+            {
+                SYS_LOG_DEBUG("[CH %d] Current Temp, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx], temp_ctrl_task_context.cur_temp[ch_idx]);
+                if (temp_ctrl_task_context.cur_temp[ch_idx] < temp_ctrl_task_context.stable_temperature) {
+                    Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);
+                }
+                else {
+                    Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
+                }
             }
         }
     }

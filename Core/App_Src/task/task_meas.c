@@ -629,7 +629,7 @@ static void _meas_task_cb(void) {
             SYS_LOG_INFO("- monitor pd : %d", meas_result_data.monitor_pd_data[cur_ch]);
 #endif
             /* LED Off */
-            _led_ctrl(cur_ch, false);
+//            _led_ctrl(cur_ch, false);
             /* Change Channel */
             if (++cur_ch >= CH_NUM) {
                 meas_task_context.meas_cur_ch = CH1_IDX;

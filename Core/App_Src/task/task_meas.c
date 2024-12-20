@@ -346,6 +346,18 @@ HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, uint16_t *p_r
             return HAL_OK;
 
         case MEAS_RESULT_CAT_MONITOR_PD_ADC:
+            if (HAL_OK == Hal_Pd_SetMonitorCh(CH1_IDX)){
+                Hal_Delay(500);
+                Hal_Pd_GetMonitorData(CH1_IDX, &meas_result_data.monitor_pd_data[CH1_IDX]);
+            }
+            if (HAL_OK == Hal_Pd_SetMonitorCh(CH2_IDX)){
+                Hal_Delay(500);
+                Hal_Pd_GetMonitorData(CH2_IDX, &meas_result_data.monitor_pd_data[CH2_IDX]);
+            }
+            if (HAL_OK == Hal_Pd_SetMonitorCh(CH3_IDX)){    
+                Hal_Delay(500);
+                Hal_Pd_GetMonitorData(CH3_IDX, &meas_result_data.monitor_pd_data[CH3_IDX]);
+            }
             memcpy(p_result_val, &meas_result_data.monitor_pd_data, sizeof(uint16_t));
             return HAL_OK;
 

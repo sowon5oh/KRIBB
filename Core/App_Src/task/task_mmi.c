@@ -123,7 +123,7 @@ HAL_StatusTypeDef Task_MMI_SendMeasSigleResult(void) {
     }
     else {
         /* All Data */
-        temp_msg_buff[0] = meas_ch;
+        temp_msg_buff[0] = MMI_CMD3_MEAS_REQ_SINGLE_CH_ALL_ID;
         memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
         memcpy(&temp_msg_buff[3], &recv_pd_data_buff[CH1_IDX], 2);
         memcpy(&temp_msg_buff[5], &temperature_data_buff[CH1_IDX], 2);

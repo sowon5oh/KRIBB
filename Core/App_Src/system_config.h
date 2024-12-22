@@ -47,7 +47,7 @@ extern "C" {
 #define SYS_LOG_LEVEL_INFO  2
 #define SYS_LOG_LEVEL_WARN  3
 #define SYS_LOG_LEVEL_ERR   4
-#define SYS_LOG_LEVEL_CFG   SYS_LOG_LEVEL_NONE
+#define SYS_LOG_LEVEL_CFG   SYS_LOG_LEVEL_INFO
 
 /* config for features */
 #define CONFIG_FEATURE_SETTINGS_DEFAULT        0

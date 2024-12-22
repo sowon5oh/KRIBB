@@ -91,7 +91,6 @@ extern "C" {
 /* RX Command Group 2: Set for Measuring */
 #define MMI_CMD1_MEAS_SET                   0x0A
 #define MMI_CMD1_MEAS_SET_RESP              0x1A
-#define MMI_CMD1_MEAS_SET_MAX_DATA_LEN      MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN
 
 #define MMI_CMD2_MEAS_SET_VAL_REQ_W_RESP         0x00
 #define MMI_CMD3_MEAS_SET_VAL_REQ                0x00
@@ -151,6 +150,7 @@ extern "C" {
 
 #define MMI_CMD2_MEAS_SET_INITIALIZE                         0xFF
 #define MMI_CMD3_MEAS_SET_INITIALIZE                         0x00
+#define MMI_CMD1_MEAS_SET_MAX_DATA_LEN                       MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN
 
 /* RX Command Group 3: Request Measuring */
 #define MMI_CMD1_MEAS_REQ                0x0B
@@ -305,27 +305,18 @@ typedef enum {
 
 #define MEAS_SET_DEFAULT_LED_CTRL_TYPE             LED_CTRL_AUTO
 
-#pragma pack(push, 1)
 typedef struct {
     MeasSetTempCtrlType_t temp_ctrl_mode[CH_NUM]; /* Ch1 - CH3 */
     uint16_t led_on_time[CH_NUM];
     uint16_t led_on_level[CH_NUM];
+    uint16_t temperature_offset[CH_NUM];
+    uint16_t stable_temperature;
+    /* ~NVM */
     uint16_t adc_sample_cnt[CH_NUM];
     uint16_t adc_delay_ms[CH_NUM];
-    uint16_t stable_temperature;
-    uint16_t temperature_offset[CH_NUM];
-    /* ~NVM */
     MeasSetChTest_t ch_test[CH_NUM];
     MeasCtrlLedType_t led_ctrl_mode[CH_NUM]; /* Ch1 - CH3 */
 } MeasSetData_t;
-#pragma pack(pop)
-
-typedef struct {
-    union {
-        MeasSetData_t settings;
-        uint8_t msg[MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN + 3];
-    };
-} MeasSetDataMsg_t;
 
 typedef struct {
     int16_t temperature_data[CH_NUM];

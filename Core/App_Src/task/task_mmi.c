@@ -393,17 +393,34 @@ static HAL_StatusTypeDef _process_get_device_info(uint8_t cmd2, uint8_t cmd3) {
 }
 
 static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
-    if (MMI_CMD2_MEAS_SET_VAL_REQ_W_RESP == cmd2) {
-        MeasSetDataMsg_t set_data_buff;
+    MeasSetData_t cur_set_data;
+    uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN];
 
+    if (MMI_CMD2_MEAS_SET_VAL_REQ_W_RESP == cmd2) {
         SYS_VERIFY_TRUE(MMI_CMD3_MEAS_SET_VAL_REQ == cmd3);
 
-        Task_Meas_Get_Set(&set_data_buff.settings);
-        SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET_RESP, cmd2, cmd3, MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN, &set_data_buff.msg[0]));
+        Task_Meas_Get_Set(&cur_set_data);
+        memset(&set_data_val, 0, sizeof(set_data_val));
+        memcpy(&set_data_val[0], &cur_set_data.temp_ctrl_mode[CH1_IDX], 1);
+        memcpy(&set_data_val[1], &cur_set_data.temp_ctrl_mode[CH2_IDX], 1);
+        memcpy(&set_data_val[2], &cur_set_data.temp_ctrl_mode[CH3_IDX], 1);
+        memcpy(&set_data_val[3], &cur_set_data.led_on_time[CH1_IDX], 2);
+        memcpy(&set_data_val[5], &cur_set_data.led_on_time[CH2_IDX], 2);
+        memcpy(&set_data_val[7], &cur_set_data.led_on_time[CH3_IDX], 2);
+        memcpy(&set_data_val[9], &cur_set_data.led_on_level[CH1_IDX], 2);
+        memcpy(&set_data_val[11], &cur_set_data.led_on_level[CH2_IDX], 2);
+        memcpy(&set_data_val[13], &cur_set_data.led_on_level[CH3_IDX], 2);
+        memcpy(&set_data_val[15], &cur_set_data.temperature_offset[CH1_IDX], 2);
+        memcpy(&set_data_val[17], &cur_set_data.temperature_offset[CH2_IDX], 2);
+        memcpy(&set_data_val[19], &cur_set_data.temperature_offset[CH3_IDX], 2);
+        /* 20 - 26: Reserved */
+        memcpy(&set_data_val[27], &cur_set_data.stable_temperature, 2);
+
+        SYS_VERIFY_SUCCESS(_mmi_send(MMI_CMD1_MEAS_SET_RESP, cmd2, cmd3, MMI_CMD3_MEAS_SET_VAL_REQ_RESP_DATA_LEN, (uint8_t *)&set_data_val));
 
         return HAL_OK;
     }
-    else if (MMI_CMD2_MEAS_SET_INITIALIZE == cmd2 ) {
+    else if (MMI_CMD2_MEAS_SET_INITIALIZE == cmd2) {
         SYS_VERIFY_TRUE(MMI_CMD3_MEAS_SET_INITIALIZE == cmd3);
 
         Task_Meas_Set_Initialize();
@@ -412,7 +429,6 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
     }
     else {
         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
-        uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN];
 
         memcpy(set_data_val, p_data, (data_len > sizeof(set_data_val) ? sizeof(set_data_val) : data_len));
 

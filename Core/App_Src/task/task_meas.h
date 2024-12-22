@@ -46,6 +46,7 @@ HAL_StatusTypeDef Task_Meas_Get_Result(MeasResultCat_t result_cat, uint16_t *p_r
 HAL_StatusTypeDef Task_Meas_Get_Status(MeasReqStatus_t *p_status_val);
 HAL_StatusTypeDef Task_Meas_Ctrl_Led(MeasSetChVal_t ch, MeasCtrlLedType_t ctrl);
 HAL_StatusTypeDef Task_Meas_Ctrl_OpMode(MeasCtrlOpMode_t op_mode);
+HAL_StatusTypeDef Task_Meas_Ctrl_AdcInputMode(MeasCtrlAdcInputMode_t input_mode);
 
 #ifdef __cplusplus
 }

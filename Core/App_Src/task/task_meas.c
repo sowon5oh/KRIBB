@@ -299,6 +299,21 @@ HAL_StatusTypeDef Task_Meas_Ctrl_OpMode(MeasCtrlOpMode_t op_mode) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef Task_Meas_Ctrl_AdcInputMode(MeasCtrlAdcInputMode_t input_mode) {
+    SYS_VERIFY_TRUE(input_mode < ADC_INPUT_MODE_MAX);
+
+    _meas_task_enable(false);
+
+    if (HAL_OK == Hal_Pd_SetInputMode(input_mode)) {
+        SYS_LOG_INFO("[MEASURE ADC INPUT SET TO] %d", input_mode);
+        return HAL_OK;
+    }
+    else {
+        SYS_LOG_INFO("[MEASURE ADC INPUT SET FAILED]");
+        return HAL_ERROR;
+    }
+}
+
 HAL_StatusTypeDef Task_Meas_Get_AllChResult(MeasResultData_t *p_data) {
     SYS_VERIFY_PARAM_NOT_NULL(p_data);
 
@@ -539,8 +554,21 @@ static void _meas_task_led_stable_cb(void) {
 static void _meas_task_adc_continous_cb(void) {
     MeasCh_t cur_ch = meas_task_context.meas_cur_ch;
 
+    if (cur_ch == CH_ALL) {
+        if (HAL_OK == Hal_Pd_SetMonitorCh(CH1_IDX)) {
+            Hal_Pd_GetMonitorData(CH1_IDX, &monitor_pd_buff[CH1_IDX][meas_task_context.sample_cnt]);
+        }
+        if (HAL_OK == Hal_Pd_SetMonitorCh(CH2_IDX)) {
+            Hal_Pd_GetMonitorData(CH2_IDX, &monitor_pd_buff[CH2_IDX][meas_task_context.sample_cnt]);
+        }
+        if (HAL_OK == Hal_Pd_SetMonitorCh(CH3_IDX)) {
+            Hal_Pd_GetMonitorData(CH3_IDX, &monitor_pd_buff[CH3_IDX][meas_task_context.sample_cnt]);
+        }
+    }
+    else {
+        Hal_Pd_GetMonitorData(cur_ch, &monitor_pd_buff[cur_ch][meas_task_context.sample_cnt]);
+    }
     Hal_Pd_GetRecvData(cur_ch, &recv_pd_buff[cur_ch][meas_task_context.sample_cnt]);
-    Hal_Pd_GetMonitorData(cur_ch, &monitor_pd_buff[cur_ch][meas_task_context.sample_cnt]);
 
     if (++meas_task_context.sample_cnt >= meas_set_data.adc_sample_cnt[cur_ch]) {
         meas_result_data.recv_pd_data[cur_ch] = _calc_pd_avr(recv_pd_buff[cur_ch], meas_set_data.adc_sample_cnt[cur_ch]);

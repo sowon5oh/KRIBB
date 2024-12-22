@@ -66,6 +66,12 @@ HAL_StatusTypeDef Hal_Pd_SetMonitorCh(HalPdCh_t ch) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef Hal_Pd_SetInputMode(HalPdInput_t input_mode) {
+    SYS_VERIFY_SUCCESS(DRV_ADS130B04_SetInput(input_mode));
+
+    return HAL_OK;
+}
+
 HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, int16_t *p_data) {
     int16_t monitor_pd_data[HAL_PD_CH_NUM];
 

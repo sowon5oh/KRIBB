@@ -48,6 +48,14 @@ typedef enum {
     DRV_ADS130B04_MUX_CH_MAX = DRV_ADS130B04_MUX_CH_NUM,
 } Ads130b04Ch3MuxCh_t;
 
+typedef enum {
+    DRV_ADS130B04_CH_INPUT_MODE_CONN = 0,
+    DRV_ADS130B04_CH_INPUT_MODE_DISCONN,
+    DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE,
+    DRV_ADS130B04_CH_INPUT_MODE_TEST_NEGATIVE,
+    DRV_ADS130B04_CH_INPUT_MODE_TEST_NUM,
+} Ads130b04InputMode_t;
+
 /* Exported macro ------------------------------------------------------------*/
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -55,6 +63,7 @@ HAL_StatusTypeDef DRV_ADS130B04_Init(SPI_HandleTypeDef *p_handle, HalPdMeasRespC
 HAL_StatusTypeDef DRV_ADS130B04_Start(void);
 HAL_StatusTypeDef DRV_ADS130B04_Stop(void);
 HAL_StatusTypeDef DRV_ADS130B04_SetMuxCh(Ads130b04Ch3MuxCh_t ch);
+HAL_StatusTypeDef DRV_ADS130B04_SetInput(Ads130b04InputMode_t input_mode);
 HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data);
 HAL_StatusTypeDef DRV_ADS130B04_UpdateData(void);
 

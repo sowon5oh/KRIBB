@@ -210,6 +210,10 @@ extern "C" {
 #define MMI_CMD3_CTRL_DATA_SEND_MODE          0x00
 #define MMI_CMD3_CTRL_DATA_SEND_MODE_DATA_LEN (1)
 
+#define MMI_CMD2_CTRL_ADC_INPUT_MODE          0x03
+#define MMI_CMD3_CTRL_ADC_INPUT_MODE          0x00
+#define MMI_CMD3_CTRL_ADC_INPUT_MODE_DATA_LEN (1)
+
 typedef union {
     uint8_t bVal[4];
     float fVal;
@@ -274,6 +278,14 @@ typedef enum {
     MEAS_OP_MODE_SINGLE = 0x01,
     MEAS_OP_MODE_MAX,
 } MeasCtrlOpMode_t;
+
+typedef enum {
+    ADC_INPUT_MODE_CONNECT = 0x00,
+    ADC_INPUT_MODE_DISCONNECT = 0x01,
+    ADC_INPUT_MODE_POSITIVE_TEST = 0x02,
+    ADC_INPUT_MODE_NEGATIVE_TEST = 0x03,
+    ADC_INPUT_MODE_MAX,
+} MeasCtrlAdcInputMode_t;
 
 /* Default Measure Setting */
 #define MEAS_SET_DEFAULT_TEMP_CTRL_MODE            TEMP_CTRL_AUTO

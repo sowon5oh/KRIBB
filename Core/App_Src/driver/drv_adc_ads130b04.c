@@ -85,16 +85,9 @@ typedef enum {
     ADS130B04_CH_GAIN_MODE_128, /* FSR: +/-  9.375 mV */
 } ads130b04ChGainMode_t;
 
-typedef enum {
-    DRV_ADS130B04_CH_INPUT_MODE_CONN = 0,
-    DRV_ADS130B04_CH_INPUT_MODE_DISCONN,
-    DRV_ADS130B04_CH_INPUT_MODE_TEST_POSITIVE,
-    DRV_ADS130B04_CH_INPUT_MODE_TEST_NEGATIVE,
-} ads130b04ChInputMode_t;
-
 typedef struct {
     bool enable;
-    ads130b04ChInputMode_t input_mode;
+    Ads130b04InputMode_t input_mode;
 } ads130b04ChCfg_t;
 
 typedef enum {
@@ -391,6 +384,20 @@ HAL_StatusTypeDef DRV_ADS130B04_SetMuxCh(Ads130b04Ch3MuxCh_t ch) {
     _ch4_mux_enable(true);
 
     return HAL_OK;
+}
+
+HAL_StatusTypeDef DRV_ADS130B04_SetInput(Ads130b04InputMode_t input_mode) {
+    SYS_VERIFY_TRUE(input_mode < DRV_ADS130B04_CH_INPUT_MODE_TEST_NUM);
+
+    SYS_VERIFY_SUCCESS(_send_cmd(ADS130B04_CMD_ID_STANDBY));
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_0].input_mode = input_mode;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_1].input_mode = input_mode;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_2].input_mode = input_mode;
+    ads130b04_ch_cfg[DRV_ADS130B04_CH_3].input_mode = input_mode;
+    SYS_VERIFY_SUCCESS(_send_cmd(ADS130B04_CMD_ID_WAKEUP));
+
+    /* Ch MUX Config */
+    return _set_ch_mux_cfg();
 }
 
 HAL_StatusTypeDef DRV_ADS130B04_GetData(Ads130b04ChSel_t ch, int16_t *p_data) {

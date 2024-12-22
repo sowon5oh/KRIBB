@@ -560,6 +560,12 @@ static HAL_StatusTypeDef _process_ctrl_device(uint8_t cmd2, uint8_t cmd3, uint8_
             Task_Meas_Ctrl_OpMode(set_data_val[0]);
             break;
 
+        case MMI_CMD2_CTRL_ADC_INPUT_MODE:
+            SYS_VERIFY_TRUE(data_len == MMI_CMD3_CTRL_ADC_INPUT_MODE_DATA_LEN);
+
+            Task_Meas_Ctrl_AdcInputMode(set_data_val[0]);
+            break;
+
         default:
             return HAL_ERROR;
             break;

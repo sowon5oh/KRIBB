@@ -41,6 +41,13 @@ typedef enum {
     HAL_PD_CH_NUM = HAL_PD_CH_ALL,
 } HalPdCh_t;
 
+typedef enum {
+    HAL_PD_INPUT_NORMAL = 0,
+    HAL_PD_INPUT_GND,
+    HAL_PD_TEST_SIGNAL_POSITIVE,
+    HAL_PD_TEST_SIGNAL_NEGATIVE,
+} HalPdInput_t;
+
 typedef void (*HalPdMeasRespCb_t)(void);
 /* Exported macro ------------------------------------------------------------*/
 
@@ -49,6 +56,7 @@ HAL_StatusTypeDef Hal_Pd_Init(SPI_HandleTypeDef *p_hdl, HalPdMeasRespCb_t cb_fn)
 HAL_StatusTypeDef Hal_Pd_Start(void);
 HAL_StatusTypeDef Hal_Pd_Stop(void);
 HAL_StatusTypeDef Hal_Pd_SetMonitorCh(HalPdCh_t ch);
+HAL_StatusTypeDef Hal_Pd_SetInputMode(HalPdInput_t input_mode);
 HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, int16_t *p_data);
 HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, int16_t *p_data);
 HAL_StatusTypeDef Hal_Pd_UpdateData(void);

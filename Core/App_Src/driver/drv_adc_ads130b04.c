@@ -194,7 +194,7 @@ typedef struct {
 #define ADS130B04_REG_ADDR_CH1_CFG            0x0E    // 14
 #define ADS130B04_REG_ADDR_CH2_CFG            0x13    // 19
 #define ADS130B04_REG_ADDR_CH3_CFG            0x18    // 24
-#define DRV_ADS130B04_CH_CFG_MUX_BOFF         1
+#define DRV_ADS130B04_CH_CFG_MUX_BOFF         0
 #define DRV_ADS130B04_CH_CFG_MUX_BCNT         2
 /* REGISTER MAP CRC REGISTER (Read-Only Register) */
 #define ADS130B04_REG_ADDR_REG_MAP_CRC        0x3E    // 62

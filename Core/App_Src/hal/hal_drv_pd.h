@@ -51,6 +51,7 @@ HAL_StatusTypeDef Hal_Pd_Stop(void);
 HAL_StatusTypeDef Hal_Pd_SetMonitorCh(HalPdCh_t ch);
 HAL_StatusTypeDef Hal_Pd_GetMonitorData(HalPdCh_t ch, int16_t *p_data);
 HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, int16_t *p_data);
+HAL_StatusTypeDef Hal_Pd_UpdateData(void);
 
 #ifdef __cplusplus
 }

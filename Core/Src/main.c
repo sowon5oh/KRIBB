@@ -83,6 +83,8 @@ int __io_putchar(int ch) {
         return -1;
     return ch;
 }
+static void _timerCallback(void);
+static void _taskCallback(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -109,42 +111,68 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
             HAL_GPIO_TogglePin(OP_LED_GPIO_Port, OP_LED_Pin);
             led_timer_1sec_cnt = 0;
         }
+
+        /* app timer */
+        _timerCallback();
     }
 
     /* 10 kHz Timer (0.1 msec) */
     if (htim->Instance == TIM10) {
-        /* app timer */
-        for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_ID_MAX; timer_idx++) {
-            /* Check if the timer is active and if there is remaining time */
-            if (app_timers[timer_idx].active && app_timers[timer_idx].remaining_0_1_ms > 0) {
-                app_timers[timer_idx].remaining_0_1_ms--; /* Decrease the remaining time by 1 ms */
-                if (app_timers[timer_idx].remaining_0_1_ms == 0) {
-                    if (NULL != app_timers[timer_idx].timer_cb) {
-                        app_timers[timer_idx].timer_cb(); /* Call the timer callback function */
-                        if (app_timers[timer_idx].repeat) {
-                            app_timers[timer_idx].remaining_0_1_ms = app_timers[timer_idx].timeout_0_1_ms; /* Restart Timer */
-                        }
-                        else {
-                            app_timers[timer_idx].active = 0; /* Stop Timer */
-                        }
-                    }
-                }
-            }
-        }
+        /* app task */
+        _taskCallback();
+    }
+}
 
-        for (uint8_t task_idx = 0; task_idx < APP_TASK_ID_MAX; task_idx++) {
-            /* Check if the task is active and if there is remaining time */
-            if (app_tasks[task_idx].active && app_tasks[task_idx].remaining_0_1_ms > 0) {
-                app_tasks[task_idx].remaining_0_1_ms--; /* Decrease the remaining time by 1 ms */
-                if (app_tasks[task_idx].remaining_0_1_ms == 0) {
-                    if (NULL != app_tasks[task_idx].task_cb) {
-                        app_tasks[task_idx].task_cb(); /* Call the task callback function */
-                        app_tasks[task_idx].remaining_0_1_ms = app_tasks[task_idx].task_duty_0_1_ms; /* task keep going */
+volatile bool timer_mutex_flag = false;
+volatile bool task_mutex_flag = false;
+
+void _mutex_lock(volatile bool *mutex_flag) {
+    while (__atomic_test_and_set(mutex_flag, __ATOMIC_ACQUIRE)) {
+        /* Busy-wait */
+    }
+}
+
+void _mutex_unlock(volatile bool *mutex_flag) {
+    __atomic_clear(mutex_flag, __ATOMIC_RELEASE);
+}
+
+static void _timerCallback(void) {
+    _mutex_lock(&timer_mutex_flag);
+    for (uint8_t timer_idx = 0; timer_idx < APP_TIMER_ID_MAX; timer_idx++) {
+        /* Check if the timer is active and if there is remaining time */
+        if (app_timers[timer_idx].active && app_timers[timer_idx].remaining_1_ms > 0) {
+            app_timers[timer_idx].remaining_1_ms--; /* Decrease the remaining time by 1 ms */
+            if (app_timers[timer_idx].remaining_1_ms == 0) {
+                if (NULL != app_timers[timer_idx].timer_cb) {
+                    app_timers[timer_idx].timer_cb(); /* Call the timer callback function */
+                    if (app_timers[timer_idx].repeat) {
+                        app_timers[timer_idx].remaining_1_ms = app_timers[timer_idx].timeout_1_ms; /* Restart Timer */
+                    }
+                    else {
+                        app_timers[timer_idx].active = 0; /* Stop Timer */
                     }
                 }
             }
         }
     }
+    _mutex_unlock(&timer_mutex_flag);
+}
+
+static void _taskCallback(void) {
+    _mutex_lock(&task_mutex_flag);
+    for (uint8_t task_idx = 0; task_idx < APP_TASK_ID_MAX; task_idx++) {
+        /* Check if the task is active and if there is remaining time */
+        if (app_tasks[task_idx].active && app_tasks[task_idx].remaining_0_1_ms > 0) {
+            app_tasks[task_idx].remaining_0_1_ms--; /* Decrease the remaining time by 1 ms */
+            if (app_tasks[task_idx].remaining_0_1_ms == 0) {
+                if (NULL != app_tasks[task_idx].task_cb) {
+                    app_tasks[task_idx].task_cb(); /* Call the task callback function */
+                    app_tasks[task_idx].remaining_0_1_ms = app_tasks[task_idx].task_duty_0_1_ms; /* task keep going */
+                }
+            }
+        }
+    }
+    _mutex_unlock(&task_mutex_flag);
 }
 
 #if(CONFIG_FEATURE_TEMPERATURE_DMA_MODE != 1)
@@ -224,12 +252,12 @@ int main(void) {
     SYS_LOG_INFO("----------------------------------");
     SYS_LOG_INFO("            Devie Start           ");
     SYS_LOG_INFO("----------------------------------");
-                                                                                                                        // @formatter:on
+                                                                                                                            // @formatter:on
     /* Init Fsm Task */
     Task_Fsm_Init();
     
     /* Init Meas Task & Read settings from FRAM */
-    HAL_Delay(10);
+    HAL_Delay(50);
     Task_Meas_Init();
     Task_TempCtrl_Init();
     
@@ -710,8 +738,8 @@ static void MX_GPIO_Init(void) {
 /* USER CODE BEGIN 4 */
 void App_Timer_Start(AppTimerId_t timer_id, uint32_t timeout_ms, bool repeat, void (*timer_cb)(void)) {
     if (timer_id < APP_TIMER_ID_MAX) {
-        app_timers[timer_id].timeout_0_1_ms = timeout_ms * 10;
-        app_timers[timer_id].remaining_0_1_ms = timeout_ms * 10;
+        app_timers[timer_id].timeout_1_ms = timeout_ms;
+        app_timers[timer_id].remaining_1_ms = timeout_ms;
         app_timers[timer_id].timer_cb = timer_cb;
         app_timers[timer_id].active = 1;
         app_timers[timer_id].repeat = repeat;

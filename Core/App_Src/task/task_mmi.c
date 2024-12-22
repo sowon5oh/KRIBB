@@ -82,51 +82,80 @@ HAL_StatusTypeDef Task_MMI_SendDeviceInfo(void) {
     return HAL_OK;
 }
 
-HAL_StatusTypeDef Task_MMI_SendMeasAllChResult(void) {
+HAL_StatusTypeDef Task_MMI_SendMeasContinousResult(void) {
     MeasResultData_t result_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN];
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN];
+
+    uint8_t temp_data_len = sizeof(result_data_buff.temperature_data);
+    uint8_t recv_pd_data_len = sizeof(result_data_buff.recv_pd_data);
+    uint8_t monitor_pd_data_len = sizeof(result_data_buff.monitor_pd_data);
+    SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN);
+
     Task_Meas_Get_AllChResult(&result_data_buff);
 
     memcpy(&temp_msg_buff[0], &result_data_buff.temperature_data, sizeof(result_data_buff.temperature_data));
     memcpy(&temp_msg_buff[6], &result_data_buff.recv_pd_data, sizeof(result_data_buff.recv_pd_data));
     memcpy(&temp_msg_buff[12], &result_data_buff.monitor_pd_data, sizeof(result_data_buff.monitor_pd_data));
 
-    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_DATA_ALL_CH, MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN, &temp_msg_buff[0]);
+    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_CONTINUOS_MODE, MMI_CMD3_MEAS_REQ_CONTINUOS_RESP_DATA_LEN, &temp_msg_buff[0]);
 }
 
-HAL_StatusTypeDef Task_MMI_SendMeasSigleChResult(void) {
+HAL_StatusTypeDef Task_MMI_SendMeasSigleResult(void) {
     MeasSetChVal_t meas_ch;
     uint16_t meas_cnt;
-    int16_t recv_pd_data_buff;
-    int16_t temperature_data_buff;
-    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN];
+    int16_t recv_pd_data_buff[MEAS_SET_CH_NUM];
+    int16_t temperature_data_buff[MEAS_SET_CH_NUM];
+    uint8_t temp_msg_buff[MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_ALL_DATA_LEN] = {
+        0, };
 
-    Task_Meas_Get_SingleChResult(&meas_ch, &meas_cnt, &recv_pd_data_buff, &temperature_data_buff);
+    SYS_VERIFY_TRUE(MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_ALL_DATA_LEN >= (sizeof(meas_ch) + sizeof(meas_cnt) + sizeof(recv_pd_data_buff[0]) + sizeof(temperature_data_buff[0])));
 
-    temp_msg_buff[0] = meas_ch;
-    memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
-    memcpy(&temp_msg_buff[3], &recv_pd_data_buff, sizeof(recv_pd_data_buff));
-    memcpy(&temp_msg_buff[5], &temperature_data_buff, sizeof(temperature_data_buff));
+    Task_Meas_Get_SingleChResult(&meas_ch, &meas_cnt, &recv_pd_data_buff[0], &temperature_data_buff[0]);
 
-    return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH, MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_RESP_DATA_LEN, &temp_msg_buff[0]);
+    if (meas_ch < MEAS_SET_CH_ALL && meas_ch >= MEAS_SET_CH_1) {
+        /* Single Data */
+        temp_msg_buff[0] = meas_ch;
+        memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
+        memcpy(&temp_msg_buff[3], &recv_pd_data_buff[0], 2);
+        memcpy(&temp_msg_buff[5], &temperature_data_buff[0], 2);
+
+        return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_SINGLE_MODE, MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_X_DATA_LEN, &temp_msg_buff[0]);
+    }
+    else {
+        /* All Data */
+        temp_msg_buff[0] = MMI_CMD3_MEAS_REQ_SINGLE_CH_ALL_ID;
+        memcpy(&temp_msg_buff[1], &meas_cnt, sizeof(meas_cnt));
+        memcpy(&temp_msg_buff[3], &recv_pd_data_buff[CH1_IDX], 2);
+        memcpy(&temp_msg_buff[5], &temperature_data_buff[CH1_IDX], 2);
+        memcpy(&temp_msg_buff[7], &recv_pd_data_buff[CH2_IDX], 2);
+        memcpy(&temp_msg_buff[9], &temperature_data_buff[CH2_IDX], 2);
+        memcpy(&temp_msg_buff[11], &recv_pd_data_buff[CH3_IDX], 2);
+        memcpy(&temp_msg_buff[13], &temperature_data_buff[CH3_IDX], 2);
+
+        return _mmi_send(MMI_CMD1_MEAS_REQ_RESP, MMI_CMD2_MEAS_REQ_DATA_W_RESP, MMI_CMD3_MEAS_REQ_SINGLE_MODE, MMI_CMD3_MEAS_REQ_SINGLE_RESP_CH_ALL_DATA_LEN, &temp_msg_buff[0]);
+    }
 }
 
 HAL_StatusTypeDef Task_MMI_SendMonitorPdResult(MeasSetChVal_t ch_cfg) {
     int16_t monitor_pd_data[3];
-    uint8_t data_buff[MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN];
+    uint8_t data_buff[MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN];
 
-    SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, (uint16_t*)&monitor_pd_data[0]));
+    SYS_VERIFY_SUCCESS(Task_Meas_Get_Result(MEAS_RESULT_CAT_MONITOR_PD_ADC, (uint16_t* )&monitor_pd_data[0]));
 
-    if(ch_cfg == MEAS_SET_CH_MAX){
-        //TODO
-        return HAL_ERROR;
+    if (ch_cfg == MEAS_SET_CH_MAX) {
+        data_buff[0] = (monitor_pd_data[CH1_IDX] >> 8) && 0xFF;
+        data_buff[1] = monitor_pd_data[CH1_IDX] && 0xFF;
+        data_buff[0] = (monitor_pd_data[CH2_IDX] >> 8) && 0xFF;
+        data_buff[1] = monitor_pd_data[CH2_IDX] && 0xFF;
+        data_buff[0] = (monitor_pd_data[CH3_IDX] >> 8) && 0xFF;
+        data_buff[1] = monitor_pd_data[CH3_IDX] && 0xFF;
+        return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MAX_DATA_LEN, &data_buff[0]);
     }
-    else{
+    else {
         data_buff[0] = (monitor_pd_data[ch_cfg - 1] >> 8) && 0xFF;
         data_buff[1] = monitor_pd_data[ch_cfg - 1] && 0xFF;
+        return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN, &data_buff[0]);
     }
-
-    return _mmi_send(MMI_CMD1_MEAS_SET_RESP, MMI_CMD2_MEAS_SET_RESP_LED_LEVEL, ch_cfg, MMI_CMD3_MEAS_REQ_ADC_MIN_DATA_LEN, &data_buff[0]);
 }
 
 /* Private user code ---------------------------------------------------------*/
@@ -374,6 +403,13 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
         return HAL_OK;
     }
+    else if (MMI_CMD2_MEAS_SET_INITIALIZE == cmd2 ) {
+        SYS_VERIFY_TRUE(MMI_CMD3_MEAS_SET_INITIALIZE == cmd3);
+
+        Task_Meas_Set_Initialize();
+
+        return HAL_OK;
+    }
     else {
         MeasSetChVal_t ch_cfg = (MeasSetChVal_t) cmd3; /* cmd3: ch select */
         uint8_t set_data_val[MMI_CMD1_MEAS_SET_MAX_DATA_LEN];
@@ -425,31 +461,26 @@ static HAL_StatusTypeDef _process_set_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *
 
 static HAL_StatusTypeDef _process_req_meas(uint8_t cmd2, uint8_t cmd3, uint8_t *p_data, uint8_t data_len) {
     MeasResultData_t result_data_val;
+    MeasSetChVal_t set_ch;
 
     if (MMI_CMD2_MEAS_REQ_DATA_W_RESP == cmd2) {
         switch (cmd3) {
-            case MMI_CMD3_MEAS_REQ_DATA_ALL_CH:
-                uint8_t req_all_msg[MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN];
-                uint8_t temp_data_len = sizeof(result_data_val.temperature_data);
-                uint8_t recv_pd_data_len = sizeof(result_data_val.recv_pd_data);
-                uint8_t monitor_pd_data_len = sizeof(result_data_val.monitor_pd_data);
-                SYS_VERIFY_TRUE(temp_data_len + recv_pd_data_len + monitor_pd_data_len <= MMI_CMD3_MEAS_REQ_DATA_ALL_CH_RESP_DATA_LEN);
-
-                SYS_VERIFY_SUCCESS(Task_Meas_Get_AllChResult(&result_data_val));
-
-                memcpy(&req_all_msg[0], &result_data_val.temperature_data[0], temp_data_len);
-                memcpy(&req_all_msg[temp_data_len], &result_data_val.recv_pd_data[0], recv_pd_data_len);
-                memcpy(&req_all_msg[temp_data_len + recv_pd_data_len], &result_data_val.monitor_pd_data[0], monitor_pd_data_len);
-
+            case MMI_CMD3_MEAS_REQ_CONTINUOS_MODE:
                 Task_Meas_Req_ContinuosMode();
                 return HAL_OK;
 
-            case MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH:
-                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_REQ_DATA_SINGLE_CH_DATA_LEN);
+            case MMI_CMD3_MEAS_REQ_SINGLE_MODE:
+                SYS_VERIFY_TRUE(data_len == MMI_CMD3_MEAS_REQ_SINGLE_DATA_LEN);
                 MeasSetChVal_t ch_cfg = p_data[0];
                 uint16_t ch_cnt = (p_data[1] << 8) | p_data[2];
 
-                Task_Meas_Req_SingleMode(ch_cfg, ch_cnt);
+                if (ch_cfg < MEAS_SET_CH_ALL && ch_cfg >= MEAS_SET_CH_1) {
+                    set_ch = ch_cfg;
+                }
+                else {
+                    set_ch = MEAS_SET_CH_ALL;
+                }
+                Task_Meas_Req_SingleMode(set_ch, ch_cnt);
                 return HAL_OK;
 
             default:

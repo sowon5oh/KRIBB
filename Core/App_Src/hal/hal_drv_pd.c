@@ -90,4 +90,8 @@ HAL_StatusTypeDef Hal_Pd_GetRecvData(HalPdCh_t ch, int16_t *p_data) {
     return HAL_OK;
 }
 
+HAL_StatusTypeDef Hal_Pd_UpdateData(void) {
+    return DRV_ADS130B04_UpdateData();
+}
+
 /* Private user code ---------------------------------------------------------*/

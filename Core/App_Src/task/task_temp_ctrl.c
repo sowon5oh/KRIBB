@@ -123,8 +123,8 @@ static void _temp_ctrl_task_init(void) {
     _set_temp_ctrl_mode(CH2_IDX, TEMP_CTRL_AUTO);
     _set_temp_ctrl_mode(CH3_IDX, TEMP_CTRL_AUTO);
 }
-
 static void _temp_ctrl_task_enable(bool enable) {
+
     if (enable) {
         temp_ctrl_task_context.task_op_state = true;
         
@@ -185,18 +185,15 @@ static void _set_temp_ctrl_mode(MeasCh_t ch, MeasSetTempCtrlType_t temp_ctrl_mod
     /* Temperature Control */
     switch (temp_ctrl_mode) {
         case TEMP_CTRL_FORCE_OFF:
-            _temp_ctrl_task_enable(false);
             Hal_Heater_Ctrl(ch, HAL_HEATER_OFF);
             SYS_LOG_INFO("Heater Force Off");
             break;
 
         case TEMP_CTRL_AUTO:
-            _temp_ctrl_task_enable(true);
             SYS_LOG_INFO("Heater Auto Control");
             break;
 
         case TEMP_CTRL_FORCE_ON:
-            _temp_ctrl_task_enable(false);
             Hal_Heater_Ctrl(ch, HAL_HEATER_ON);
             SYS_LOG_INFO("Heater Force On");
             break;

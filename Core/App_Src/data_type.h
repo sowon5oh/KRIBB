@@ -321,7 +321,7 @@ typedef struct {
     MeasSetTempCtrlType_t temp_ctrl_mode[CH_NUM]; /* Ch1 - CH3 */
     uint16_t led_on_time[CH_NUM];
     uint16_t led_on_level[CH_NUM];
-    uint16_t temperature_offset[CH_NUM];
+    int16_t temperature_offset[CH_NUM];
     uint16_t stable_temperature;
     /* ~NVM */
     uint16_t adc_sample_cnt[CH_NUM];

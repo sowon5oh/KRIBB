@@ -310,8 +310,6 @@ typedef enum {
 #define MEAS_SET_STABLE_TEMPERATURE_MAX_DEGREE     45
 #define MEAS_SET_DEFAULT_STABLE_TEMPERATURE_DEGREE 35
 
-#define MEAS_SET_TEMPERATURE_OFFSET_MIN_DEGREE     0
-#define MEAS_SET_TEMPERATURE_OFFSET_MAX_DEGREE     50
 #define MEAS_SET_DEFAULT_TEMPERATURE_OFFSET_DEGREE 30
 #define MEAS_SET_TEMPERATURE_DEGREE_SCALE          100
 
@@ -322,7 +320,7 @@ typedef struct {
     uint16_t led_on_time[CH_NUM];
     uint16_t led_on_level[CH_NUM];
     int16_t temperature_offset[CH_NUM];
-    uint16_t stable_temperature;
+    int16_t stable_temperature;
     /* ~NVM */
     uint16_t adc_sample_cnt[CH_NUM];
     uint16_t adc_delay_ms[CH_NUM];

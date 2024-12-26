@@ -192,7 +192,7 @@ static void _set_temp_ctrl_mode(MeasCh_t ch, MeasSetTempCtrlType_t temp_ctrl_mod
 
         case TEMP_CTRL_AUTO:
             _temp_ctrl_task_enable(true);
-            SYS_LOG_INFO("Heater Auto Contol");
+            SYS_LOG_INFO("Heater Auto Control");
             break;
 
         case TEMP_CTRL_FORCE_ON:

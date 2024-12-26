@@ -915,30 +915,17 @@ static void _meas_set_ch_test(MeasSetChVal_t ch, MeasSetChTest_t state) {
 }
 
 static void _meas_set_temperature_offset_degree(MeasSetChVal_t ch, uint16_t val) {
-    uint16_t temp_val = val;
-
-    if (val > (MEAS_SET_TEMPERATURE_OFFSET_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
-        SYS_LOG_WARN("temperature offset settings changed");SYS_LOG_WARN("Original: [%d]====>", val);
-        temp_val = MEAS_SET_TEMPERATURE_OFFSET_MAX_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-        SYS_LOG_WARN("Changed : ====>[%d]", temp_val);
-    }
-    else if (val < (MEAS_SET_TEMPERATURE_OFFSET_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE)) {
-        SYS_LOG_WARN("temperature offset settings changed");SYS_LOG_WARN("Original: [%d]====>", val);
-        temp_val = MEAS_SET_TEMPERATURE_OFFSET_MIN_DEGREE * MEAS_SET_TEMPERATURE_DEGREE_SCALE;
-        SYS_LOG_WARN("Changed : ====>[%d]", temp_val);
-    }
-
     if (ch == MEAS_SET_CH_ALL) {
-        meas_set_data.temperature_offset[CH1_IDX] = temp_val;
-        meas_set_data.temperature_offset[CH2_IDX] = temp_val;
-        meas_set_data.temperature_offset[CH3_IDX] = temp_val;
-        Task_TempCtrl_SetTempOffset(CH1_IDX, (float) temp_val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
-        Task_TempCtrl_SetTempOffset(CH2_IDX, (float) temp_val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
-        Task_TempCtrl_SetTempOffset(CH3_IDX, (float) temp_val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+        meas_set_data.temperature_offset[CH1_IDX] = val;
+        meas_set_data.temperature_offset[CH2_IDX] = val;
+        meas_set_data.temperature_offset[CH3_IDX] = val;
+        Task_TempCtrl_SetTempOffset(CH1_IDX, (float) val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+        Task_TempCtrl_SetTempOffset(CH2_IDX, (float) val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+        Task_TempCtrl_SetTempOffset(CH3_IDX, (float) val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     }
     else {
-        meas_set_data.temperature_offset[ch - 1] = temp_val;
-        Task_TempCtrl_SetTempOffset(ch - 1, (float) temp_val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
+        meas_set_data.temperature_offset[ch - 1] = val;
+        Task_TempCtrl_SetTempOffset(ch - 1, (float) val / MEAS_SET_TEMPERATURE_DEGREE_SCALE);
     }
 
     SYS_LOG_INFO("Temperature Offset setting: %d, %d, %d (/100)'C)", meas_set_data.temperature_offset[CH1_IDX], meas_set_data.temperature_offset[CH2_IDX], meas_set_data.temperature_offset[CH3_IDX]);

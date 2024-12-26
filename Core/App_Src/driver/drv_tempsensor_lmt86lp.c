@@ -112,11 +112,11 @@ static float _digit_to_temperature(uint16_t digit) {
     /* Ensure digit is within the valid range */
     if (digit < ADC_MIN_DIGIT) {
         SYS_LOG_WARN("ADC digit %d is lower than Min digit", digit);
-        return TEMPERATURE_MAX_VALUE;
+        return TEMPERATURE_MIN_VALUE;
     }
     else if (digit > ADC_MAX_DIGIT) {
         SYS_LOG_WARN("ADC digit %d is higher than Max digit", digit);
-        return TEMPERATURE_MIN_VALUE;
+        return TEMPERATURE_MAX_VALUE;
     }
     else {
         /* Calculate temperature using the given formula */

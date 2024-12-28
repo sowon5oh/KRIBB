@@ -52,7 +52,6 @@ static void _temp_ctrl_task_cb(void);
 
 /* Private variables ---------------------------------------------------------*/
 static tempCtrlTaskContext_t temp_ctrl_task_context = {
-    .task_op_state = false,
     .cur_temp[CH1_IDX] = 0.0f,
     .cur_temp[CH2_IDX] = 0.0f,
     .cur_temp[CH3_IDX] = 0.0f,
@@ -123,17 +122,13 @@ static void _temp_ctrl_task_init(void) {
     _set_temp_ctrl_mode(CH2_IDX, TEMP_CTRL_AUTO);
     _set_temp_ctrl_mode(CH3_IDX, TEMP_CTRL_AUTO);
 }
-static void _temp_ctrl_task_enable(bool enable) {
 
+static void _temp_ctrl_task_enable(bool enable) {
     if (enable) {
-        temp_ctrl_task_context.task_op_state = true;
-        
         /* Task Start */
         App_Task_Start(APP_TASK_TEMP_CTRL, TEMP_CTRL_TASK_DUTY_MS, _temp_ctrl_task_cb);
     }
     else {
-        temp_ctrl_task_context.task_op_state = false;
-        
         /* Task Stop */
         App_Task_Stop(APP_TASK_TEMP_CTRL);
     }
@@ -162,7 +157,7 @@ static void _temp_ctrl_task_cb(void) {
                 SYS_LOG_DEBUG("[CH %d] Temperature Over MAX Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_OFF);
             }
-            else if (MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE >= temp_ctrl_task_context.cur_temp[ch_idx])
+            else if (MEAS_SET_STABLE_TEMPERATURE_MIN_DEGREE > temp_ctrl_task_context.cur_temp[ch_idx])
             {
                 SYS_LOG_DEBUG("[CH %d] Temperature Below MIN Limit, %.2f", ch_idx + 1, temp_ctrl_task_context.cur_temp[ch_idx]);
                 Hal_Heater_Ctrl(ch_idx, HAL_HEATER_ON);

@@ -504,12 +504,16 @@ static void _meas_set_init(void) {
     temp_temperature = (read_data[FRAM_STABLE_TEMPERATURE_ADDR + 1] << 8 | read_data[FRAM_STABLE_TEMPERATURE_ADDR]);
     _meas_set_stable_temperature_degree((float) temp_temperature);
 
+	// 20250309 TempOffset 0으로 고정
     temp_temperature = (read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH1 + 1] << 8 | read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH1]);
-    _meas_set_temperature_offset_degree(MEAS_SET_CH_1, (float) temp_temperature);
+    //_meas_set_temperature_offset_degree(MEAS_SET_CH_1, (float) temp_temperature);
+	_meas_set_temperature_offset_degree(MEAS_SET_CH_1, (float) 0);
     temp_temperature = (read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH2 + 1] << 8 | read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH2]);
-    _meas_set_temperature_offset_degree(MEAS_SET_CH_2, (float) temp_temperature);
+    //_meas_set_temperature_offset_degree(MEAS_SET_CH_2, (float) temp_temperature);
+	_meas_set_temperature_offset_degree(MEAS_SET_CH_2, (float) 0);
     temp_temperature = (read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH3 + 1] << 8 | read_data[FRAM_TEMPERATURE_OFFSET_ADDR_CH3]);
-    _meas_set_temperature_offset_degree(MEAS_SET_CH_3, (float) temp_temperature);
+    //_meas_set_temperature_offset_degree(MEAS_SET_CH_3, (float) temp_temperature);
+	_meas_set_temperature_offset_degree(MEAS_SET_CH_3, (float) 0);
 
     /* Set other default data */
     meas_set_data.led_ctrl_state[CH1_IDX] = MEAS_SET_DEFAULT_LED_CTRL_TYPE;
